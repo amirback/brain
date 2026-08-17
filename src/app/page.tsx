@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { Btn, Card, CountUp, Reveal, SectionLabel, Sparkline } from "@/components/ui";
 import {
-  IconArrow, IconBolt, IconBook, IconChart, IconClock, IconFlame,
+  IconArrow, IconBolt, IconBook, IconClock, IconFlame,
   IconMap, IconParent, IconRefresh, IconTeacher, IconTrend, IconTrophy,
 } from "@/components/Icons";
 import { CLASSMATES } from "@/lib/mock";

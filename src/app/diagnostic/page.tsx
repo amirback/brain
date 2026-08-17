@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { TOPICS } from "@/lib/content";
-import { forecast, nextDiagnosticTopic, nextTarget, pickQuestion, START_ELO } from "@/lib/engine";
+import { forecast, nextDiagnosticTopic, nextTarget, pickQuestion } from "@/lib/engine";
 import type { Question } from "@/lib/types";
 import { QuestionCard } from "@/components/QuestionCard";
 import { Btn, Card, Confetti, CountUp, Bar, Reveal } from "@/components/ui";

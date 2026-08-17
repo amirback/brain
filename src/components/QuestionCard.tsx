@@ -108,7 +108,11 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
             >
               <span
                 className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold ${
-                  isRight || isPicked ? "bg-brand text-ink" : "bg-soot text-dim"
+                  isWrongPick
+                    ? "bg-red-500/80 text-ink"
+                    : isRight || isPicked
+                      ? "bg-brand text-ink"
+                      : "bg-soot text-dim"
                 }`}
               >
                 {String.fromCharCode(65 + i)}
