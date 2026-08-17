@@ -25,6 +25,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      # Turns Pages on for the repo the first time this runs, so no manual
+      # switch-flipping in Settings is needed.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - run: npm ci
 
       - name: Build static site
