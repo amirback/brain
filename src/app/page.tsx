@@ -1,69 +1,386 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
+import { useStore } from "@/lib/store";
+import { Btn, Card, CountUp, Reveal, SectionLabel, Sparkline } from "@/components/ui";
+import {
+  IconArrow, IconBolt, IconBook, IconChart, IconClock, IconFlame,
+  IconMap, IconParent, IconRefresh, IconTeacher, IconTrend, IconTrophy,
+} from "@/components/Icons";
+import { CLASSMATES } from "@/lib/mock";
+
+export default function Landing() {
+  const { d } = useI18n();
+  const { user } = useStore();
+
+  const featIcons = [IconMap, IconTrend, IconRefresh, IconTrophy, IconFlame, IconTeacher];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <>
+      {/* ---------------- hero ---------------- */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 dotgrid opacity-60" aria-hidden="true" />
+        <div className="glow-orb -top-24 -left-20 h-[420px] w-[420px]" aria-hidden="true" />
+        <div className="glow-orb top-40 -right-32 h-[380px] w-[380px] opacity-70" aria-hidden="true" />
+        <div
+          className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink"
+          aria-hidden="true"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-20 sm:pt-20 sm:pb-28">
+          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-8 items-center">
+            <div>
+              <Reveal>
+                <span className="inline-flex items-center gap-2 rounded-full border border-line2 bg-coal/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand pulse-dot" />
+                  {d.landing.badge}
+                </span>
+              </Reveal>
+
+              <Reveal delay={80}>
+                <h1 className="font-display mt-6 text-[clamp(38px,7.2vw,68px)] font-extrabold leading-[0.98] tracking-[-0.03em]">
+                  {d.landing.h1a}
+                  <br />
+                  <span className="text-brand">{d.landing.h1b}</span>
+                </h1>
+              </Reveal>
+
+              <Reveal delay={160}>
+                <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-mute">{d.landing.sub}</p>
+              </Reveal>
+
+              <Reveal delay={240}>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Btn href={user ? "/dashboard" : "/start"} size="lg" className="arrow-slide">
+                    {user ? d.nav.dashboard : d.landing.ctaPrimary}
+                    <span className="arr">
+                      <IconArrow size={18} />
+                    </span>
+                  </Btn>
+                  <Btn href="/demo" variant="outline" size="lg">
+                    {d.landing.ctaSecondary}
+                  </Btn>
+                </div>
+              </Reveal>
+
+              <Reveal delay={320}>
+                <div className="mt-10 flex items-center gap-6">
+                  <div className="flex -space-x-2.5">
+                    {CLASSMATES.slice(0, 5).map((c, i) => (
+                      <span
+                        key={c.id}
+                        className="grid h-9 w-9 place-items-center rounded-full border-2 border-ink bg-soot text-[12px] font-bold text-mute"
+                        style={{ zIndex: 5 - i }}
+                      >
+                        {c.name.slice(0, 1)}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-xs leading-snug text-dim">
+                    <span className="block font-semibold text-paper tabular-nums">1 240+</span>
+                    {d.landing.footer.forWho}
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+
+            {/* floating demo stack */}
+            <div className="relative h-[420px] sm:h-[460px] select-none" aria-hidden="true">
+              <div className="float-a absolute left-0 top-4 w-[240px] sm:w-[262px] rounded-3xl border border-line bg-card p-4 shadow-2xl shadow-black/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">
+                    {d.landing.demoCard.forecast}
+                  </span>
+                  <IconTrend size={16} />
+                </div>
+                <div className="font-display mt-2 text-4xl font-extrabold tabular-nums">
+                  <CountUp to={31} />
+                  <span className="text-lg text-dim"> / 50</span>
+                </div>
+                <div className="mt-1 text-[12px] font-semibold text-brand">{d.landing.demoCard.forecastDelta}</div>
+                <div className="mt-3">
+                  <Sparkline points={[18, 20, 22, 25, 27, 29, 31]} h={52} />
+                </div>
+              </div>
+
+              <div className="float-b absolute right-0 top-28 w-[210px] sm:w-[230px] rounded-3xl border border-line bg-card p-4 shadow-2xl shadow-black/60">
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-dim">
+                  <IconMap size={15} />
+                  {d.landing.demoCard.mapTitle}
+                </div>
+                <div className="mt-3 grid grid-cols-4 gap-1.5">
+                  {[1, 1, 0.6, 0.25, 1, 0.6, 0.25, 0, 0.6, 1, 0, 0.25].map((v, i) => (
+                    <span
+                      key={i}
+                      className="aspect-square rounded-[5px]"
+                      style={{
+                        background:
+                          v === 1 ? "#ff5c00" : v === 0.6 ? "rgba(255,92,0,.55)" : v === 0.25 ? "rgba(255,92,0,.2)" : "#222",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="float-c absolute bottom-6 left-6 sm:left-10 w-[214px] rounded-3xl border border-line bg-card p-4 shadow-2xl shadow-black/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">
+                    {d.landing.demoCard.eloTitle}
+                  </span>
+                  <IconBolt size={15} />
+                </div>
+                <div className="font-display mt-1.5 flex items-end gap-2 text-3xl font-extrabold tabular-nums">
+                  <CountUp to={1147} />
+                  <span className="mb-1 text-[12px] font-semibold text-brand">{d.landing.demoCard.eloDelta}</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-line2 px-2 py-0.5 text-[10px] font-bold text-mute">
+                    <IconFlame size={11} /> 9
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-line2 px-2 py-0.5 text-[10px] font-bold text-mute">
+                    <IconClock size={11} /> 47.5{d.common.hour}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* ---------------- marquee ---------------- */}
+      <section className="border-y border-line bg-coal/50 py-3.5">
+        <div className="marquee">
+          {[0, 1].map((k) => (
+            <div key={k} className="marquee-track" aria-hidden={k === 1}>
+              {d.landing.marquee.map((m, i) => (
+                <span key={`${k}-${i}`} className="flex items-center gap-6 px-6">
+                  <span className="font-display text-sm font-bold uppercase tracking-[0.15em] text-mute whitespace-nowrap">
+                    {m}
+                  </span>
+                  <span className="h-1 w-1 shrink-0 rounded-full bg-brand" />
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* ---------------- steps ---------------- */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
+        <Reveal>
+          <SectionLabel>{d.landing.stepsTitle}</SectionLabel>
+        </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {d.landing.steps.map((s, i) => (
+            <Reveal key={i} delay={i * 90}>
+              <div className="step-card group h-full rounded-3xl border border-line bg-card p-6 card-hover">
+                <div className="flex items-start gap-5">
+                  <span className="step-num shrink-0">{i + 1}</span>
+                  <div className="pt-2">
+                    <h3 className="font-display text-lg font-bold leading-snug">{s.t}</h3>
+                    <p className="mt-2 text-[14.5px] leading-relaxed text-mute">{s.d}</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------- features ---------------- */}
+      <section className="relative overflow-hidden border-y border-line bg-coal/40">
+        <div className="glow-orb -right-40 top-0 h-[360px] w-[360px] opacity-50" aria-hidden="true" />
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
+          <Reveal>
+            <h2 className="font-display max-w-2xl text-[clamp(28px,4.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.02em]">
+              <span className="text-outline">{d.landing.featTitle}</span>
+              <br />
+              {d.landing.featTitle2}
+            </h2>
+          </Reveal>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {d.landing.features.map((f, i) => {
+              const Icon = featIcons[i];
+              return (
+                <Reveal key={i} delay={(i % 3) * 80}>
+                  <Card hover className="h-full">
+                    <div className="mb-4 grid h-11 w-11 place-items-center rounded-2xl border border-line2 bg-soot text-paper">
+                      <Icon size={22} />
+                    </div>
+                    <h3 className="font-display text-[17px] font-bold">{f.t}</h3>
+                    <p className="mt-2 text-[14px] leading-relaxed text-mute">{f.d}</p>
+                  </Card>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- editorial (light) ---------------- */}
+      <section className="sec-light relative overflow-hidden">
+        <div className="absolute inset-0 dotgrid-light opacity-70" aria-hidden="true" />
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            <Reveal>
+              <h2 className="font-display text-[clamp(30px,5vw,52px)] font-extrabold leading-[1.02] tracking-[-0.025em]">
+                {d.landing.editTitle}
+                <br />
+                <span className="text-brand">{d.landing.editTitle2}</span>
+              </h2>
+              <p className="mt-6 max-w-md text-[16.5px] leading-relaxed text-[#3d3d3d]">{d.landing.editBody}</p>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[#e2e2e2] bg-[#e2e2e2]">
+                {d.landing.editStats.map((s, i) => (
+                  <div key={i} className="bg-paper p-6 sm:p-7">
+                    <div className="font-display text-[clamp(26px,4vw,38px)] font-extrabold leading-none tracking-tight text-ink">
+                      {s.v}
+                    </div>
+                    <div className="mt-2 text-[13px] leading-snug text-[#5a5a5a]">{s.l}</div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- gamification ---------------- */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
+        <div className="grid gap-12 lg:grid-cols-[1fr_0.85fr] lg:items-center">
+          <div>
+            <Reveal>
+              <SectionLabel>{d.common.elo}</SectionLabel>
+              <h2 className="font-display text-[clamp(28px,4.8vw,46px)] font-extrabold leading-[1.05] tracking-[-0.02em]">
+                {d.landing.gamTitle}
+                <br />
+                <span className="text-brand">{d.landing.gamTitle2}</span>
+              </h2>
+              <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-mute">{d.landing.gamBody}</p>
+            </Reveal>
+
+            <Reveal delay={140}>
+              <div className="mt-8 flex flex-wrap gap-3">
+                {[
+                  { icon: IconBolt, v: "1147", l: d.common.elo },
+                  { icon: IconFlame, v: "9", l: d.common.streak },
+                  { icon: IconClock, v: "47.5" + d.common.hour, l: d.dash.hours },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-2xl border border-line bg-card px-4 py-3">
+                    <s.icon size={20} />
+                    <div>
+                      <div className="font-display text-lg font-bold leading-none tabular-nums">{s.v}</div>
+                      <div className="mt-1 text-[11px] uppercase tracking-wider text-dim">{s.l}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+
+          <Reveal delay={100}>
+            <Card pad="p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-dim">
+                  {d.landing.gamLadder}
+                </span>
+                <IconTrophy size={18} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {CLASSMATES.slice(0, 4).map((c, i) => (
+                  <div
+                    key={c.id}
+                    className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 ${
+                      i === 0 ? "border-brand/40 bg-brand/8" : "border-line bg-soot/40"
+                    }`}
+                  >
+                    <span
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold tabular-nums ${
+                        i === 0 ? "bg-brand text-ink" : "bg-line text-mute"
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 truncate text-sm font-semibold">{c.name}</span>
+                    <span className="text-sm font-bold tabular-nums text-mute">{c.elo}</span>
+                  </div>
+                ))}
+                <div className="mt-1 flex items-center gap-3 rounded-2xl border border-dashed border-line2 px-3 py-2.5">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-soot text-[12px] font-extrabold text-dim">
+                    5
+                  </span>
+                  <span className="flex-1 text-sm font-semibold text-dim">{d.lead.you}</span>
+                  <span className="text-sm font-bold tabular-nums text-dim">—</span>
+                </div>
+              </div>
+            </Card>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ---------------- roles ---------------- */}
+      <section className="border-y border-line bg-coal/40">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-24">
+          <Reveal>
+            <SectionLabel>{d.landing.rolesTitle}</SectionLabel>
+          </Reveal>
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              { r: d.landing.roleTeacher, href: "/teacher", Icon: IconTeacher },
+              { r: d.landing.roleParent, href: "/parent", Icon: IconParent },
+            ].map(({ r, href, Icon }, i) => (
+              <Reveal key={href} delay={i * 100}>
+                <Link href={href} className="group block h-full">
+                  <Card hover className="flex h-full flex-col">
+                    <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl border border-line2 bg-soot">
+                      <Icon size={24} />
+                    </div>
+                    <h3 className="font-display text-xl font-bold">{r.t}</h3>
+                    <p className="mt-2 flex-1 text-[14.5px] leading-relaxed text-mute">{r.d}</p>
+                    <span className="arrow-slide mt-5 inline-flex items-center gap-2 text-sm font-bold text-brand">
+                      {r.cta}
+                      <span className="arr">
+                        <IconArrow size={16} />
+                      </span>
+                    </span>
+                  </Card>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- final cta ---------------- */}
+      <section className="relative overflow-hidden">
+        <div className="glow-orb left-1/2 top-0 h-[420px] w-[420px] -translate-x-1/2 opacity-70" aria-hidden="true" />
+        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 py-24 text-center sm:py-32">
+          <Reveal>
+            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-2xl border border-line2 bg-card">
+              <IconBook size={26} />
+            </div>
+            <h2 className="font-display text-[clamp(28px,5.4vw,50px)] font-extrabold leading-[1.04] tracking-[-0.025em]">
+              {d.landing.ctaTitle}
+            </h2>
+            <p className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-mute">{d.landing.ctaSub}</p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <Btn href={user ? "/dashboard" : "/start"} size="lg" className="arrow-slide">
+                {user ? d.nav.dashboard : d.landing.ctaPrimary}
+                <span className="arr">
+                  <IconArrow size={18} />
+                </span>
+              </Btn>
+              <Btn href="/demo" variant="outline" size="lg">
+                {d.landing.ctaSecondary}
+              </Btn>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    </>
   );
 }
