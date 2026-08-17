@@ -10,7 +10,6 @@ import {
 } from "@/components/Icons";
 
 
-const FACES = ["Айым", "Данияр", "Томирис", "Алишер", "Аружан"];
 const LADDER = [
   { name: "Айым", elo: 1512 },
   { name: "Данияр", elo: 1288 },
@@ -73,22 +72,17 @@ export default function Landing() {
               </Reveal>
 
               <Reveal delay={320}>
-                <div className="mt-10 flex items-center gap-6">
-                  <div className="flex -space-x-2.5">
-                    {FACES.map((name, i) => (
-                      <span
-                        key={name}
-                        className="grid h-9 w-9 place-items-center rounded-full border-2 border-ink bg-soot text-[12px] font-bold text-mute"
-                        style={{ zIndex: 5 - i }}
-                      >
-                        {name.slice(0, 1)}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="text-xs leading-snug text-dim">
-                    <span className="block font-semibold text-paper tabular-nums">1 240+</span>
-                    {d.landing.footer.forWho}
-                  </div>
+                <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  {[
+                    { v: "6", l: d.subjects.title },
+                    { v: "3", l: d.profile.lang },
+                    { v: "0 ₸", l: d.roles.student.t },
+                  ].map((x) => (
+                    <div key={x.l} className="text-xs leading-snug text-dim">
+                      <span className="font-display block text-lg font-extrabold text-paper tabular-nums">{x.v}</span>
+                      {x.l}
+                    </div>
+                  ))}
                 </div>
               </Reveal>
             </div>

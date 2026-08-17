@@ -202,6 +202,41 @@ export default function ProfilePage() {
         </Card>
       </Reveal>
 
+      {/* past mock tests */}
+      {user.mocks.some((m) => m.status === "done") && (
+        <Reveal delay={145}>
+          <Card className="mt-3">
+            <h2 className="font-display mb-3.5 text-lg font-bold">{d.mock.history}</h2>
+            <div className="flex flex-col gap-2">
+              {user.mocks
+                .filter((m) => m.status === "done")
+                .sort((a, b) => (b.takenAt ?? 0) - (a.takenAt ?? 0))
+                .slice(0, 4)
+                .map((m) => (
+                  <div key={m.id} className="flex items-center gap-3.5 rounded-2xl border border-line bg-coal p-3.5">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-soot text-mute">
+                      <IconClock size={18} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[14px] font-bold tabular-nums">
+                        {m.score} / {m.size}
+                      </div>
+                      <div className="text-[12px] text-dim">
+                        {new Date(m.takenAt ?? m.createdAt).toISOString().slice(0, 10)}
+                      </div>
+                    </div>
+                    {(m.wrongQids?.length ?? 0) > 0 && (
+                      <Btn href={`/practice?fix=${m.id}`} size="sm" variant="outline" className="shrink-0">
+                        {d.mock.fixStart}
+                      </Btn>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
       {/* achievements */}
       <Reveal delay={160}>
         <Card className="mt-3">
@@ -248,7 +283,12 @@ export default function ProfilePage() {
           <div className="flex items-start gap-3">
             <IconUser size={20} />
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] leading-relaxed text-dim">{d.profile.dataNote}</p>
+              {user.email && (
+                <div className="mb-2 text-[13.5px] font-semibold">
+                  {d.auth.emailLabel}: <span className="text-mute">{user.email}</span>
+                </div>
+              )}
+              <p className="text-[13px] leading-relaxed text-dim">{user.email ? d.auth.localNote : d.profile.dataNote}</p>
               <button onClick={() => setResetOpen(true)} className="press mt-3 text-[13px] font-bold text-red-400 hover:text-red-300">
                 {d.profile.reset}
               </button>

@@ -1,8 +1,20 @@
-import type { Space, StudentState, SubjectId } from "./types";
+import type { ClassRecord, Space, StudentState, SubjectId } from "./types";
 import { readiness, START_ELO } from "./engine";
 
 /** The built-in class any student can join to see a populated teacher panel. */
 export const DEMO_CLASS_CODE = "CL-DEMO";
+
+/** Registered in every space so the demo code always resolves to a real class. */
+export function demoClassRecord(): ClassRecord {
+  return {
+    code: DEMO_CLASS_CODE,
+    teacherName: "Гүлнар Серікқызы",
+    school: "НИШ №1",
+    className: "9 «Б»",
+    subject: "math",
+    createdAt: Date.now(),
+  };
+}
 
 const DAY = 24 * 3600 * 1000;
 
@@ -62,6 +74,7 @@ function buildStudent(s: Seed): StudentState {
 
   const base: StudentState = {
     code: s.code,
+    email: null,
     name: s.name,
     grade: s.grade,
     goal: "ent",
@@ -88,6 +101,11 @@ function buildStudent(s: Seed): StudentState {
     materials: [],
     customTopics: [],
     achievements: ["firstDiag", "checkin"],
+    mocks: [],
+    inbox: [],
+    lessonProgress: {},
+    lastLesson: null,
+    lastNudge: null,
   };
   base.forecastHistory = [
     { ts: Date.now() - 8 * DAY, raw: Math.max(0, readiness(base, base.activeSubject) - 0.16) },
@@ -110,6 +128,7 @@ function demoMe(): StudentState {
 
   const me: StudentState = {
     code: "ST-AMIR",
+    email: "amir@example.kz",
     name: "Амир",
     grade: 9,
     goal: "ent",
@@ -136,6 +155,21 @@ function demoMe(): StudentState {
     materials: [],
     customTopics: [],
     achievements: ["firstDiag", "streak3", "elo1000", "mastered", "checkin"],
+    mocks: [
+      {
+        id: "mk-demo",
+        subject: "math",
+        topics: ["linear", "quadratic", "functions"],
+        createdAt: Date.now() - 2 * DAY,
+        dueAt: Date.now() + 2 * DAY,
+        size: 10,
+        status: "scheduled",
+      },
+    ],
+    inbox: [],
+    lessonProgress: { linear: 2 },
+    lastLesson: "linear",
+    lastNudge: null,
   };
   const now = readiness(me, "math");
   me.forecastHistory = [
@@ -159,15 +193,17 @@ export function demoSpace(): Space {
     role: "student",
     activeStudent: me.code,
     students,
+    classes: { [DEMO_CLASS_CODE]: demoClassRecord() },
     teacher: {
       code: DEMO_CLASS_CODE,
+      email: "teacher@example.kz",
       name: "Гүлнар Серікқызы",
       school: "НИШ №1",
       className: "9 «Б»",
       subject: "math",
       createdAt: Date.now() - 60 * DAY,
     },
-    parent: { name: "Родитель", childCode: me.code },
+    parent: { name: "Родитель", email: "parent@example.kz", childCode: me.code },
     helpRequests: [
       {
         id: "r-demo",

@@ -7,6 +7,8 @@ import { historyLessons, historyQuestions, historyTopics } from "./history";
 import { satLessons, satQuestions, satTopics } from "./sat";
 import { ieltsLessons, ieltsQuestions, ieltsTopics } from "./ielts";
 
+export { SUMMARIES, summaryOf } from "./summaries";
+
 export const SUBJECTS: Subject[] = [
   {
     id: "math",

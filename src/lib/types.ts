@@ -96,8 +96,43 @@ export interface CustomTopic {
   desc: string;
 }
 
+export interface ClassRecord {
+  code: string; // what students type in to join
+  teacherName: string;
+  school: string;
+  className: string;
+  subject: SubjectId;
+  createdAt: number;
+}
+
+export interface MockTest {
+  id: string;
+  subject: SubjectId;
+  topics: string[];
+  /** Set by the planner when the test is scheduled. */
+  dueAt: number;
+  createdAt: number;
+  size: number;
+  status: "scheduled" | "done";
+  score?: number;      // correct answers
+  wrongQids?: string[];// what to work on afterwards
+  takenAt?: number;
+}
+
+export interface InboxMessage {
+  id: string;
+  kind: "motivation" | "deadline" | "result" | "advice";
+  title: string;
+  body: string;
+  ts: number;
+  read: boolean;
+  /** Optional in-app destination, e.g. "/practice?mock=..." */
+  action?: { label: string; href: string };
+}
+
 export interface StudentState {
   code: string; // the code a teacher or parent uses to find this student
+  email: string | null; // used to sign back in if the profile is lost
   name: string;
   grade: number;
   goal: Goal;
@@ -121,10 +156,17 @@ export interface StudentState {
   materials: TeacherMaterial[];
   customTopics: CustomTopic[];
   achievements: string[];
+  mocks: MockTest[];
+  inbox: InboxMessage[];
+  /** Where the student stopped reading: topic id -> section index. */
+  lessonProgress: Record<string, number>;
+  lastLesson: string | null;
+  lastNudge: string | null; // YYYY-MM-DD of the last motivational message
 }
 
 export interface TeacherState {
-  code: string; // class code students type in to join
+  code: string; // the class this teacher owns
+  email: string | null;
   name: string;
   school: string;
   className: string;
@@ -134,6 +176,7 @@ export interface TeacherState {
 
 export interface ParentState {
   name: string;
+  email: string | null;
   childCode: string | null;
 }
 
@@ -155,6 +198,8 @@ export interface Space {
   role: Role | null;
   activeStudent: string | null; // student code
   students: Record<string, StudentState>;
+  /** Every class that exists, keyed by its code — what a student joins. */
+  classes: Record<string, ClassRecord>;
   teacher: TeacherState | null;
   parent: ParentState | null;
   helpRequests: HelpRequest[];

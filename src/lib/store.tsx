@@ -2,39 +2,45 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type {
-  AnswerLog, CustomTopic, Goal, HelpRequest, ParentState, Role, Space,
+  AnswerLog, ClassRecord, CustomTopic, Goal, InboxMessage, Lang, ParentState, Role, Space,
   StudentState, SubjectId, TeacherMaterial, TeacherState, TeacherTask,
 } from "./types";
 import { applyElo, eloDelta, makeCode, masteryStep, readiness, START_ELO } from "./engine";
 import { defaultSubjects } from "./content";
-import { demoSpace, DEMO_CLASS_CODE } from "./mock";
+import { demoSpace, DEMO_CLASS_CODE, demoClassRecord } from "./mock";
+import { todayStr } from "./store-helpers";
+import { mockResultMessage, planMock } from "./advisor";
 
-const LS_KEY = "brain.space.v2";
+export { todayStr };
+export { streakLength, totalSeconds, weekSeconds, lastNDays, fmtHours } from "./store-helpers";
+export { DEMO_CLASS_CODE };
 
-export function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+const LS_KEY = "brain.space.v3";
 
 const emptySpace = (): Space => ({
   role: null,
   activeStudent: null,
   students: {},
+  // The demo class always exists, so a code is never a dead end.
+  classes: { [DEMO_CLASS_CODE]: demoClassRecord() },
   teacher: null,
   parent: null,
   helpRequests: [],
 });
 
-function freshStudent(
-  name: string, grade: number, goal: Goal, subjects: SubjectId[], examDate: string | null
-): StudentState {
+function freshStudent(a: {
+  name: string; email: string | null; grade: number; goal: Goal; subjects: SubjectId[]; examDate: string | null;
+}): StudentState {
+  const subjects = a.subjects.length > 0 ? a.subjects : defaultSubjects(a.goal);
   return {
     code: makeCode("ST"),
-    name,
-    grade,
-    goal,
-    subjects: subjects.length > 0 ? subjects : defaultSubjects(goal),
-    activeSubject: (subjects[0] ?? defaultSubjects(goal)[0]),
-    examDate,
+    email: a.email,
+    name: a.name,
+    grade: a.grade,
+    goal: a.goal,
+    subjects,
+    activeSubject: subjects[0],
+    examDate: a.examDate,
     createdAt: Date.now(),
     classCode: null,
     elo: START_ELO,
@@ -52,22 +58,34 @@ function freshStudent(
     materials: [],
     customTopics: [],
     achievements: [],
+    mocks: [],
+    inbox: [],
+    lessonProgress: {},
+    lastLesson: null,
+    lastNudge: null,
   };
+}
+
+export interface JoinResult {
+  ok: boolean;
+  className?: string;
+  teacherName?: string;
 }
 
 interface StoreCtx {
   space: Space;
   ready: boolean;
-  /** The signed-in student, or the child a parent is looking at. */
   user: StudentState | null;
   viewedStudent: StudentState | null;
   role: Role | null;
 
   setRole: (r: Role) => void;
-  createStudent: (a: { name: string; grade: number; goal: Goal; subjects: SubjectId[]; examDate: string | null }) => void;
-  createTeacher: (a: { name: string; school: string; className: string; subject: SubjectId }) => void;
-  createParent: (name: string) => void;
-  joinClass: (classCode: string) => boolean;
+  createStudent: (a: { name: string; email: string | null; grade: number; goal: Goal; subjects: SubjectId[]; examDate: string | null }) => void;
+  createTeacher: (a: { name: string; email: string | null; school: string; className: string; subject: SubjectId }) => void;
+  createParent: (a: { name: string; email: string | null }) => void;
+  /** Signs back into a profile stored on this device by its email. */
+  signInByEmail: (email: string) => Role | null;
+  joinClass: (classCode: string) => JoinResult;
   linkChild: (studentCode: string) => boolean;
   seedDemo: () => void;
   resetAll: () => void;
@@ -85,8 +103,12 @@ interface StoreCtx {
   addCustomTopic: (c: Omit<CustomTopic, "id">) => void;
   requestHelp: (topic: string) => void;
   unlock: (a: string) => void;
-  /** Students who joined the signed-in teacher's class. */
   classRoster: () => StudentState[];
+
+  saveLessonProgress: (topic: string, section: number) => void;
+  finishMock: (mockId: string, score: number, wrongQids: string[], lang: Lang) => void;
+  syncInbox: (messages: InboxMessage[]) => void;
+  markInboxRead: (id?: string) => void;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
@@ -101,6 +123,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = window.localStorage.getItem(LS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Space;
+        // Older saves may predate the class registry; make sure it exists.
+        if (!parsed.classes) parsed.classes = {};
+        if (!parsed.classes[DEMO_CLASS_CODE]) parsed.classes[DEMO_CLASS_CODE] = demoClassRecord();
         ref.current = parsed;
         setSpace(parsed);
       }
@@ -121,13 +146,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const currentStudent = (s: Space): StudentState | null =>
     s.activeStudent ? (s.students[s.activeStudent] ?? null) : null;
 
-  /** Applies a change to the signed-in student and writes the space back. */
+  // Returning the same object from `fn` means "nothing changed" — persisting
+  // anyway would hand React a new reference every time and spin any effect
+  // that depends on the student.
   const mutateStudent = useCallback(
     (fn: (st: StudentState) => StudentState) => {
       const s = ref.current;
       const st = currentStudent(s);
       if (!st) return;
-      persist({ ...s, students: { ...s.students, [st.code]: fn(st) } });
+      const next = fn(st);
+      if (next === st) return;
+      persist({ ...s, students: { ...s.students, [st.code]: next } });
     },
     [persist]
   );
@@ -161,68 +190,96 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist({ ...ref.current, role: r });
   }, [persist]);
 
-  const createStudent = useCallback(
-    (a: { name: string; grade: number; goal: Goal; subjects: SubjectId[]; examDate: string | null }) => {
-      const st = freshStudent(a.name, a.grade, a.goal, a.subjects, a.examDate);
-      const s = ref.current;
-      persist({
-        ...s,
-        role: "student",
-        activeStudent: st.code,
-        students: { ...s.students, [st.code]: st },
-      });
-    },
-    [persist]
-  );
+  const createStudent = useCallback((a: {
+    name: string; email: string | null; grade: number; goal: Goal; subjects: SubjectId[]; examDate: string | null;
+  }) => {
+    const st = freshStudent(a);
+    const s = ref.current;
+    persist({ ...s, role: "student", activeStudent: st.code, students: { ...s.students, [st.code]: st } });
+  }, [persist]);
 
-  const createTeacher = useCallback(
-    (a: { name: string; school: string; className: string; subject: SubjectId }) => {
-      const teacher: TeacherState = { ...a, code: makeCode("CL"), createdAt: Date.now() };
-      persist({ ...ref.current, role: "teacher", teacher });
-    },
-    [persist]
-  );
+  /** Creating a teacher also registers their class, so the code is joinable. */
+  const createTeacher = useCallback((a: {
+    name: string; email: string | null; school: string; className: string; subject: SubjectId;
+  }) => {
+    const s = ref.current;
+    const code = makeCode("CL");
+    const teacher: TeacherState = { ...a, code, createdAt: Date.now() };
+    const record: ClassRecord = {
+      code,
+      teacherName: a.name,
+      school: a.school,
+      className: a.className,
+      subject: a.subject,
+      createdAt: Date.now(),
+    };
+    persist({ ...s, role: "teacher", teacher, classes: { ...s.classes, [code]: record } });
+  }, [persist]);
 
-  const createParent = useCallback((name: string) => {
-    const parent: ParentState = { name, childCode: null };
+  const createParent = useCallback((a: { name: string; email: string | null }) => {
+    const parent: ParentState = { name: a.name, email: a.email, childCode: null };
     persist({ ...ref.current, role: "parent", parent });
   }, [persist]);
 
+  /** Finds a profile saved on this device by email and signs back into it. */
+  const signInByEmail = useCallback((email: string): Role | null => {
+    const s = ref.current;
+    const needle = email.trim().toLowerCase();
+    if (!needle) return null;
+    const student = Object.values(s.students).find((st) => st.email?.toLowerCase() === needle);
+    if (student) {
+      persist({ ...s, role: "student", activeStudent: student.code });
+      return "student";
+    }
+    if (s.teacher?.email?.toLowerCase() === needle) {
+      persist({ ...s, role: "teacher" });
+      return "teacher";
+    }
+    if (s.parent?.email?.toLowerCase() === needle) {
+      persist({ ...s, role: "parent" });
+      return "parent";
+    }
+    return null;
+  }, [persist]);
+
   /** A student types the code their teacher read out in class. */
-  const joinClass = useCallback((classCode: string): boolean => {
+  const joinClass = useCallback((classCode: string): JoinResult => {
     const s = ref.current;
     const st = currentStudent(s);
     const code = classCode.trim().toUpperCase();
-    if (!st) return false;
-    // In this MVP the only class that exists is the one held in this space,
-    // plus the seeded demo class every account can join.
-    const known = s.teacher?.code === code || code === DEMO_CLASS_CODE;
-    if (!known) return false;
-    persist({ ...s, students: { ...s.students, [st.code]: { ...st, classCode: code } } });
-    return true;
+    if (!st) return { ok: false };
+    const record = s.classes[code];
+    if (!record) return { ok: false };
+    // Work already handed out to this class is copied over on join, so a
+    // student who arrives late still sees the assignments.
+    const classmate = Object.values(s.students).find((x) => x.classCode === code && x.code !== st.code);
+    persist({
+      ...s,
+      students: {
+        ...s.students,
+        [st.code]: {
+          ...st,
+          classCode: code,
+          tasks: st.tasks.length > 0 ? st.tasks : (classmate?.tasks ?? []),
+          materials: st.materials.length > 0 ? st.materials : (classmate?.materials ?? []),
+          customTopics: st.customTopics.length > 0 ? st.customTopics : (classmate?.customTopics ?? []),
+        },
+      },
+    });
+    return { ok: true, className: record.className, teacherName: record.teacherName };
   }, [persist]);
 
-  /** A parent types the code shown in their child's profile. */
   const linkChild = useCallback((studentCode: string): boolean => {
     const s = ref.current;
     const code = studentCode.trim().toUpperCase();
     if (!s.students[code]) return false;
-    persist({ ...s, parent: { name: s.parent?.name ?? "", childCode: code } });
+    persist({ ...s, parent: { name: s.parent?.name ?? "", email: s.parent?.email ?? null, childCode: code } });
     return true;
   }, [persist]);
 
-  const seedDemo = useCallback(() => {
-    persist(demoSpace());
-  }, [persist]);
-
-  const resetAll = useCallback(() => {
-    persist(emptySpace());
-  }, [persist]);
-
-  /** Back to the role picker without wiping any profile. */
-  const switchRole = useCallback(() => {
-    persist({ ...ref.current, role: null });
-  }, [persist]);
+  const seedDemo = useCallback(() => persist(demoSpace()), [persist]);
+  const resetAll = useCallback(() => persist(emptySpace()), [persist]);
+  const switchRole = useCallback(() => persist({ ...ref.current, role: null }), [persist]);
 
   /* ---------- learning ---------- */
 
@@ -247,12 +304,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...st.forecastHistory.slice(-120),
       { ts: Date.now(), raw: readiness(next, next.activeSubject) },
     ];
+    // The planner watches progress and schedules a mock once enough is covered.
+    const mock = planMock(next);
+    if (mock) next.mocks = [...next.mocks, mock];
     persist({ ...s, students: { ...s.students, [st.code]: next } });
     return { delta, elo };
   }, [persist]);
 
   const finishDiagnostic = useCallback(() => {
-    mutateStudent((st) => ({ ...st, diagnosticDone: true }));
+    mutateStudent((st) => (st.diagnosticDone ? st : { ...st, diagnosticDone: true }));
   }, [mutateStudent]);
 
   const finishCheckpoint = useCallback(() => {
@@ -263,8 +323,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [mutateStudent]);
 
-  // Switching the goal keeps every topic's mastery; it only changes which
-  // subjects are on the plan. Returns how many topics carried over.
   const switchGoal = useCallback((goal: Goal, subjects: SubjectId[]): number => {
     const s = ref.current;
     const st = currentStudent(s);
@@ -288,7 +346,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [persist]);
 
   const setActiveSubject = useCallback((sub: SubjectId) => {
-    mutateStudent((st) => ({ ...st, activeSubject: sub }));
+    mutateStudent((st) => (st.activeSubject === sub ? st : { ...st, activeSubject: sub }));
   }, [mutateStudent]);
 
   const addSubject = useCallback((sub: SubjectId) => {
@@ -298,45 +356,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [mutateStudent]);
 
   const toggleTask = useCallback((id: string) => {
-    mutateStudent((st) => ({
-      ...st,
-      tasks: st.tasks.map((x) => (x.id === id ? { ...x, done: !x.done } : x)),
-    }));
+    mutateStudent((st) => ({ ...st, tasks: st.tasks.map((x) => (x.id === id ? { ...x, done: !x.done } : x)) }));
   }, [mutateStudent]);
 
-  /** A teacher assigns work: it lands with every student in their class. */
-  const addTask = useCallback((task: Omit<TeacherTask, "id" | "done">) => {
+  /** Anything a teacher hands out lands with every student in their class. */
+  const spreadToClass = useCallback((fn: (st: StudentState) => StudentState) => {
     const s = ref.current;
     if (!s.teacher) return;
-    const full: TeacherTask = { ...task, id: `t${Date.now()}`, done: false };
     const students = { ...s.students };
     for (const [code, st] of Object.entries(students)) {
-      if (st.classCode === s.teacher.code) students[code] = { ...st, tasks: [...st.tasks, full] };
+      if (st.classCode === s.teacher.code) students[code] = fn(st);
     }
     persist({ ...s, students });
   }, [persist]);
+
+  const addTask = useCallback((task: Omit<TeacherTask, "id" | "done">) => {
+    const full: TeacherTask = { ...task, id: `t${Date.now()}`, done: false };
+    spreadToClass((st) => ({ ...st, tasks: [...st.tasks, full] }));
+  }, [spreadToClass]);
 
   const addMaterial = useCallback((m: Omit<TeacherMaterial, "id">) => {
-    const s = ref.current;
-    if (!s.teacher) return;
     const full: TeacherMaterial = { ...m, id: `m${Date.now()}` };
-    const students = { ...s.students };
-    for (const [code, st] of Object.entries(students)) {
-      if (st.classCode === s.teacher.code) students[code] = { ...st, materials: [...st.materials, full] };
-    }
-    persist({ ...s, students });
-  }, [persist]);
+    spreadToClass((st) => ({ ...st, materials: [...st.materials, full] }));
+  }, [spreadToClass]);
 
   const addCustomTopic = useCallback((c: Omit<CustomTopic, "id">) => {
-    const s = ref.current;
-    if (!s.teacher) return;
     const full: CustomTopic = { ...c, id: `c${Date.now()}` };
-    const students = { ...s.students };
-    for (const [code, st] of Object.entries(students)) {
-      if (st.classCode === s.teacher.code) students[code] = { ...st, customTopics: [...st.customTopics, full] };
-    }
-    persist({ ...s, students });
-  }, [persist]);
+    spreadToClass((st) => ({ ...st, customTopics: [...st.customTopics, full] }));
+  }, [spreadToClass]);
 
   const requestHelp = useCallback((topic: string) => {
     const s = ref.current;
@@ -361,6 +408,48 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return Object.values(s.students).filter((st) => st.classCode === s.teacher!.code);
   }, []);
 
+  const saveLessonProgress = useCallback((topic: string, section: number) => {
+    mutateStudent((st) => {
+      const reached = Math.max(st.lessonProgress[topic] ?? 0, section);
+      if (reached === (st.lessonProgress[topic] ?? 0) && st.lastLesson === topic) return st;
+      return { ...st, lessonProgress: { ...st.lessonProgress, [topic]: reached }, lastLesson: topic };
+    });
+  }, [mutateStudent]);
+
+  const finishMock = useCallback((mockId: string, score: number, wrongQids: string[], lang: Lang) => {
+    const s = ref.current;
+    const st = currentStudent(s);
+    if (!st) return;
+    const mocks = st.mocks.map((m) =>
+      m.id === mockId ? { ...m, status: "done" as const, score, wrongQids, takenAt: Date.now() } : m
+    );
+    const done = mocks.find((m) => m.id === mockId);
+    const inbox = done ? [mockResultMessage(done, lang), ...st.inbox] : st.inbox;
+    persist({ ...s, students: { ...s.students, [st.code]: { ...st, mocks, inbox } } });
+  }, [persist]);
+
+  const syncInbox = useCallback((messages: InboxMessage[]) => {
+    if (messages.length === 0) return;
+    mutateStudent((st) => {
+      const known = new Set(st.inbox.map((m) => m.id));
+      const fresh = messages.filter((m) => !known.has(m.id));
+      if (fresh.length === 0) return st;
+      const nudged = fresh.some((m) => m.kind === "motivation");
+      return {
+        ...st,
+        inbox: [...fresh, ...st.inbox].slice(0, 40),
+        lastNudge: nudged ? todayStr() : st.lastNudge,
+      };
+    });
+  }, [mutateStudent]);
+
+  const markInboxRead = useCallback((id?: string) => {
+    mutateStudent((st) => {
+      if (!st.inbox.some((m) => (!id || m.id === id) && !m.read)) return st;
+      return { ...st, inbox: st.inbox.map((m) => (!id || m.id === id ? { ...m, read: true } : m)) };
+    });
+  }, [mutateStudent]);
+
   const user = currentStudent(space);
   // A parent sees a child only after linking one by code — never whichever
   // student happens to be signed in on this device.
@@ -373,11 +462,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider
       value={{
         space, ready, user, viewedStudent, role: space.role,
-        setRole, createStudent, createTeacher, createParent, joinClass, linkChild,
-        seedDemo, resetAll, switchRole,
+        setRole, createStudent, createTeacher, createParent, signInByEmail,
+        joinClass, linkChild, seedDemo, resetAll, switchRole,
         recordAnswer, finishDiagnostic, finishCheckpoint, switchGoal,
         setActiveSubject, addSubject, toggleTask, addTask, addMaterial,
         addCustomTopic, requestHelp, unlock, classRoster,
+        saveLessonProgress, finishMock, syncInbox, markInboxRead,
       }}
     >
       {children}
@@ -385,56 +475,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export { DEMO_CLASS_CODE };
-
 export function useStore(): StoreCtx {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("StoreProvider missing");
   return ctx;
-}
-
-/* ---------- derived helpers ---------- */
-
-export function streakLength(dates: string[]): number {
-  if (dates.length === 0) return 0;
-  const set = new Set(dates);
-  let len = 0;
-  const d = new Date();
-  if (!set.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
-  while (set.has(d.toISOString().slice(0, 10))) {
-    len += 1;
-    d.setDate(d.getDate() - 1);
-  }
-  return len;
-}
-
-export function totalSeconds(byDay: Record<string, number>): number {
-  return Object.values(byDay).reduce((a, b) => a + b, 0);
-}
-
-export function weekSeconds(byDay: Record<string, number>): number {
-  let sum = 0;
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    sum += byDay[d.toISOString().slice(0, 10)] ?? 0;
-  }
-  return sum;
-}
-
-export function lastNDays(byDay: Record<string, number>, n: number): { date: string; seconds: number }[] {
-  const out: { date: string; seconds: number }[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    out.push({ date: key, seconds: byDay[key] ?? 0 });
-  }
-  return out;
-}
-
-export function fmtHours(seconds: number, hourLabel: string, minLabel: string): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.round((seconds % 3600) / 60);
-  return h === 0 ? `${m}${minLabel}` : `${h}${hourLabel} ${m}${minLabel}`;
 }

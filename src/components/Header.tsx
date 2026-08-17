@@ -71,8 +71,9 @@ export function Header() {
         : role === "student"
           ? [
               { href: "/dashboard", label: d.nav.dashboard },
+              { href: "/assistant", label: d.assistant.title },
+              { href: "/inbox", label: d.inbox.title },
               { href: "/league", label: d.nav.leaderboard },
-              { href: "/profile", label: d.nav.profile },
             ]
           : [];
 

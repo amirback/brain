@@ -7,16 +7,17 @@ import { useI18n } from "@/lib/i18n";
 import { fmtHours, lastNDays, streakLength, totalSeconds, useStore, weekSeconds } from "@/lib/store";
 import { subjectById, topicById, topicsOf } from "@/lib/content";
 import { checkpointDue, daysUntilCheckpoint, formatForecast, masteryBand, readiness, recommend } from "@/lib/engine";
-import type { SubjectId } from "@/lib/types";
+import { advise, buildMessages } from "@/lib/advisor";
+import type { JoinResult } from "@/lib/store";
 import { Bar, Btn, Card, MiniBars, Modal, Reveal, Ring, Sparkline } from "@/components/ui";
 import {
-  IconArrow, IconBolt, IconCheck, IconClock, IconFlame, IconMap,
-  IconRefresh, IconTarget, IconTeacher, IconTrend, IconTrophy,
+  IconArrow, IconBolt, IconBook, IconCheck, IconClock, IconFlame, IconMap,
+  IconRefresh, IconSpark, IconTarget, IconTeacher, IconTrend, IconTrophy,
 } from "@/components/Icons";
 
 export default function Dashboard() {
-  const { d, pick } = useI18n();
-  const { user, ready, role, toggleTask, setActiveSubject, joinClass, space } = useStore();
+  const { d, pick, lang } = useI18n();
+  const { user, ready, role, toggleTask, setActiveSubject, joinClass, space, syncInbox } = useStore();
   const router = useRouter();
   const [joinOpen, setJoinOpen] = useState(false);
 
@@ -26,6 +27,14 @@ export default function Dashboard() {
     else if (role === "teacher") router.replace("/teacher");
     else if (role === "parent") router.replace("/parent");
   }, [ready, user, role, router]);
+
+  // Opening the dashboard is when reminders get generated.
+  useEffect(() => {
+    if (!user || role !== "student") return;
+    syncInbox(buildMessages(user, lang));
+    // Runs on entry only: syncInbox writes to `user`, so watching it would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, lang]);
 
   const derived = useMemo(() => {
     if (!user) return null;
@@ -46,10 +55,19 @@ export default function Dashboard() {
     const rivals = Object.values(space.students).filter((s) => s.code !== user.code);
     const rival = [...rivals].sort((a, b) => a.elo - b.elo).find((c) => c.elo > user.elo) ?? null;
     const dueCheckpoint = checkpointDue(user.lastCheckpoint, user.createdAt);
+    const mock = user.mocks.find((mk) => mk.status === "scheduled") ?? null;
+    const mockDays = mock ? Math.ceil((mock.dueAt - Date.now()) / 864e5) : null;
+    const lastMock = [...user.mocks].filter((mk) => mk.status === "done").sort((a, b) => (b.takenAt ?? 0) - (a.takenAt ?? 0))[0] ?? null;
+    const unread = user.inbox.filter((mm) => !mm.read).length;
+    const tip = advise(user)[0] ?? null;
+    const resume = user.lastLesson ? topicById(user.lastLesson) : null;
     const daysLeft = user.examDate
       ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 864e5))
       : null;
-    return { subject, streak, total, week, days, view, delta, recs, weak, rival, dueCheckpoint, daysLeft };
+    return {
+      subject, streak, total, week, days, view, delta, recs, weak, rival,
+      dueCheckpoint, daysLeft, mock, mockDays, lastMock, unread, tip, resume,
+    };
   }, [user, space]);
 
   if (!ready || !user || !derived) return null;
@@ -224,6 +242,75 @@ export default function Dashboard() {
           </Card>
         </Reveal>
       </div>
+
+      {/* what the mentor says today */}
+      {derived.tip && (
+        <Reveal delay={60}>
+          <Card className="mt-3 border-brand/30 bg-brand/5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand">
+                  <IconSpark size={19} />
+                </span>
+                <p className="pt-0.5 text-[14px] leading-relaxed text-mute">{pick(derived.tip.text)}</p>
+              </div>
+              <Btn href="/assistant" size="sm" variant="outline" className="w-full shrink-0 sm:w-auto">
+                {d.assistant.open}
+              </Btn>
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
+      {/* scheduled mock test with its deadline */}
+      {derived.mock && (
+        <Reveal delay={70}>
+          <Card className={`mt-3 ${derived.mockDays !== null && derived.mockDays <= 1 ? "border-amber/45 bg-amber/6" : ""}`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber/40 bg-amber/12 text-amber">
+                  <IconClock size={20} />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-display text-[15px] font-bold">{d.mock.scheduled}</h3>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
+                    {derived.mock.size} {d.mock.questions} ·{" "}
+                    {derived.mockDays !== null && derived.mockDays > 0
+                      ? `${d.mock.dueIn} ${derived.mockDays} ${d.common.day}`
+                      : derived.mockDays === 0
+                        ? d.mock.dueToday
+                        : d.mock.overdue}
+                  </p>
+                </div>
+              </div>
+              <Btn href={`/practice?mock=${derived.mock.id}`} size="sm" className="w-full shrink-0 sm:w-auto">
+                {d.mock.start}
+              </Btn>
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
+      {/* resume the lesson the student left */}
+      {derived.resume && (
+        <Reveal delay={75}>
+          <Link href={`/learn?t=${derived.resume.id}`} className="group mt-3 block">
+            <Card hover className="flex items-center gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot text-mute">
+                <IconBook size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-dim">{d.lesson.resumeSub}</span>
+                <span className="mt-0.5 block truncate text-[15px] font-bold">{pick(derived.resume.title)}</span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-brand">
+                <span className="hidden sm:inline">{d.lesson.resume}</span>
+                <IconArrow size={14} />
+              </span>
+            </Card>
+          </Link>
+        </Reveal>
+      )}
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[1.35fr_1fr]">
         <div className="flex flex-col gap-3">
@@ -440,6 +527,27 @@ export default function Dashboard() {
             </Reveal>
           )}
 
+          <Reveal delay={200}>
+            <Link href="/inbox" className="group block">
+              <Card hover className="flex items-center gap-3.5">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot text-mute">
+                  <IconSpark size={20} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-bold">{d.inbox.title}</span>
+                  <span className="block text-[12px] text-dim">
+                    {derived.unread > 0 ? `${derived.unread} ${d.inbox.unread}` : d.inbox.sub}
+                  </span>
+                </span>
+                {derived.unread > 0 && (
+                  <span className="grid h-6 min-w-6 shrink-0 place-items-center rounded-full bg-brand px-1.5 text-[11px] font-extrabold text-ink tabular-nums">
+                    {derived.unread}
+                  </span>
+                )}
+              </Card>
+            </Link>
+          </Reveal>
+
           <Reveal delay={220}>
             <Card>
               <div className="mb-3 flex items-center justify-between">
@@ -465,22 +573,23 @@ export function JoinClassModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onJoin: (code: string) => boolean;
+  onJoin: (code: string) => JoinResult;
 }) {
   const { d } = useI18n();
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
-  const [ok, setOk] = useState(false);
+  const [joined, setJoined] = useState<JoinResult | null>(null);
 
   const submit = () => {
-    if (onJoin(code)) {
-      setOk(true);
+    const res = onJoin(code);
+    if (res.ok) {
+      setJoined(res);
       setError(false);
       window.setTimeout(() => {
         onClose();
-        setOk(false);
+        setJoined(null);
         setCode("");
-      }, 1100);
+      }, 1400);
     } else {
       setError(true);
     }
@@ -488,23 +597,33 @@ export function JoinClassModal({
 
   return (
     <Modal open={open} onClose={onClose} title={d.codes.joinTitle}>
-      {ok ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-brand/40 bg-brand/8 p-4 slide-up">
+      {joined ? (
+        <div className="slide-up flex items-start gap-3 rounded-2xl border border-brand/40 bg-brand/8 p-4">
           <IconCheck size={22} />
-          <span className="text-[14.5px] font-bold text-brand">{d.codes.joinOk}</span>
+          <div className="min-w-0">
+            <div className="text-[14.5px] font-bold text-brand">{d.codes.joinOk}</div>
+            <div className="mt-0.5 text-[13px] text-mute">
+              {joined.className}
+              {joined.teacherName ? ` · ${joined.teacherName}` : ""}
+            </div>
+          </div>
         </div>
       ) : (
         <>
           <p className="mb-4 text-[13.5px] leading-relaxed text-mute">{d.codes.joinHint}</p>
           <input
-            className="field text-center font-display text-lg font-bold tracking-[0.18em] uppercase"
+            className="field text-center font-display text-lg font-bold uppercase tracking-[0.18em]"
             value={code}
             onChange={(e) => {
               setCode(e.target.value.toUpperCase());
               setError(false);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && code.trim().length >= 4) submit();
+            }}
             placeholder={d.codes.joinPh}
-            maxLength={8}
+            maxLength={10}
+            autoFocus
           />
           {error && <p className="mt-2 text-[12.5px] font-semibold text-red-400">{d.codes.joinFail}</p>}
           <p className="mt-3 text-[12px] leading-relaxed text-dim">{d.codes.demoHint}</p>

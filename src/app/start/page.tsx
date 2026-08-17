@@ -49,6 +49,20 @@ export default function StartPage() {
 
 function RolePicker({ onPick }: { onPick: (r: Role) => void }) {
   const { d } = useI18n();
+  const { signInByEmail } = useStore();
+  const router = useRouter();
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [failed, setFailed] = useState(false);
+
+  const trySignIn = () => {
+    const r = signInByEmail(email);
+    if (!r) {
+      setFailed(true);
+      return;
+    }
+    router.push(r === "teacher" ? "/teacher" : r === "parent" ? "/parent" : "/dashboard");
+  };
   const cards: { role: Role; Icon: typeof IconUser; t: string; sub: string }[] = [
     { role: "student", Icon: IconUser, t: d.roles.student.t, sub: d.roles.student.d },
     { role: "teacher", Icon: IconTeacher, t: d.roles.teacher.t, sub: d.roles.teacher.d },
@@ -88,8 +102,66 @@ function RolePicker({ onPick }: { onPick: (r: Role) => void }) {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={260}>
+          <div className="mt-8 rounded-3xl border border-line bg-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="font-display text-[15px] font-bold">{d.auth.haveAccount}</h2>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-dim">{d.auth.localNote}</p>
+              </div>
+              <Btn size="sm" variant="outline" onClick={() => setSignInOpen(true)} className="shrink-0">
+                {d.auth.signIn}
+              </Btn>
+            </div>
+          </div>
+        </Reveal>
       </div>
+
+      <Modal open={signInOpen} onClose={() => setSignInOpen(false)} title={d.auth.signInTitle}>
+        <p className="mb-4 text-[13.5px] leading-relaxed text-mute">{d.auth.signInHint}</p>
+        <input
+          className="field"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setFailed(false);
+          }}
+          placeholder={d.auth.emailPh}
+        />
+        {failed && <p className="mt-2 text-[12.5px] font-semibold text-red-400">{d.auth.signInFail}</p>}
+        <Btn full size="lg" className="mt-4" disabled={!email.includes("@")} onClick={trySignIn}>
+          {d.auth.signIn}
+        </Btn>
+      </Modal>
     </div>
+  );
+}
+
+/* ---------------- email field ---------------- */
+
+function EmailField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { d } = useI18n();
+  return (
+    <label className="block">
+      <span className="mb-2 flex items-baseline gap-2 text-[13px] font-semibold text-mute">
+        {d.auth.emailLabel}
+        <span className="text-[11px] font-normal text-dim">({d.auth.emailOptional})</span>
+      </span>
+      <input
+        className="field"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={d.auth.emailPh}
+      />
+      <span className="mt-1.5 block text-[11.5px] leading-snug text-dim">{d.auth.emailHint}</span>
+    </label>
   );
 }
 
@@ -101,6 +173,7 @@ function StudentSetup() {
   const router = useRouter();
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [grade, setGrade] = useState(9);
   const [goal, setGoal] = useState<Goal>("ent");
   const [subjects, setSubjects] = useState<SubjectId[]>(defaultSubjects("ent"));
@@ -121,6 +194,7 @@ function StudentSetup() {
   const submit = () => {
     createStudent({
       name: name.trim() || "—",
+      email: email.trim() || null,
       grade,
       goal,
       subjects: subjects.length > 0 ? subjects : defaultSubjects(goal),
@@ -150,6 +224,10 @@ function StudentSetup() {
               <span className="mb-2 block text-[13px] font-semibold text-mute">{d.start.nameLabel}</span>
               <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={d.start.namePh} maxLength={24} />
             </label>
+
+            <div className="mt-5">
+              <EmailField value={email} onChange={setEmail} />
+            </div>
 
             <div className="mt-5">
               <span className="mb-2 block text-[13px] font-semibold text-mute">{d.start.gradeLabel}</span>
@@ -258,12 +336,19 @@ function TeacherSetup() {
   const router = useRouter();
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [school, setSchool] = useState("");
   const [className, setClassName] = useState("");
   const [subject, setSubject] = useState<SubjectId>("math");
 
   const submit = () => {
-    createTeacher({ name: name.trim() || "—", school: school.trim(), className: className.trim() || "—", subject });
+    createTeacher({
+      name: name.trim() || "—",
+      email: email.trim() || null,
+      school: school.trim(),
+      className: className.trim() || "—",
+      subject,
+    });
     router.push("/teacher");
   };
 
@@ -290,6 +375,7 @@ function TeacherSetup() {
                 <span className="mb-2 block text-[13px] font-semibold text-mute">{d.teacherSetup.name}</span>
                 <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={d.teacherSetup.namePh} />
               </label>
+              <EmailField value={email} onChange={setEmail} />
               <label className="block">
                 <span className="mb-2 block text-[13px] font-semibold text-mute">{d.teacherSetup.school}</span>
                 <input className="field" value={school} onChange={(e) => setSchool(e.target.value)} placeholder={d.teacherSetup.schoolPh} />
@@ -329,6 +415,7 @@ function ParentSetup() {
   const { createParent, switchRole } = useStore();
   const router = useRouter();
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
 
   return (
     <div className="relative overflow-hidden">
@@ -351,13 +438,16 @@ function ParentSetup() {
               <span className="mb-2 block text-[13px] font-semibold text-mute">{d.parentSetup.name}</span>
               <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={d.parentSetup.namePh} />
             </label>
+            <div className="mt-5">
+              <EmailField value={email} onChange={setEmail} />
+            </div>
             <Btn
               size="lg"
               full
               className="arrow-slide mt-5"
               disabled={!name.trim()}
               onClick={() => {
-                createParent(name.trim());
+                createParent({ name: name.trim(), email: email.trim() || null });
                 router.push("/parent");
               }}
             >
