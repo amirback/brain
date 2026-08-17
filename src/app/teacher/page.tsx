@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { streakLength, totalSeconds, useStore } from "@/lib/store";
-import { TOPICS, topicById } from "@/lib/content";
-import { CLASSMATES } from "@/lib/mock";
-import { Btn, Card, Modal, Reveal, Bar } from "@/components/ui";
+import { subjectById, topicById, topicsOf } from "@/lib/content";
+import type { StudentState, SubjectId } from "@/lib/types";
+import { Bar, Btn, Card, Modal, Reveal } from "@/components/ui";
 import {
   IconBolt, IconCheck, IconClock, IconFlame, IconGrid, IconHelp,
   IconLink, IconPlus, IconTeacher, IconUser,
@@ -13,63 +14,69 @@ import {
 
 export default function TeacherPage() {
   const { d, pick } = useI18n();
-  const { user, addTask, addMaterial, addCustomTopic, helpRequests } = useStore();
+  const { space, ready, role, addTask, addMaterial, addCustomTopic, classRoster } = useStore();
+  const router = useRouter();
 
   const [taskOpen, setTaskOpen] = useState(false);
   const [topicOpen, setTopicOpen] = useState(false);
   const [matOpen, setMatOpen] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (role !== "teacher" || !space.teacher) router.replace("/start");
+  }, [ready, role, space.teacher, router]);
+
+  const teacher = space.teacher;
+  const roster = useMemo(() => classRoster(), [classRoster]);
+  const subject: SubjectId = teacher?.subject ?? "math";
+  const topics = topicsOf(subject);
 
   const allTopics = useMemo(
     () => [
-      ...TOPICS.map((t) => ({ id: t.id, name: pick(t.title) })),
-      ...(user?.customTopics ?? []).map((c) => ({ id: c.id, name: c.name })),
+      ...topics.map((t) => ({ id: t.id, name: pick(t.title) })),
+      ...(roster[0]?.customTopics ?? []).map((c) => ({ id: c.id, name: c.name })),
     ],
-    [user, pick]
+    [topics, roster, pick]
   );
 
-  // the signed-in student joins the class list, so the panel shows live data
-  const roster = useMemo(() => {
-    const list = CLASSMATES.map((c) => ({
-      id: c.id,
-      name: c.name,
-      elo: c.elo,
-      hours: c.hours,
-      streak: c.streak,
-      lastActiveDays: c.lastActiveDays,
-      mastery: c.mastery,
-      stuck: c.stuck,
-      me: false,
-    }));
-    if (user?.diagnosticDone) {
-      list.push({
-        id: "me",
-        name: user.name,
-        elo: user.elo,
-        hours: totalSeconds(user.secondsByDay) / 3600,
-        streak: streakLength(user.streakDates),
-        lastActiveDays: 0,
-        mastery: user.mastery,
-        stuck: undefined,
-        me: true,
-      });
-    }
-    return list.sort((a, b) => b.elo - a.elo);
-  }, [user]);
-
   const stats = useMemo(() => {
+    if (roster.length === 0) return { avg: 0, activeToday: 0, weakest: [] as { t: (typeof topics)[number]; avg: number }[] };
     const avg = Math.round(roster.reduce((s, r) => s + r.elo, 0) / roster.length);
-    const activeToday = roster.filter((r) => r.lastActiveDays === 0).length;
-    const weakest = TOPICS.map((t) => ({
-      t,
-      avg: roster.reduce((s, r) => s + (r.mastery[t.id] ?? 0), 0) / roster.length,
-    })).sort((a, b) => a.avg - b.avg);
+    const today = new Date().toISOString().slice(0, 10);
+    const activeToday = roster.filter((r) => r.streakDates.includes(today)).length;
+    const weakest = topics
+      .map((t) => ({ t, avg: roster.reduce((s, r) => s + (r.mastery[t.id] ?? 0), 0) / roster.length }))
+      .sort((a, b) => a.avg - b.avg);
     return { avg, activeToday, weakest };
-  }, [roster]);
+  }, [roster, topics]);
+
+  const requests = space.helpRequests.filter((r) => r.classCode === teacher?.code);
+
+  if (!ready || !teacher) return null;
 
   const notify = (msg: string) => {
     setFlash(msg);
     window.setTimeout(() => setFlash(null), 3400);
+  };
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(teacher.code);
+      setCodeCopied(true);
+      window.setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // clipboard blocked — the code stays visible and selectable
+    }
+  };
+
+  // Last seen: the most recent day with either a streak mark or tracked time.
+  const daysAgo = (st: StudentState): number | null => {
+    const days = [...st.streakDates, ...Object.keys(st.secondsByDay)].sort();
+    const last = days.pop();
+    if (!last) return null;
+    return Math.round((Date.now() - new Date(last).getTime()) / 864e5);
   };
 
   return (
@@ -81,18 +88,21 @@ export default function TeacherPage() {
               <IconTeacher size={30} />
               {d.teacher.title}
             </h1>
-            <p className="mt-2 text-[14px] text-mute">{d.teacher.sub}</p>
+            <p className="mt-2 text-[14px] text-mute">
+              {teacher.name} · {teacher.className}
+              {teacher.school ? ` · ${teacher.school}` : ""} · {pick(subjectById(subject)?.title ?? { ru: "", kk: "", en: "" })}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Btn size="sm" onClick={() => setTaskOpen(true)}>
+            <Btn size="sm" onClick={() => setTaskOpen(true)} disabled={roster.length === 0}>
               <IconPlus size={15} />
               {d.teacher.give}
             </Btn>
-            <Btn size="sm" variant="outline" onClick={() => setTopicOpen(true)}>
+            <Btn size="sm" variant="outline" onClick={() => setTopicOpen(true)} disabled={roster.length === 0}>
               <IconGrid size={15} />
               {d.teacher.addTopicTitle}
             </Btn>
-            <Btn size="sm" variant="outline" onClick={() => setMatOpen(true)}>
+            <Btn size="sm" variant="outline" onClick={() => setMatOpen(true)} disabled={roster.length === 0}>
               <IconLink size={15} />
               {d.teacher.addMatTitle}
             </Btn>
@@ -100,20 +110,42 @@ export default function TeacherPage() {
         </div>
       </Reveal>
 
+      {/* class code — the mechanism that links students to this teacher */}
+      <Reveal delay={40}>
+        <Card className="mt-6 border-brand/35 bg-brand/6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-brand">{d.codes.classCode}</div>
+              <div className="font-display mt-1 text-3xl font-extrabold tracking-[0.12em]">{teacher.code}</div>
+              <p className="mt-2 text-[13px] leading-relaxed text-mute">{d.codes.classCodeHint}</p>
+            </div>
+            <Btn size="sm" variant={codeCopied ? "outline" : "primary"} onClick={copyCode} className="shrink-0">
+              {codeCopied ? (
+                <>
+                  <IconCheck size={15} />
+                  {d.codes.copied}
+                </>
+              ) : (
+                d.codes.copy
+              )}
+            </Btn>
+          </div>
+        </Card>
+      </Reveal>
+
       {flash && (
-        <div className="slide-up mt-5 flex items-center gap-3 rounded-2xl border border-brand/40 bg-brand/8 p-4">
+        <div className="slide-up mt-4 flex items-center gap-3 rounded-2xl border border-brand/40 bg-brand/8 p-4">
           <IconCheck size={20} />
           <span className="text-[14px] font-semibold text-brand">{flash}</span>
         </div>
       )}
 
-      {/* stats */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { l: d.teacher.students, v: roster.length, Icon: IconUser },
-          { l: d.teacher.avgElo, v: stats.avg, Icon: IconBolt },
+          { l: d.teacher.avgElo, v: stats.avg || "—", Icon: IconBolt },
           { l: d.teacher.activeToday, v: stats.activeToday, Icon: IconFlame },
-          { l: d.teacher.requests, v: helpRequests.length, Icon: IconHelp },
+          { l: d.teacher.requests, v: requests.length, Icon: IconHelp },
         ].map((s, i) => (
           <Reveal key={s.l} delay={i * 50}>
             <Card>
@@ -127,188 +159,189 @@ export default function TeacherPage() {
         ))}
       </div>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-[1.5fr_1fr]">
-        {/* roster */}
+      {roster.length === 0 ? (
         <Reveal delay={80}>
-          <Card pad="p-0" className="overflow-hidden">
-            <div className="border-b border-line px-5 py-4">
-              <h2 className="font-display text-lg font-bold">{d.teacher.students}</h2>
+          <Card className="mt-3 py-12 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-soot">
+              <IconUser size={26} />
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-left">
-                <thead>
-                  <tr className="border-b border-line text-[11px] uppercase tracking-wider text-dim">
-                    <th className="px-5 py-3 font-bold">{d.teacher.colName}</th>
-                    <th className="px-3 py-3 font-bold">{d.teacher.colElo}</th>
-                    <th className="px-3 py-3 font-bold">{d.teacher.colProgress}</th>
-                    <th className="px-3 py-3 font-bold">{d.teacher.colHours}</th>
-                    <th className="px-5 py-3 font-bold">{d.teacher.colStatus}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roster.map((r) => {
-                    const avgM =
-                      TOPICS.reduce((s, t) => s + (r.mastery[t.id] ?? 0), 0) / TOPICS.length;
-                    const stuckTopic = r.stuck ? topicById(r.stuck) : null;
-                    return (
-                      <tr key={r.id} className={`border-b border-line last:border-0 ${r.me ? "bg-brand/6" : ""}`}>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <span
-                              className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl text-[12px] font-extrabold ${
-                                r.me ? "bg-brand text-ink" : "bg-soot text-mute"
-                              }`}
-                            >
-                              {r.name.slice(0, 1)}
-                            </span>
-                            <div className="min-w-0">
-                              <div className="truncate text-[14px] font-bold">{r.name}</div>
-                              <div className="text-[11px] text-dim tabular-nums">
-                                {r.lastActiveDays === 0
-                                  ? d.common.today
-                                  : `${r.lastActiveDays} ${d.teacher.daysAgo}`}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3.5 text-[14px] font-bold tabular-nums">{r.elo}</td>
-                        <td className="px-3 py-3.5">
-                          <div className="w-24">
-                            <Bar value={avgM} h={6} tone={avgM < 0.4 ? "dim" : avgM < 0.7 ? "amber" : "brand"} />
-                            <div className="mt-1 text-[11px] text-dim tabular-nums">{Math.round(avgM * 100)}%</div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3.5 text-[13px] tabular-nums text-mute">{r.hours.toFixed(1)}</td>
-                        <td className="px-5 py-3.5">
-                          {stuckTopic ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber/40 bg-amber/10 px-2.5 py-1 text-[11px] font-bold text-amber">
-                              {d.teacher.stuckOn} {pick(stuckTopic.title).split(" ")[0]}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-line2 px-2.5 py-1 text-[11px] font-semibold text-dim">
-                              {d.teacher.ok}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <p className="mx-auto max-w-sm text-[14.5px] leading-relaxed text-mute">{d.teacherSetup.rosterEmpty}</p>
           </Card>
         </Reveal>
-
-        <div className="flex flex-col gap-3">
-          {/* weak topics */}
-          <Reveal delay={120}>
-            <Card>
-              <h2 className="font-display mb-4 text-lg font-bold">{d.teacher.weakTopics}</h2>
-              <div className="flex flex-col gap-3.5">
-                {stats.weakest.map((w) => (
-                  <div key={w.t.id}>
-                    <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                      <span className="truncate text-[13.5px] font-semibold">{pick(w.t.title)}</span>
-                      <span className="text-[12px] font-bold tabular-nums text-mute">{Math.round(w.avg * 100)}%</span>
-                    </div>
-                    <Bar value={w.avg} tone={w.avg < 0.4 ? "dim" : w.avg < 0.7 ? "amber" : "brand"} h={7} />
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </Reveal>
-
-          {/* help requests */}
-          <Reveal delay={160}>
-            <Card>
-              <h2 className="font-display mb-3.5 flex items-center gap-2 text-lg font-bold">
-                <IconHelp size={18} />
-                {d.teacher.requests}
-              </h2>
-              {helpRequests.length === 0 ? (
-                <p className="text-[13.5px] leading-relaxed text-dim">{d.teacher.requestsEmpty}</p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {helpRequests.map((r) => {
-                    const t = topicById(r.topic);
-                    return (
-                      <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-amber/30 bg-amber/6 p-3">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber/15 text-[12px] font-extrabold text-amber">
-                          {r.student.slice(0, 1)}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[13.5px] font-bold">{r.student}</div>
-                          <div className="text-[11.5px] text-dim">{t ? pick(t.title) : r.topic}</div>
-                        </div>
-                        <IconClock size={15} />
-                      </div>
-                    );
-                  })}
+      ) : (
+        <>
+          <div className="mt-3 grid gap-3 lg:grid-cols-[1.5fr_1fr]">
+            <Reveal delay={80}>
+              <Card pad="p-0" className="overflow-hidden">
+                <div className="border-b border-line px-5 py-4">
+                  <h2 className="font-display text-lg font-bold">{d.teacher.students}</h2>
                 </div>
-              )}
-            </Card>
-          </Reveal>
-        </div>
-      </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-left">
+                    <thead>
+                      <tr className="border-b border-line text-[11px] uppercase tracking-wider text-dim">
+                        <th className="px-5 py-3 font-bold">{d.teacher.colName}</th>
+                        <th className="px-3 py-3 font-bold">{d.teacher.colElo}</th>
+                        <th className="px-3 py-3 font-bold">{d.teacher.colProgress}</th>
+                        <th className="px-3 py-3 font-bold">{d.teacher.colHours}</th>
+                        <th className="px-5 py-3 font-bold">{d.teacher.colStatus}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...roster].sort((a, b) => b.elo - a.elo).map((r) => {
+                        const avgM = topics.reduce((s, t) => s + (r.mastery[t.id] ?? 0), 0) / Math.max(1, topics.length);
+                        const stuck = topics.find((t) => (r.attempts[t.id] ?? 0) > 3 && (r.mastery[t.id] ?? 0) < 0.35);
+                        const ago = daysAgo(r);
+                        return (
+                          <tr key={r.code} className="border-b border-line last:border-0">
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-2.5">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-soot text-[12px] font-extrabold text-mute">
+                                  {r.name.slice(0, 1)}
+                                </span>
+                                <div className="min-w-0">
+                                  <div className="truncate text-[14px] font-bold">{r.name}</div>
+                                  <div className="text-[11px] text-dim tabular-nums">
+                                    {ago === null ? "—" : ago === 0 ? d.common.today : `${ago} ${d.teacher.daysAgo}`}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5 text-[14px] font-bold tabular-nums">{r.elo}</td>
+                            <td className="px-3 py-3.5">
+                              <div className="w-24">
+                                <Bar value={avgM} h={6} tone={avgM < 0.4 ? "dim" : avgM < 0.7 ? "amber" : "brand"} />
+                                <div className="mt-1 text-[11px] text-dim tabular-nums">{Math.round(avgM * 100)}%</div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5 text-[13px] tabular-nums text-mute">
+                              {(totalSeconds(r.secondsByDay) / 3600).toFixed(1)}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              {stuck ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber/40 bg-amber/10 px-2.5 py-1 text-[11px] font-bold text-amber">
+                                  {d.teacher.stuckOn} {pick(stuck.title).split(" ")[0]}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-line2 px-2.5 py-1 text-[11px] font-semibold text-dim">
+                                  {d.teacher.ok}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </Reveal>
 
-      {/* class heatmap */}
-      <Reveal delay={200}>
-        <Card className="mt-3">
-          <div className="mb-1 flex items-center justify-between gap-4">
-            <h2 className="font-display text-lg font-bold">{d.teacher.heat}</h2>
-          </div>
-          <p className="mb-4 text-[12.5px] text-dim">{d.teacher.heatHint}</p>
-          <div className="overflow-x-auto">
-            <div className="min-w-[420px]">
-              <div className="mb-2 grid grid-cols-[110px_repeat(3,1fr)] gap-1.5">
-                <span />
-                {TOPICS.map((t) => (
-                  <span key={t.id} className="truncate text-center text-[11px] font-semibold text-dim">
-                    {pick(t.title).split(" ")[0]}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {roster.map((r) => (
-                  <div key={r.id} className="grid grid-cols-[110px_repeat(3,1fr)] items-center gap-1.5">
-                    <span className={`truncate text-[12.5px] font-semibold ${r.me ? "text-brand" : "text-mute"}`}>
-                      {r.name}
-                    </span>
-                    {TOPICS.map((t) => {
-                      const m = r.mastery[t.id] ?? 0;
-                      return (
-                        <span
-                          key={t.id}
-                          className="h-8 rounded-lg transition-transform hover:scale-[1.04]"
-                          style={{
-                            background:
-                              m >= 0.7
-                                ? "#ff5c00"
-                                : m >= 0.45
-                                  ? "rgba(255,92,0,.55)"
-                                  : m >= 0.25
-                                    ? "rgba(255,92,0,.28)"
-                                    : "#242424",
-                          }}
-                          title={`${r.name} · ${pick(t.title)} · ${Math.round(m * 100)}%`}
-                        />
-                      );
-                    })}
+            <div className="flex flex-col gap-3">
+              <Reveal delay={120}>
+                <Card>
+                  <h2 className="font-display mb-4 text-lg font-bold">{d.teacher.weakTopics}</h2>
+                  <div className="flex flex-col gap-3.5">
+                    {stats.weakest.map((w) => (
+                      <div key={w.t.id}>
+                        <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                          <span className="truncate text-[13.5px] font-semibold">{pick(w.t.title)}</span>
+                          <span className="text-[12px] font-bold tabular-nums text-mute">{Math.round(w.avg * 100)}%</span>
+                        </div>
+                        <Bar value={w.avg} tone={w.avg < 0.4 ? "dim" : w.avg < 0.7 ? "amber" : "brand"} h={7} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </Card>
+              </Reveal>
+
+              <Reveal delay={160}>
+                <Card>
+                  <h2 className="font-display mb-3.5 flex items-center gap-2 text-lg font-bold">
+                    <IconHelp size={18} />
+                    {d.teacher.requests}
+                  </h2>
+                  {requests.length === 0 ? (
+                    <p className="text-[13.5px] leading-relaxed text-dim">{d.teacher.requestsEmpty}</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {requests.map((r) => {
+                        const t = topicById(r.topic);
+                        return (
+                          <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-amber/30 bg-amber/6 p-3">
+                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber/15 text-[12px] font-extrabold text-amber">
+                              {r.student.slice(0, 1)}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[13.5px] font-bold">{r.student}</div>
+                              <div className="text-[11.5px] text-dim">{t ? pick(t.title) : r.topic}</div>
+                            </div>
+                            <IconClock size={15} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
+              </Reveal>
             </div>
           </div>
-        </Card>
-      </Reveal>
 
-      {/* ---------- modals ---------- */}
+          <Reveal delay={200}>
+            <Card className="mt-3">
+              <h2 className="font-display text-lg font-bold">{d.teacher.heat}</h2>
+              <p className="mb-4 mt-1 text-[12.5px] text-dim">{d.teacher.heatHint}</p>
+              <div className="overflow-x-auto">
+                <div className="min-w-[420px]">
+                  <div
+                    className="mb-2 grid gap-1.5"
+                    style={{ gridTemplateColumns: `110px repeat(${topics.length}, 1fr)` }}
+                  >
+                    <span />
+                    {topics.map((t) => (
+                      <span key={t.id} className="truncate text-center text-[11px] font-semibold text-dim">
+                        {pick(t.title).split(" ")[0]}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {[...roster].sort((a, b) => b.elo - a.elo).map((r) => (
+                      <div
+                        key={r.code}
+                        className="grid items-center gap-1.5"
+                        style={{ gridTemplateColumns: `110px repeat(${topics.length}, 1fr)` }}
+                      >
+                        <span className="truncate text-[12.5px] font-semibold text-mute">{r.name}</span>
+                        {topics.map((t) => {
+                          const m = r.mastery[t.id] ?? 0;
+                          return (
+                            <span
+                              key={t.id}
+                              className="h-8 rounded-lg transition-transform hover:scale-[1.04]"
+                              style={{
+                                background:
+                                  m >= 0.7 ? "#ff5c00" : m >= 0.45 ? "rgba(255,92,0,.55)" : m >= 0.25 ? "rgba(255,92,0,.28)" : "#2a2c33",
+                              }}
+                              title={`${r.name} · ${pick(t.title)} · ${Math.round(m * 100)}%`}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Reveal>
+        </>
+      )}
+
       <TaskModal
         open={taskOpen}
         onClose={() => setTaskOpen(false)}
         topics={allTopics}
         onSave={(t) => {
-          addTask(t);
+          addTask({ ...t, subject, from: teacher.name });
           setTaskOpen(false);
           notify(d.teacher.giveDone);
         }}
@@ -317,7 +350,7 @@ export default function TeacherPage() {
         open={topicOpen}
         onClose={() => setTopicOpen(false)}
         onSave={(c) => {
-          addCustomTopic(c);
+          addCustomTopic({ ...c, subject });
           setTopicOpen(false);
           notify(d.teacher.addTopicDone);
         }}

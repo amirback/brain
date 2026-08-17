@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
@@ -37,8 +37,9 @@ export function LangSwitch({ compact = false }: { compact?: boolean }) {
 
 export function Header() {
   const { d } = useI18n();
-  const { user } = useStore();
+  const { user, role, switchRole } = useStore();
   const path = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [solid, setSolid] = useState(false);
 
@@ -60,14 +61,27 @@ export function Header() {
     };
   }, [open]);
 
-  const links = [
-    { href: "/dashboard", label: d.nav.dashboard },
-    { href: "/league", label: d.nav.leaderboard },
-    { href: "/teacher", label: d.nav.teacher },
-    { href: "/parent", label: d.nav.parent },
-  ];
+  // Navigation follows the role: a parent has no reason to see the league,
+  // and a teacher has no student dashboard.
+  const links =
+    role === "teacher"
+      ? [{ href: "/teacher", label: d.teacher.title }]
+      : role === "parent"
+        ? [{ href: "/parent", label: d.parent.title }]
+        : role === "student"
+          ? [
+              { href: "/dashboard", label: d.nav.dashboard },
+              { href: "/league", label: d.nav.leaderboard },
+              { href: "/profile", label: d.nav.profile },
+            ]
+          : [];
 
   const isActive = (href: string) => path === href || path.startsWith(href + "/");
+
+  const onSwitchRole = () => {
+    switchRole();
+    router.push("/start");
+  };
 
   return (
     <>
@@ -100,7 +114,7 @@ export function Header() {
             <div className="hidden sm:block">
               <LangSwitch />
             </div>
-            {user ? (
+            {role === "student" && user ? (
               <Link
                 href="/profile"
                 className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-coal pl-1 pr-3 py-1 press hover:border-line2"
@@ -110,6 +124,13 @@ export function Header() {
                 </span>
                 <span className="text-xs font-semibold tabular-nums">{user.elo}</span>
               </Link>
+            ) : role ? (
+              <button
+                onClick={onSwitchRole}
+                className="hidden sm:inline-flex press items-center h-9 px-3.5 rounded-xl border border-line2 text-[12.5px] font-semibold text-mute hover:border-brand hover:text-brand"
+              >
+                {d.roles.switch}
+              </button>
             ) : (
               <Link
                 href="/start"
@@ -133,7 +154,7 @@ export function Header() {
       {open && (
         <div className="fixed inset-0 z-40 md:hidden bg-ink pt-16">
           <div className="px-4 py-6 flex flex-col gap-1">
-            {[{ href: "/", label: d.nav.home }, ...links, { href: "/profile", label: d.nav.profile }].map((l, i) => (
+            {[{ href: "/", label: d.nav.home }, ...links].map((l, i) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -148,7 +169,11 @@ export function Header() {
             ))}
             <div className="mt-4 flex items-center justify-between px-1">
               <LangSwitch />
-              {!user && (
+              {role ? (
+                <button onClick={onSwitchRole} className="press inline-flex h-11 items-center rounded-2xl border border-line2 px-4 font-bold text-mute">
+                  {d.roles.switch}
+                </button>
+              ) : (
                 <Link href="/start" className="press inline-flex items-center h-11 px-5 rounded-2xl bg-brand text-ink font-bold">
                   {d.nav.start}
                 </Link>

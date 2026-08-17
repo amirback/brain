@@ -4,44 +4,143 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
-import type { Goal } from "@/lib/types";
+import { SUBJECTS, defaultSubjects, subjectsForGoal } from "@/lib/content";
+import type { Goal, Role, SubjectId } from "@/lib/types";
 import { Btn, Card, Modal, Reveal } from "@/components/ui";
-import { IconArrow, IconBolt, IconBook, IconCheck, IconHelp, IconSpark, IconTarget, IconTrophy } from "@/components/Icons";
+import {
+  IconArrow, IconBolt, IconBook, IconCheck, IconGlobe, IconHelp, IconParent,
+  IconSpark, IconTarget, IconTeacher, IconTrophy, IconUser,
+} from "@/components/Icons";
 import { LangSwitch } from "@/components/Header";
 
 const GOAL_ICON: Record<Goal, typeof IconTarget> = {
   ent: IconTarget,
   olymp: IconTrophy,
   school: IconBook,
+  sat: IconBolt,
+  ielts: IconGlobe,
 };
 
 export default function StartPage() {
+  const { role, user, space, ready, setRole } = useStore();
+  const router = useRouter();
+
+  // Picking a role goes straight to that role's home when its profile
+  // already exists, so switching back and forth is one click.
+  const pickRole = (r: Role) => {
+    setRole(r);
+    if (r === "student" && user) router.push("/dashboard");
+    else if (r === "teacher" && space.teacher) router.push("/teacher");
+    else if (r === "parent" && space.parent) router.push("/parent");
+  };
+
+  if (!ready) return null;
+
+  // The role decides everything below: it's the first question the site asks.
+  if (!role) return <RolePicker onPick={pickRole} />;
+  if (role === "student" && !user) return <StudentSetup />;
+  if (role === "teacher" && !space.teacher) return <TeacherSetup />;
+  if (role === "parent" && !space.parent) return <ParentSetup />;
+
+  return <AlreadySignedIn />;
+}
+
+/* ---------------- role picker ---------------- */
+
+function RolePicker({ onPick }: { onPick: (r: Role) => void }) {
   const { d } = useI18n();
-  const { createUser } = useStore();
+  const cards: { role: Role; Icon: typeof IconUser; t: string; sub: string }[] = [
+    { role: "student", Icon: IconUser, t: d.roles.student.t, sub: d.roles.student.d },
+    { role: "teacher", Icon: IconTeacher, t: d.roles.teacher.t, sub: d.roles.teacher.d },
+    { role: "parent", Icon: IconParent, t: d.roles.parent.t, sub: d.roles.parent.d },
+  ];
+  return (
+    <div className="relative overflow-hidden">
+      <div className="glow-orb -top-32 left-1/2 h-[380px] w-[380px] -translate-x-1/2 opacity-60" aria-hidden="true" />
+      <div className="relative mx-auto max-w-2xl px-4 py-14 sm:py-20">
+        <Reveal>
+          <div className="mb-9 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="font-display text-[clamp(28px,6vw,40px)] font-extrabold tracking-[-0.02em]">
+                {d.roles.pick}
+              </h1>
+              <p className="mt-2 text-[15px] text-mute">{d.roles.pickSub}</p>
+            </div>
+            <LangSwitch />
+          </div>
+        </Reveal>
+
+        <div className="flex flex-col gap-3">
+          {cards.map((c, i) => (
+            <Reveal key={c.role} delay={i * 80}>
+              <button onClick={() => onPick(c.role)} className="press w-full text-left">
+                <Card hover className="flex items-center gap-4">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot">
+                    <c.Icon size={26} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="font-display block text-[18px] font-bold">{c.t}</span>
+                    <span className="mt-1 block text-[13.5px] leading-snug text-mute">{c.sub}</span>
+                  </span>
+                  <IconArrow size={20} />
+                </Card>
+              </button>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- student ---------------- */
+
+function StudentSetup() {
+  const { d, pick } = useI18n();
+  const { createStudent, switchRole } = useStore();
   const router = useRouter();
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState(9);
   const [goal, setGoal] = useState<Goal>("ent");
+  const [subjects, setSubjects] = useState<SubjectId[]>(defaultSubjects("ent"));
   const [examDate, setExamDate] = useState("");
   const [advisor, setAdvisor] = useState(false);
 
+  const available = subjectsForGoal(goal);
+
+  const chooseGoal = (g: Goal) => {
+    setGoal(g);
+    setSubjects(defaultSubjects(g));
+  };
+
+  const toggleSubject = (s: SubjectId) => {
+    setSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
+  };
+
   const submit = () => {
-    createUser(name.trim() || "—", grade, goal, examDate || null);
+    createStudent({
+      name: name.trim() || "—",
+      grade,
+      goal,
+      subjects: subjects.length > 0 ? subjects : defaultSubjects(goal),
+      examDate: examDate || null,
+    });
     router.push("/diagnostic");
   };
 
   return (
     <div className="relative overflow-hidden">
       <div className="glow-orb -top-32 left-1/2 h-[380px] w-[380px] -translate-x-1/2 opacity-60" aria-hidden="true" />
-
       <div className="relative mx-auto max-w-lg px-4 py-12 sm:py-16">
         <Reveal>
-          <div className="mb-8 flex items-center justify-between">
-            <h1 className="font-display text-[clamp(28px,6vw,38px)] font-extrabold tracking-[-0.02em]">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h1 className="font-display text-[clamp(26px,5.6vw,36px)] font-extrabold tracking-[-0.02em]">
               {d.start.title}
             </h1>
-            <LangSwitch />
+            <button onClick={switchRole} className="press text-[12px] font-bold text-dim hover:text-brand">
+              {d.roles.switch}
+            </button>
           </div>
         </Reveal>
 
@@ -49,14 +148,7 @@ export default function StartPage() {
           <Card pad="p-5 sm:p-6">
             <label className="block">
               <span className="mb-2 block text-[13px] font-semibold text-mute">{d.start.nameLabel}</span>
-              <input
-                className="field"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={d.start.namePh}
-                autoComplete="given-name"
-                maxLength={24}
-              />
+              <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={d.start.namePh} maxLength={24} />
             </label>
 
             <div className="mt-5">
@@ -67,9 +159,7 @@ export default function StartPage() {
                     key={g}
                     onClick={() => setGrade(g)}
                     className={`press h-11 rounded-xl border text-sm font-bold tabular-nums transition-colors ${
-                      grade === g
-                        ? "border-brand bg-brand text-ink"
-                        : "border-line bg-coal text-mute hover:border-line2 hover:text-paper"
+                      grade === g ? "border-brand bg-brand text-ink" : "border-line bg-coal text-mute hover:border-line2 hover:text-paper"
                     }`}
                   >
                     {g}
@@ -81,31 +171,24 @@ export default function StartPage() {
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="text-[13px] font-semibold text-mute">{d.start.goalLabel}</span>
-                <button
-                  onClick={() => setAdvisor(true)}
-                  className="press inline-flex items-center gap-1.5 text-[12px] font-bold text-brand hover:text-brand-hi"
-                >
+                <button onClick={() => setAdvisor(true)} className="press inline-flex items-center gap-1.5 text-[12px] font-bold text-brand hover:text-brand-hi">
                   <IconHelp size={14} />
                   {d.start.unsure}
                 </button>
               </div>
               <div className="flex flex-col gap-2">
-                {(["ent", "olymp", "school"] as Goal[]).map((g) => {
+                {(["ent", "olymp", "school", "sat", "ielts"] as Goal[]).map((g) => {
                   const Icon = GOAL_ICON[g];
                   const active = goal === g;
                   return (
                     <button
                       key={g}
-                      onClick={() => setGoal(g)}
+                      onClick={() => chooseGoal(g)}
                       className={`press flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition-colors ${
                         active ? "border-brand bg-brand/8" : "border-line bg-coal hover:border-line2"
                       }`}
                     >
-                      <span
-                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${
-                          active ? "border-brand/40 bg-brand/12 text-brand" : "border-line2 bg-soot text-mute"
-                        }`}
-                      >
+                      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${active ? "border-brand/40 bg-brand/12 text-brand" : "border-line2 bg-soot text-mute"}`}>
                         <Icon size={20} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -119,52 +202,206 @@ export default function StartPage() {
               </div>
             </div>
 
-            {goal === "ent" && (
+            <div className="mt-5">
+              <span className="mb-1 block text-[13px] font-semibold text-mute">{d.subjects.pick}</span>
+              <span className="mb-2.5 block text-[12px] text-dim">{d.subjects.pickHint}</span>
+              <div className="grid grid-cols-2 gap-2">
+                {available.map((s) => {
+                  const active = subjects.includes(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleSubject(s.id)}
+                      className={`press rounded-2xl border p-3 text-left transition-colors ${
+                        active ? "border-brand bg-brand/8" : "border-line bg-coal hover:border-line2"
+                      }`}
+                    >
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="truncate text-[14px] font-bold">{pick(s.title)}</span>
+                        {active && <IconCheck size={16} />}
+                      </span>
+                      <span className="mt-1 block truncate text-[11.5px] text-dim">{pick(s.blurb)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {(goal === "ent" || goal === "sat" || goal === "ielts") && (
               <label className="mt-5 block slide-up">
                 <span className="mb-2 block text-[13px] font-semibold text-mute">{d.start.examDateLabel}</span>
                 <input type="date" className="field" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
               </label>
             )}
 
-            <div className="mt-5 grid grid-cols-2 gap-2">
-              <div className="rounded-2xl border border-line bg-coal px-3.5 py-3">
-                <div className="text-[11px] uppercase tracking-wider text-dim">{d.start.subjectLabel}</div>
-                <div className="mt-1 flex items-center gap-2 text-sm font-bold">
-                  <IconBolt size={15} />
-                  {d.start.subjectMath}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-dashed border-line px-3.5 py-3 opacity-55">
-                <div className="text-[11px] uppercase tracking-wider text-dim">{d.start.subjectLabel}</div>
-                <div className="mt-1 text-sm font-bold text-dim">{d.start.subjectSoon}</div>
-              </div>
-            </div>
-
-            <Btn onClick={submit} size="lg" full className="arrow-slide mt-6">
+            <Btn onClick={submit} size="lg" full className="arrow-slide mt-6" disabled={subjects.length === 0}>
               {d.start.startDiag}
               <span className="arr">
                 <IconArrow size={18} />
               </span>
             </Btn>
-
             <p className="mt-4 text-center text-[12px] leading-snug text-dim">{d.profile.dataNote}</p>
           </Card>
         </Reveal>
       </div>
 
-      <Advisor
-        open={advisor}
-        onClose={() => setAdvisor(false)}
-        onPick={(g) => {
-          setGoal(g);
-          setAdvisor(false);
-        }}
-      />
+      <Advisor open={advisor} onClose={() => setAdvisor(false)} onPick={(g) => { chooseGoal(g); setAdvisor(false); }} />
     </div>
   );
 }
 
-/* ---------------- advisor dialogue ---------------- */
+/* ---------------- teacher ---------------- */
+
+function TeacherSetup() {
+  const { d, pick } = useI18n();
+  const { createTeacher, switchRole } = useStore();
+  const router = useRouter();
+
+  const [name, setName] = useState("");
+  const [school, setSchool] = useState("");
+  const [className, setClassName] = useState("");
+  const [subject, setSubject] = useState<SubjectId>("math");
+
+  const submit = () => {
+    createTeacher({ name: name.trim() || "—", school: school.trim(), className: className.trim() || "—", subject });
+    router.push("/teacher");
+  };
+
+  return (
+    <div className="relative overflow-hidden">
+      <div className="glow-orb -top-32 left-1/2 h-[360px] w-[360px] -translate-x-1/2 opacity-55" aria-hidden="true" />
+      <div className="relative mx-auto max-w-lg px-4 py-12 sm:py-16">
+        <Reveal>
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h1 className="font-display flex items-center gap-3 text-[clamp(24px,5.2vw,34px)] font-extrabold tracking-[-0.02em]">
+              <IconTeacher size={28} />
+              {d.teacherSetup.title}
+            </h1>
+            <button onClick={switchRole} className="press text-[12px] font-bold text-dim hover:text-brand">
+              {d.roles.switch}
+            </button>
+          </div>
+        </Reveal>
+
+        <Reveal delay={60}>
+          <Card pad="p-5 sm:p-6">
+            <div className="flex flex-col gap-4">
+              <label className="block">
+                <span className="mb-2 block text-[13px] font-semibold text-mute">{d.teacherSetup.name}</span>
+                <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={d.teacherSetup.namePh} />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-[13px] font-semibold text-mute">{d.teacherSetup.school}</span>
+                <input className="field" value={school} onChange={(e) => setSchool(e.target.value)} placeholder={d.teacherSetup.schoolPh} />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-[13px] font-semibold text-mute">{d.teacherSetup.className}</span>
+                <input className="field" value={className} onChange={(e) => setClassName(e.target.value)} placeholder={d.teacherSetup.classNamePh} />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-[13px] font-semibold text-mute">{d.teacherSetup.subject}</span>
+                <select className="field" value={subject} onChange={(e) => setSubject(e.target.value as SubjectId)}>
+                  {SUBJECTS.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {pick(s.title)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <Btn onClick={submit} size="lg" full className="arrow-slide mt-6" disabled={!name.trim()}>
+              {d.teacherSetup.create}
+              <span className="arr">
+                <IconArrow size={18} />
+              </span>
+            </Btn>
+          </Card>
+        </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- parent ---------------- */
+
+function ParentSetup() {
+  const { d } = useI18n();
+  const { createParent, switchRole } = useStore();
+  const router = useRouter();
+  const [name, setName] = useState("");
+
+  return (
+    <div className="relative overflow-hidden">
+      <div className="glow-orb -top-32 left-1/2 h-[360px] w-[360px] -translate-x-1/2 opacity-55" aria-hidden="true" />
+      <div className="relative mx-auto max-w-lg px-4 py-12 sm:py-16">
+        <Reveal>
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h1 className="font-display flex items-center gap-3 text-[clamp(24px,5.2vw,34px)] font-extrabold tracking-[-0.02em]">
+              <IconParent size={28} />
+              {d.parentSetup.title}
+            </h1>
+            <button onClick={switchRole} className="press text-[12px] font-bold text-dim hover:text-brand">
+              {d.roles.switch}
+            </button>
+          </div>
+        </Reveal>
+        <Reveal delay={60}>
+          <Card pad="p-5 sm:p-6">
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-semibold text-mute">{d.parentSetup.name}</span>
+              <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={d.parentSetup.namePh} />
+            </label>
+            <Btn
+              size="lg"
+              full
+              className="arrow-slide mt-5"
+              disabled={!name.trim()}
+              onClick={() => {
+                createParent(name.trim());
+                router.push("/parent");
+              }}
+            >
+              {d.parentSetup.create}
+              <span className="arr">
+                <IconArrow size={18} />
+              </span>
+            </Btn>
+            <p className="mt-4 text-[12.5px] leading-relaxed text-dim">{d.codes.noChildHint}</p>
+          </Card>
+        </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- already signed in ---------------- */
+
+function AlreadySignedIn() {
+  const { d } = useI18n();
+  const { role, switchRole } = useStore();
+  const home = role === "teacher" ? "/teacher" : role === "parent" ? "/parent" : "/dashboard";
+  const label = role === "teacher" ? d.roles.teacher.t : role === "parent" ? d.roles.parent.t : d.roles.student.t;
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-20 text-center">
+      <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-card">
+        <IconSpark size={26} />
+      </div>
+      <p className="text-[13px] uppercase tracking-wider text-dim">{d.roles.signedAs}</p>
+      <h1 className="font-display mt-1.5 text-3xl font-extrabold">{label}</h1>
+      <div className="mt-7 flex flex-col gap-2">
+        <Btn href={home} size="lg" full>
+          {d.common.continue}
+        </Btn>
+        <Btn variant="outline" size="lg" full onClick={switchRole}>
+          {d.roles.switch}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- advisor ---------------- */
 
 function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (g: Goal) => void }) {
   const { d } = useI18n();
@@ -176,13 +413,13 @@ function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void
     setAns([]);
   };
 
-  const answer = (i: number) => {
-    const next = [...ans, i];
-    setAns(next);
-    setStep(step + 1);
-  };
+  const questions = [
+    { q: d.consult.q1, a: d.consult.q1a },
+    { q: d.consult.q2, a: d.consult.q2a },
+    { q: d.consult.q3, a: d.consult.q3a },
+  ];
 
-  // Simple rule engine: exam intent dominates, then taste, then grade.
+  // Simple rule engine: exam intent dominates, then taste, then grade band.
   const decide = (): Goal => {
     const [gradeBand, exam, taste] = ans;
     if (taste === 1) return "olymp";
@@ -191,23 +428,10 @@ function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void
     return "school";
   };
 
-  const questions = [
-    { q: d.consult.q1, a: d.consult.q1a },
-    { q: d.consult.q2, a: d.consult.q2a },
-    { q: d.consult.q3, a: d.consult.q3a },
-  ];
-
   const rec = step >= 3 ? decide() : null;
 
   return (
-    <Modal
-      open={open}
-      onClose={() => {
-        onClose();
-        setTimeout(reset, 250);
-      }}
-      title={d.consult.title}
-    >
+    <Modal open={open} onClose={() => { onClose(); setTimeout(reset, 250); }} title={d.consult.title}>
       <div className="mb-4 flex items-start gap-3 rounded-2xl border border-line bg-coal p-3.5">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand">
           <IconSpark size={19} />
@@ -227,7 +451,7 @@ function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void
             {questions[step].a.map((a, i) => (
               <button
                 key={i}
-                onClick={() => answer(i)}
+                onClick={() => { setAns([...ans, i]); setStep(step + 1); }}
                 className="press rounded-2xl border border-line bg-coal px-4 py-3 text-left text-[14px] font-semibold hover:border-brand hover:bg-brand/6"
               >
                 {a}
@@ -246,13 +470,7 @@ function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void
             <Btn onClick={() => onPick(rec)} full>
               {d.consult.accept}
             </Btn>
-            <Btn
-              variant="outline"
-              onClick={() => {
-                onClose();
-                setTimeout(reset, 250);
-              }}
-            >
+            <Btn variant="outline" onClick={() => { onClose(); setTimeout(reset, 250); }}>
               {d.consult.other}
             </Btn>
           </div>

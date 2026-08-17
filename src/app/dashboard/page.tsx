@@ -2,62 +2,72 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { fmtHours, lastNDays, streakLength, totalSeconds, useStore, weekSeconds } from "@/lib/store";
-import { TOPICS, topicById } from "@/lib/content";
-import { checkpointDue, daysUntilCheckpoint, forecast, masteryBand, recommend } from "@/lib/engine";
-import { CLASSMATES } from "@/lib/mock";
-import { Bar, Btn, Card, MiniBars, Reveal, Ring, Sparkline } from "@/components/ui";
+import { subjectById, topicById, topicsOf } from "@/lib/content";
+import { checkpointDue, daysUntilCheckpoint, formatForecast, masteryBand, readiness, recommend } from "@/lib/engine";
+import type { SubjectId } from "@/lib/types";
+import { Bar, Btn, Card, MiniBars, Modal, Reveal, Ring, Sparkline } from "@/components/ui";
 import {
   IconArrow, IconBolt, IconCheck, IconClock, IconFlame, IconMap,
-  IconRefresh, IconTarget, IconTrend, IconTrophy,
+  IconRefresh, IconTarget, IconTeacher, IconTrend, IconTrophy,
 } from "@/components/Icons";
 
 export default function Dashboard() {
   const { d, pick } = useI18n();
-  const { user, ready, toggleTask } = useStore();
+  const { user, ready, role, toggleTask, setActiveSubject, joinClass, space } = useStore();
   const router = useRouter();
+  const [joinOpen, setJoinOpen] = useState(false);
 
   useEffect(() => {
-    if (ready && !user) router.replace("/start");
-  }, [ready, user, router]);
+    if (!ready) return;
+    if (!user) router.replace("/start");
+    else if (role === "teacher") router.replace("/teacher");
+    else if (role === "parent") router.replace("/parent");
+  }, [ready, user, role, router]);
 
   const derived = useMemo(() => {
     if (!user) return null;
+    const subject = user.activeSubject;
     const streak = streakLength(user.streakDates);
     const total = totalSeconds(user.secondsByDay);
     const week = weekSeconds(user.secondsByDay);
     const days = lastNDays(user.secondsByDay, 14);
-    const score = forecast(user);
-    const fh = user.forecastHistory;
-    const weekAgo = fh.find((p) => p.ts > Date.now() - 7 * 864e5);
-    const delta = weekAgo ? score - weekAgo.score : 0;
-    const recs = recommend(user);
-    const weak = TOPICS.map((t) => ({ t, m: user.mastery[t.id] ?? 0, a: user.attempts[t.id] ?? 0 }))
+    const raw = readiness(user, subject);
+    const view = formatForecast(raw, user.goal);
+    const weekAgo = user.forecastHistory.find((p) => p.ts > Date.now() - 7 * 864e5);
+    const delta = weekAgo ? view.numeric - formatForecast(weekAgo.raw, user.goal).numeric : 0;
+    const recs = recommend(user, subject);
+    const weak = topicsOf(subject)
+      .map((tp) => ({ t: tp, m: user.mastery[tp.id] ?? 0, a: user.attempts[tp.id] ?? 0 }))
       .filter((x) => x.a > 0 && x.m < 0.7)
       .sort((a, b) => a.m - b.m);
-    const rival = [...CLASSMATES].sort((a, b) => a.elo - b.elo).find((c) => c.elo > user.elo);
+    const rivals = Object.values(space.students).filter((s) => s.code !== user.code);
+    const rival = [...rivals].sort((a, b) => a.elo - b.elo).find((c) => c.elo > user.elo) ?? null;
     const dueCheckpoint = checkpointDue(user.lastCheckpoint, user.createdAt);
     const daysLeft = user.examDate
       ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 864e5))
       : null;
-    return { streak, total, week, days, score, delta, recs, weak, rival, dueCheckpoint, daysLeft };
-  }, [user]);
+    return { subject, streak, total, week, days, view, delta, recs, weak, rival, dueCheckpoint, daysLeft };
+  }, [user, space]);
 
   if (!ready || !user || !derived) return null;
 
-  const goalLabel = { ent: d.dash.goalEnt, olymp: d.dash.goalOlymp, school: d.dash.goalSchool }[user.goal];
+  const goalLabel = d.start.goals[user.goal].t;
+  const forecastUnit =
+    user.goal === "sat" ? d.dash.forecastUnitSat : user.goal === "ielts" ? d.dash.forecastUnitIelts : d.dash.forecastUnit;
   const openTasks = user.tasks.filter((t) => !t.done);
 
-  /* not diagnosed yet */
   if (!user.diagnosticDone) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-card">
           <IconTarget size={26} />
         </div>
-        <h1 className="font-display text-2xl font-extrabold">{d.dash.hello}, {user.name}</h1>
+        <h1 className="font-display text-2xl font-extrabold">
+          {d.dash.hello}, {user.name}
+        </h1>
         <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-mute">{d.dash.noDiag}</p>
         <Btn href="/diagnostic" size="lg" className="mt-6">
           {d.dash.goDiag}
@@ -68,7 +78,6 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
-      {/* header */}
       <Reveal>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -94,8 +103,55 @@ export default function Dashboard() {
         </div>
       </Reveal>
 
-      {/* stat row */}
-      <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* subject tabs */}
+      <Reveal delay={30}>
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {user.subjects.map((s) => {
+            const sub = subjectById(s);
+            const active = s === derived.subject;
+            return (
+              <button
+                key={s}
+                onClick={() => setActiveSubject(s)}
+                className={`press rounded-2xl border px-4 py-2.5 text-[13.5px] font-bold transition-colors ${
+                  active ? "border-brand bg-brand text-ink" : "border-line bg-card text-mute hover:border-line2 hover:text-paper"
+                }`}
+              >
+                {sub ? pick(sub.title) : s}
+              </button>
+            );
+          })}
+          <Link
+            href="/profile"
+            className="press rounded-2xl border border-dashed border-line2 px-4 py-2.5 text-[13.5px] font-bold text-dim hover:border-brand hover:text-brand"
+          >
+            + {d.subjects.add}
+          </Link>
+        </div>
+      </Reveal>
+
+      {/* class link status — this is how a teacher can see this student at all */}
+      {!user.classCode && (
+        <Reveal delay={50}>
+          <Card className="mt-4 border-amber/35 bg-amber/6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber/15 text-amber">
+                <IconTeacher size={21} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-[15px] font-bold">{d.codes.notInClass}</h3>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-mute">{d.codes.notInClassHint}</p>
+              </div>
+              <Btn size="sm" onClick={() => setJoinOpen(true)} className="w-full shrink-0 sm:w-auto">
+                {d.codes.joinCta}
+              </Btn>
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
+      {/* stats */}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Reveal delay={40}>
           <Card className="h-full">
             <div className="flex items-center justify-between">
@@ -117,16 +173,14 @@ export default function Dashboard() {
             </div>
             <div className="font-display mt-1.5 flex items-end gap-2 text-3xl font-extrabold tabular-nums">
               {derived.streak}
-              <span className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-dim">
-                {d.dash.streakUnit}
-              </span>
+              <span className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-dim">{d.dash.streakUnit}</span>
             </div>
             <div className="mt-3 flex gap-1">
               {derived.days.slice(-7).map((day) => (
                 <span
                   key={day.date}
                   className="h-6 flex-1 rounded-md"
-                  style={{ background: day.seconds > 0 ? "#ff5c00" : "#232323" }}
+                  style={{ background: day.seconds > 0 ? "#ff5c00" : "#2a2c33" }}
                   title={day.date}
                 />
               ))}
@@ -157,8 +211,8 @@ export default function Dashboard() {
               <IconTrend size={16} />
             </div>
             <div className="font-display mt-1.5 flex items-end gap-2 text-3xl font-extrabold tabular-nums">
-              {derived.score}
-              <span className="mb-1 text-lg text-dim">/ 50</span>
+              {derived.view.value}
+              <span className="mb-1 text-lg text-dim">/ {derived.view.max}</span>
               {derived.delta !== 0 && (
                 <span className={`mb-1.5 text-[12px] font-bold ${derived.delta > 0 ? "text-brand" : "text-dim"}`}>
                   {derived.delta > 0 ? "+" : ""}
@@ -166,13 +220,12 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            <div className="mt-1 text-[12px] text-dim">{d.dash.forecastUnit}</div>
+            <div className="mt-1 text-[12px] text-dim">{forecastUnit}</div>
           </Card>
         </Reveal>
       </div>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[1.35fr_1fr]">
-        {/* plan */}
         <div className="flex flex-col gap-3">
           <Reveal delay={80}>
             <Card>
@@ -185,8 +238,7 @@ export default function Dashboard() {
                   const t = topicById(r.topic);
                   if (!t) return null;
                   const m = user.mastery[r.topic] ?? 0;
-                  const label =
-                    r.kind === "start" ? d.dash.startTopic : r.kind === "review" ? d.dash.repeatTopic : d.dash.continueTopic;
+                  const label = r.kind === "start" ? d.dash.startTopic : r.kind === "review" ? d.dash.repeatTopic : d.dash.continueTopic;
                   return (
                     <Link
                       key={r.topic}
@@ -213,11 +265,8 @@ export default function Dashboard() {
             </Card>
           </Reveal>
 
-          {/* checkpoint */}
           <Reveal delay={120}>
-            <Card
-              className={derived.dueCheckpoint ? "border-brand/45 bg-brand/6" : ""}
-            >
+            <Card className={derived.dueCheckpoint ? "border-brand/45 bg-brand/6" : ""}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 flex-1 items-start gap-4">
                   <span
@@ -245,7 +294,6 @@ export default function Dashboard() {
             </Card>
           </Reveal>
 
-          {/* teacher tasks */}
           <Reveal delay={160}>
             <Card>
               <h2 className="font-display mb-3.5 text-lg font-bold">{d.dash.tasksTitle}</h2>
@@ -263,23 +311,17 @@ export default function Dashboard() {
                           t.done ? "border-line bg-coal/50 opacity-60" : "border-line bg-coal hover:border-line2"
                         }`}
                       >
-                        <span
-                          className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 ${
-                            t.done ? "border-brand bg-brand" : "border-line2"
-                          }`}
-                        >
+                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 ${t.done ? "border-brand bg-brand" : "border-line2"}`}>
                           {t.done && (
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#0a0a0a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#121317" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className={`block truncate text-[14.5px] font-semibold ${t.done ? "line-through" : ""}`}>
-                            {t.title}
-                          </span>
+                          <span className={`block truncate text-[14.5px] font-semibold ${t.done ? "line-through" : ""}`}>{t.title}</span>
                           <span className="mt-0.5 block text-[12px] text-dim">
-                            {topic ? pick(topic.title) : t.topic} · {d.dash.taskDue} {t.due}
+                            {topic ? pick(topic.title) : t.topic} · {d.dash.taskDue} {t.due} · {t.from}
                           </span>
                         </span>
                       </button>
@@ -296,7 +338,6 @@ export default function Dashboard() {
           </Reveal>
         </div>
 
-        {/* right column */}
         <div className="flex flex-col gap-3">
           <Reveal delay={100}>
             <Card>
@@ -307,33 +348,34 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="flex flex-col gap-3">
-                {[...TOPICS, ...user.customTopics.map((c) => ({ id: c.id, title: { ru: c.name, kk: c.name, en: c.name }, custom: true }))].map(
-                  (t) => {
-                    const m = user.mastery[t.id] ?? 0;
-                    const a = user.attempts[t.id] ?? 0;
-                    const band = masteryBand(m, a);
-                    const tone = { none: "dim", weak: "dim", mid: "amber", strong: "brand" } as const;
-                    return (
-                      <Link key={t.id} href={`/learn?t=${t.id}`} className="group block">
-                        <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                          <span className="truncate text-[14px] font-semibold group-hover:text-brand transition-colors">
-                            {pick(t.title as never)}
-                          </span>
-                          <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-dim">
-                            {a === 0 ? "—" : `${Math.round(m * 100)}%`}
-                          </span>
-                        </div>
-                        <Bar value={m} tone={tone[band]} h={7} />
-                      </Link>
-                    );
-                  }
-                )}
+                {[
+                  ...topicsOf(derived.subject).map((t) => ({ id: t.id, title: pick(t.title) })),
+                  ...user.customTopics
+                    .filter((c) => c.subject === derived.subject)
+                    .map((c) => ({ id: c.id, title: c.name })),
+                ].map((t) => {
+                  const m = user.mastery[t.id] ?? 0;
+                  const a = user.attempts[t.id] ?? 0;
+                  const band = masteryBand(m, a);
+                  const tone = { none: "dim", weak: "dim", mid: "amber", strong: "brand" } as const;
+                  return (
+                    <Link key={t.id} href={`/learn?t=${t.id}`} className="group block">
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                        <span className="truncate text-[14px] font-semibold transition-colors group-hover:text-brand">{t.title}</span>
+                        <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-dim">
+                          {a === 0 ? "—" : `${Math.round(m * 100)}%`}
+                        </span>
+                      </div>
+                      <Bar value={m} tone={tone[band]} h={7} />
+                    </Link>
+                  );
+                })}
               </div>
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3.5 text-[11px] text-dim">
                 {[
                   { c: "#ff5c00", l: d.dash.mapLegend.strong },
                   { c: "#ffb800", l: d.dash.mapLegend.mid },
-                  { c: "#333", l: d.dash.mapLegend.weak },
+                  { c: "#3a3d47", l: d.dash.mapLegend.weak },
                 ].map((x) => (
                   <span key={x.l} className="inline-flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-sm" style={{ background: x.c }} />
@@ -412,6 +454,65 @@ export default function Dashboard() {
           </Reveal>
         </div>
       </div>
+
+      <JoinClassModal open={joinOpen} onClose={() => setJoinOpen(false)} onJoin={joinClass} />
     </div>
+  );
+}
+
+export function JoinClassModal({
+  open, onClose, onJoin,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onJoin: (code: string) => boolean;
+}) {
+  const { d } = useI18n();
+  const [code, setCode] = useState("");
+  const [error, setError] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const submit = () => {
+    if (onJoin(code)) {
+      setOk(true);
+      setError(false);
+      window.setTimeout(() => {
+        onClose();
+        setOk(false);
+        setCode("");
+      }, 1100);
+    } else {
+      setError(true);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={d.codes.joinTitle}>
+      {ok ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-brand/40 bg-brand/8 p-4 slide-up">
+          <IconCheck size={22} />
+          <span className="text-[14.5px] font-bold text-brand">{d.codes.joinOk}</span>
+        </div>
+      ) : (
+        <>
+          <p className="mb-4 text-[13.5px] leading-relaxed text-mute">{d.codes.joinHint}</p>
+          <input
+            className="field text-center font-display text-lg font-bold tracking-[0.18em] uppercase"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value.toUpperCase());
+              setError(false);
+            }}
+            placeholder={d.codes.joinPh}
+            maxLength={8}
+          />
+          {error && <p className="mt-2 text-[12.5px] font-semibold text-red-400">{d.codes.joinFail}</p>}
+          <p className="mt-3 text-[12px] leading-relaxed text-dim">{d.codes.demoHint}</p>
+          <Btn full size="lg" className="mt-4" disabled={code.trim().length < 4} onClick={submit}>
+            {d.common.continue}
+          </Btn>
+        </>
+      )}
+    </Modal>
   );
 }

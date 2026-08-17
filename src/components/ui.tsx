@@ -187,7 +187,7 @@ export function Ring({
   return (
     <div className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#242424" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#2e333d" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2} cy={size / 2} r={r} stroke="#ff5c00" strokeWidth={stroke} fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
@@ -266,7 +266,7 @@ export function Sparkline({
       <path d={d} stroke="#ff5c00" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
         className="draw-line" style={{ ["--dash" as string]: "600", strokeDasharray: 600 }} />
       {showDots && (
-        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#ff5c00" stroke="#161616" strokeWidth="2" />
+        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#ff5c00" stroke="#1e222a" strokeWidth="2" />
       )}
     </svg>
   );
@@ -287,7 +287,7 @@ export function MiniBars({
               className="w-full rounded-t-[4px] bar-grow transition-colors"
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#ff5c00" : "#242424",
+                background: v > 0 ? "#ff5c00" : "#2a2f38",
                 animationDelay: `${i * 60}ms`,
               }}
               title={labels?.[i]}

@@ -66,7 +66,7 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
             <span
               key={i}
               className="h-1.5 w-1.5 rounded-full"
-              style={{ background: i < Math.round((q.difficulty - 600) / 200) ? "#ff5c00" : "#2a2a2a" }}
+              style={{ background: i < Math.round((q.difficulty - 600) / 200) ? "#ff5c00" : "#333844" }}
             />
           ))}
           <span className="ml-1 text-[11px] font-semibold text-dim tabular-nums">{q.difficulty}</span>

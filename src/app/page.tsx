@@ -8,7 +8,15 @@ import {
   IconArrow, IconBolt, IconBook, IconClock, IconFlame,
   IconMap, IconParent, IconRefresh, IconTeacher, IconTrend, IconTrophy,
 } from "@/components/Icons";
-import { CLASSMATES } from "@/lib/mock";
+
+
+const FACES = ["Айым", "Данияр", "Томирис", "Алишер", "Аружан"];
+const LADDER = [
+  { name: "Айым", elo: 1512 },
+  { name: "Данияр", elo: 1288 },
+  { name: "Томирис", elo: 1174 },
+  { name: "Алишер", elo: 1051 },
+];
 
 export default function Landing() {
   const { d } = useI18n();
@@ -67,13 +75,13 @@ export default function Landing() {
               <Reveal delay={320}>
                 <div className="mt-10 flex items-center gap-6">
                   <div className="flex -space-x-2.5">
-                    {CLASSMATES.slice(0, 5).map((c, i) => (
+                    {FACES.map((name, i) => (
                       <span
-                        key={c.id}
+                        key={name}
                         className="grid h-9 w-9 place-items-center rounded-full border-2 border-ink bg-soot text-[12px] font-bold text-mute"
                         style={{ zIndex: 5 - i }}
                       >
-                        {c.name.slice(0, 1)}
+                        {name.slice(0, 1)}
                       </span>
                     ))}
                   </div>
@@ -116,7 +124,7 @@ export default function Landing() {
                       className="aspect-square rounded-[5px]"
                       style={{
                         background:
-                          v === 1 ? "#ff5c00" : v === 0.6 ? "rgba(255,92,0,.55)" : v === 0.25 ? "rgba(255,92,0,.2)" : "#222",
+                          v === 1 ? "#ff5c00" : v === 0.6 ? "rgba(255,92,0,.55)" : v === 0.25 ? "rgba(255,92,0,.2)" : "#2a2f38",
                       }}
                     />
                   ))}
@@ -291,9 +299,9 @@ export default function Landing() {
                 <IconTrophy size={18} />
               </div>
               <div className="flex flex-col gap-1.5">
-                {CLASSMATES.slice(0, 4).map((c, i) => (
+                {LADDER.map((c, i) => (
                   <div
-                    key={c.id}
+                    key={c.name}
                     className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 ${
                       i === 0 ? "border-brand/40 bg-brand/8" : "border-line bg-soot/40"
                     }`}

@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { topicById } from "@/lib/content";
-import { forecast, isStuck, pickQuestion } from "@/lib/engine";
+import { formatForecast, isStuck, pickQuestion, readiness } from "@/lib/engine";
 import type { Question } from "@/lib/types";
 import { QuestionCard } from "@/components/QuestionCard";
 import { Bar, Btn, Card, Confetti, CountUp, Modal, Reveal } from "@/components/ui";
@@ -15,7 +15,7 @@ const LEN = { practice: 6, checkpoint: 5 } as const;
 
 function PracticeInner() {
   const { d, pick } = useI18n();
-  const { user, ready, recordAnswer, finishCheckpoint, requestHelp, unlock } = useStore();
+  const { user, ready, role, recordAnswer, finishCheckpoint, requestHelp, unlock } = useStore();
   const router = useRouter();
   const params = useSearchParams();
 
@@ -36,15 +36,16 @@ function PracticeInner() {
   const [stuckSent, setStuckSent] = useState(false);
 
   useEffect(() => {
-    if (ready && !user) router.replace("/start");
-  }, [ready, user, router]);
+    if (!ready) return;
+    if (!user || role !== "student") router.replace("/start");
+  }, [ready, user, role, router]);
 
   // snapshot the "before" numbers once, for the summary screen
   useEffect(() => {
     if (!user || eloStart !== null) return;
     setEloStart(user.elo);
     setMStart(topicParam ? (user.mastery[topicParam] ?? 0) : 0);
-    setFStart(forecast(user));
+    setFStart(formatForecast(readiness(user, user.activeSubject), user.goal).numeric);
   }, [user, eloStart, topicParam]);
 
   // pick the first / next question
@@ -52,6 +53,7 @@ function PracticeInner() {
     if (!user || current || done) return;
     const target = mode === "checkpoint" ? user.elo + 40 : user.elo + 60;
     const q = pickQuestion({
+      subject: user.activeSubject,
       topic: topicParam ?? undefined,
       target,
       excludeIds: asked,
@@ -63,7 +65,10 @@ function PracticeInner() {
 
   const onAnswered = (correct: boolean) => {
     if (!current) return;
-    recordAnswer({ qid: current.id, topic: current.topic, correct, difficulty: current.difficulty, mode });
+    recordAnswer({
+      qid: current.id, topic: current.topic, subject: current.subject,
+      correct, difficulty: current.difficulty, mode,
+    });
     if (correct) setRight((r) => r + 1);
   };
 
@@ -94,8 +99,8 @@ function PracticeInner() {
     if (!user) return null;
     const eloDelta = eloStart === null ? 0 : user.elo - eloStart;
     const mNow = topicParam ? (user.mastery[topicParam] ?? 0) : 0;
-    const fNow = forecast(user);
-    return { eloDelta, mNow, mDelta: mNow - mStart, fNow, fDelta: fNow - fStart };
+    const view = formatForecast(readiness(user, user.activeSubject), user.goal);
+    return { eloDelta, mNow, mDelta: mNow - mStart, view, fDelta: view.numeric - fStart };
   }, [user, eloStart, mStart, fStart, topicParam]);
 
   if (!ready || !user) return null;
@@ -139,7 +144,7 @@ function PracticeInner() {
               </div>
               <div>
                 <div className="text-[11px] font-bold uppercase tracking-wider text-dim">{d.practice.forecastNow}</div>
-                <div className="font-display mt-1.5 text-2xl font-extrabold tabular-nums">{summary.fNow}</div>
+                <div className="font-display mt-1.5 text-2xl font-extrabold tabular-nums">{summary.view.value}</div>
                 <div className={`mt-0.5 text-[11px] font-bold tabular-nums ${summary.fDelta >= 0 ? "text-brand" : "text-dim"}`}>
                   {summary.fDelta >= 0 ? "+" : ""}
                   {summary.fDelta}
@@ -178,7 +183,7 @@ function PracticeInner() {
                 setCurrent(null);
                 setEloStart(user.elo);
                 setMStart(topicParam ? (user.mastery[topicParam] ?? 0) : 0);
-                setFStart(forecast(user));
+                setFStart(formatForecast(readiness(user, user.activeSubject), user.goal).numeric);
               }}
             >
               {d.practice.more}
@@ -212,7 +217,7 @@ function PracticeInner() {
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line2 px-2.5 py-1 text-[11px] font-bold text-mute tabular-nums">
           <IconTrend size={12} />
-          {forecast(user)} / 50
+          {formatForecast(readiness(user, user.activeSubject), user.goal).value} / {formatForecast(readiness(user, user.activeSubject), user.goal).max}
         </span>
       </div>
 
