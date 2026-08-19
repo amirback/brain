@@ -8,7 +8,9 @@
       "Glob",
       "Grep",
       "WebFetch",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx tsc *)",
+      "Bash(NEXT_PUBLIC_BASE_PATH=/brain npm run build)"
     ],
     "deny": [],
     "ask": []

@@ -45,13 +45,15 @@ export interface RunnerLabels {
 }
 
 export function Runner({
-  items, passages, minutes, title, labels, onDone,
+  items, passages, minutes, title, labels, header, onDone,
 }: {
   items: ExamItem[];
   passages?: Passage[];
   minutes: number;
   title: string;
   labels: RunnerLabels;
+  /** Rendered under the clock on every question — the Listening audio player. */
+  header?: React.ReactNode;
   onDone: (r: RunnerDone) => void;
 }) {
   const [index, setIndex] = useState(0);
@@ -155,6 +157,8 @@ export function Runner({
   return (
     <div className={`mx-auto px-4 py-6 ${passage ? "max-w-6xl" : "max-w-2xl"}`}>
       <ExamBar left={`${mm}:${ss}`} lowTime={lowTime} labels={labels} onNav={() => setNavOpen(true)} title={title} />
+
+      {header && <div className="mt-3">{header}</div>}
 
       <div className="mt-5 flex items-center justify-between gap-3">
         <span className="text-[12.5px] font-bold tabular-nums text-dim">

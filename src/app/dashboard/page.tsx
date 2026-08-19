@@ -262,6 +262,32 @@ export default function Dashboard() {
         </Reveal>
       )}
 
+      {/* the exam trainer, for the goals that have one */}
+      {(user.goal === "sat" || user.goal === "ielts") && (
+        <Reveal delay={65}>
+          <Card className="mt-3 border-brand/35">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand/12 text-brand">
+                  <IconTarget size={20} />
+                </span>
+                <div className="min-w-0">
+                  <div className="font-display text-[15.5px] font-extrabold">
+                    {user.goal === "sat" ? d.exam.satTitle : d.exam.ieltsTitle}
+                  </div>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
+                    {user.goal === "sat" ? d.exam.satBlurb : d.exam.ieltsBlurb}
+                  </p>
+                </div>
+              </div>
+              <Btn href={user.goal === "sat" ? "/sat" : "/ielts"} size="sm" className="w-full shrink-0 sm:w-auto">
+                {d.exam.start}
+              </Btn>
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
       {/* scheduled mock test with its deadline */}
       {derived.mock && (
         <Reveal delay={70}>
