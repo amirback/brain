@@ -100,6 +100,14 @@ for (const it of IELTS_READING_FULL.items) {
   if (it.passage && !passageIds.has(it.passage)) { fails++; console.log(`FAIL ${it.id}: unknown passage ${it.passage}`); }
 }
 truthy("reading full test is 40 questions", IELTS_READING_FULL.items.length === 40);
+truthy("listening full test is 40 questions", IELTS_LISTENING_FULL.items.length === 40);
+// Listening answers are typed, and IELTS marks a misspelling wrong — so every
+// accepted spelling has to be one the script actually says.
+for (const it of IELTS_LISTENING_FULL.items) {
+  if (it.answer.kind === "text" && it.answer.accept.some(a => a.trim() === "")) {
+    fails++; console.log(`FAIL ${it.id}: blank accepted answer`);
+  }
+}
 
 console.log("\n--- grading a set end to end ---");
 const answers: Record<string, number | string> = {};

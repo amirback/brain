@@ -5,6 +5,7 @@ import { SAT_RW_CRAFT_2 } from "./content/sat-rw-craft-2";
 import { SAT_RW_CONVENTIONS_2 } from "./content/sat-rw-conventions-2";
 import { SAT_MATH_ALGEBRA } from "./content/sat-math-algebra";
 import { SAT_MATH_DATA } from "./content/sat-math-data";
+import { SAT_MATH_2 } from "./content/sat-math-2";
 
 /**
  * The pools must be large enough that a full mock can draw two modules per section
@@ -15,7 +16,7 @@ import { SAT_MATH_DATA } from "./content/sat-math-data";
 export const SAT_RW_POOL: ExamItem[] = [
   ...SAT_RW_CRAFT, ...SAT_RW_CRAFT_2, ...SAT_RW_CONVENTIONS, ...SAT_RW_CONVENTIONS_2,
 ];
-export const SAT_MATH_POOL: ExamItem[] = [...SAT_MATH_ALGEBRA, ...SAT_MATH_DATA];
+export const SAT_MATH_POOL: ExamItem[] = [...SAT_MATH_ALGEBRA, ...SAT_MATH_DATA, ...SAT_MATH_2];
 
 /* ---------------- deterministic shuffling ---------------- */
 
@@ -165,9 +166,9 @@ export const SAT_SETS: ItemSet[] = [
     id: "sat-math-data",
     section: "math",
     title: "Data, Geometry and Trigonometry",
-    minutes: 35,
+    minutes: 50,
     difficulty: "hard",
-    items: SAT_MATH_DATA,
+    items: [...SAT_MATH_DATA, ...SAT_MATH_2],
     ru: "Перевод единиц, проценты, таблицы и вероятность, окружности, объёмы и тригонометрия прямоугольного треугольника.",
     en: "Unit conversion, percentages, tables and probability, circles, volumes and right-triangle trigonometry.",
   }),

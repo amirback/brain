@@ -2,6 +2,7 @@ import type { ItemSet } from "./types";
 import { READING_1_ITEMS, READING_1_PASSAGES } from "./content/ielts-reading-1";
 import { READING_2_ITEMS, READING_2_PASSAGES } from "./content/ielts-reading-2";
 import { LISTENING_ITEMS, LISTENING_SCRIPTS } from "./content/ielts-listening";
+import { LISTENING_ITEMS_2, LISTENING_SCRIPTS_2 } from "./content/ielts-listening-2";
 
 /**
  * IELTS sets.
@@ -76,10 +77,26 @@ export const IELTS_LISTENING_FULL: ItemSet = {
   id: "ielts-listening-full",
   exam: "ielts",
   section: "listening",
+  title: "Listening — full test",
+  subtitle: {
+    en: "All four sections, forty questions: a booking conversation, an information talk, an academic discussion and a lecture, read aloud with a separate voice per speaker.",
+    ru: "Все четыре раздела, сорок вопросов: разговор о записи на курс, информационная лекция, академическое обсуждение и лекция — с отдельным голосом на каждого говорящего.",
+  },
+  minutes: 40,
+  difficulty: "medium",
+  items: [...LISTENING_ITEMS, ...LISTENING_ITEMS_2],
+  scripts: [...LISTENING_SCRIPTS, ...LISTENING_SCRIPTS_2],
+};
+
+/** Sections 1–2 alone, for a shorter sitting. */
+export const IELTS_LISTENING_HALF: ItemSet = {
+  id: "ielts-listening-12",
+  exam: "ielts",
+  section: "listening",
   title: "Listening — sections 1 and 2",
   subtitle: {
-    en: "A form-completion conversation and an information talk, read aloud by the browser with a separate voice per speaker.",
-    ru: "Разговор с заполнением формы и информационная лекция — браузер читает их вслух, у каждого говорящего свой голос.",
+    en: "Form completion and an information talk: the two everyday-context sections, where spelling and numbers decide the mark.",
+    ru: "Заполнение формы и информационная лекция — два бытовых раздела, где балл решают орфография и числа.",
   },
   minutes: 22,
   difficulty: "medium",
@@ -87,15 +104,33 @@ export const IELTS_LISTENING_FULL: ItemSet = {
   scripts: LISTENING_SCRIPTS,
 };
 
+/** Sections 3–4 alone: the academic half, and the harder one. */
+export const IELTS_LISTENING_ACADEMIC: ItemSet = {
+  id: "ielts-listening-34",
+  exam: "ielts",
+  section: "listening",
+  title: "Listening — sections 3 and 4",
+  subtitle: {
+    en: "A three-way academic discussion and an uninterrupted lecture — where marks go to speaker attribution and to facts stated once.",
+    ru: "Академическое обсуждение втроём и непрерывная лекция — здесь баллы решают «кто это сказал» и факты, названные один раз.",
+  },
+  minutes: 22,
+  difficulty: "hard",
+  items: LISTENING_ITEMS_2,
+  scripts: LISTENING_SCRIPTS_2,
+};
+
 export const IELTS_SETS: ItemSet[] = [
   IELTS_READING_FULL,
+  IELTS_LISTENING_FULL,
   IELTS_READING_P1,
   IELTS_READING_P2,
   IELTS_READING_P3,
-  IELTS_LISTENING_FULL,
+  IELTS_LISTENING_HALF,
+  IELTS_LISTENING_ACADEMIC,
 ];
 
 export const ieltsSetById = (id: string) => IELTS_SETS.find((s) => s.id === id);
 
 export const IELTS_READING_POOL = [...READING_1_ITEMS, ...READING_2_ITEMS];
-export const IELTS_LISTENING_POOL = LISTENING_ITEMS;
+export const IELTS_LISTENING_POOL = [...LISTENING_ITEMS, ...LISTENING_ITEMS_2];

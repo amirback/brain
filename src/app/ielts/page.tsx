@@ -50,7 +50,7 @@ export default function IeltsHub() {
   if (!ready || !user) return null;
 
   const skills = [
-    { key: "listening" as const, title: d.exam.listeningTitle, href: "/ielts/practice?set=ielts-listening-full", icon: <IconGlobe size={20} />, count: 20 },
+    { key: "listening" as const, title: d.exam.listeningTitle, href: "/ielts/practice?set=ielts-listening-full", icon: <IconGlobe size={20} />, count: 40 },
     { key: "reading" as const, title: d.exam.readingTitle, href: "/ielts/practice?set=ielts-reading-full", icon: <IconBook size={20} />, count: 40 },
     { key: "writing" as const, title: d.exam.writingTitle, href: "/ielts/writing", icon: <IconChart size={20} />, count: IELTS_WRITING.length },
     { key: "speaking" as const, title: d.exam.speakingTitle, href: "/ielts/speaking", icon: <IconSpark size={20} />, count: IELTS_SPEAKING.length },
