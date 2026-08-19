@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
-import { lessonByTopic, summaryOf, topicById } from "@/lib/content";
+import { lessonByTopic, resourcesOf, summaryOf, topicById } from "@/lib/content";
 import { masteryBand } from "@/lib/engine";
 import { videoFor } from "@/lib/advisor";
 import { Bar, Btn, Card, Reveal, Ring } from "@/components/ui";
@@ -244,6 +244,37 @@ function LearnInner() {
           <Card className="mt-7">
             <p className="text-[14.5px] leading-relaxed text-mute">{d.learn.customEmpty}</p>
           </Card>
+        </Reveal>
+      )}
+
+      {/* vetted outside material for this subject */}
+      {topic && resourcesOf(topic.subject).length > 0 && (
+        <Reveal delay={180}>
+          <div className="mb-3 mt-8 flex items-center gap-3">
+            <IconBook size={18} />
+            <h2 className="font-display text-lg font-bold">{d.lesson.resources}</h2>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <div className="flex flex-col gap-2">
+            {resourcesOf(topic.subject).map((r) => (
+              <a
+                key={r.url}
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="press flex items-center gap-3 rounded-2xl border border-line bg-card p-3.5 hover:border-brand/50"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-soot text-mute">
+                  <IconLink size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14.5px] font-semibold">{r.title}</span>
+                  <span className="block truncate text-[12px] text-dim">{pick(r.note)}</span>
+                </span>
+                <IconArrow size={16} />
+              </a>
+            ))}
+          </div>
         </Reveal>
       )}
 

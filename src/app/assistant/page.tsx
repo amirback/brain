@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { topicById } from "@/lib/content";
-import { CHAT_TURNS, advise, videoFor, type Advice } from "@/lib/advisor";
-import type { L } from "@/lib/types";
+import { CHAT_TURNS, advise, answerQuestion, videoFor, type Advice } from "@/lib/advisor";
 import { Btn, Card, Reveal } from "@/components/ui";
 import { IconArrow, IconBolt, IconCheck, IconHelp, IconSpark, IconTrend, IconLink } from "@/components/Icons";
 
@@ -16,6 +15,7 @@ interface Bubble {
   from: "me" | "ai";
   text: string;
   topic?: string;
+  bullets?: string[];
 }
 
 export default function AssistantPage() {
@@ -25,6 +25,8 @@ export default function AssistantPage() {
 
   const [chat, setChat] = useState<Bubble[]>([]);
   const [typing, setTyping] = useState(false);
+  const [draft, setDraft] = useState("");
+  const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -33,23 +35,31 @@ export default function AssistantPage() {
 
   const advice: Advice[] = useMemo(() => (user ? advise(user) : []), [user]);
 
+  useEffect(() => {
+    feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
+  }, [chat, typing]);
+
   if (!ready || !user) return null;
 
-  const ask = (i: number) => {
-    const turn = CHAT_TURNS[i];
-    const q = pick(turn.q);
+  /** Anything the student types goes through the same answering path. */
+  const send = (text: string) => {
+    const q = text.trim();
+    if (!q || typing) return;
     setChat((c) => [...c, { id: Date.now(), from: "me", text: q }]);
+    setDraft("");
     setTyping(true);
     // A short pause so the answer reads as a reply rather than a page reload.
     window.setTimeout(() => {
-      const answer = turn.a(user);
+      const reply = answerQuestion(q, user, lang);
       setChat((c) => [
         ...c,
-        { id: Date.now() + 1, from: "ai", text: (answer as L)[lang], topic: turn.topicOf?.(user) },
+        { id: Date.now() + 1, from: "ai", text: reply.text, topic: reply.topic, bullets: reply.bullets },
       ]);
       setTyping(false);
-    }, 520);
+    }, 420);
   };
+
+  const ask = (i: number) => send(pick(CHAT_TURNS[i].q));
 
   const toneStyle = {
     praise: "border-brand/40 bg-brand/8",
@@ -136,9 +146,9 @@ export default function AssistantPage() {
 
           {/* chat */}
           <Reveal delay={120}>
-            <h2 className="font-display mb-3 mt-8 text-lg font-bold">{d.assistant.ask}</h2>
+            <h2 className="font-display mb-3 mt-8 text-lg font-bold">{d.assistant.title}</h2>
             {chat.length > 0 && (
-              <div className="mb-4 flex flex-col gap-2.5">
+              <div ref={feedRef} className="mb-4 flex max-h-[460px] flex-col gap-2.5 overflow-y-auto pr-1">
                 {chat.map((b) => {
                   const topic = b.topic ? topicById(b.topic) : null;
                   const video = b.topic ? videoFor(b.topic, lang) : null;
@@ -155,6 +165,16 @@ export default function AssistantPage() {
                       </span>
                       <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line bg-card px-4 py-3">
                         <p className="text-[14px] leading-relaxed">{b.text}</p>
+                        {b.bullets && b.bullets.length > 0 && (
+                          <ul className="mt-3 flex flex-col gap-2 border-t border-line pt-3">
+                            {b.bullets.map((x, i) => (
+                              <li key={i} className="flex gap-2.5 text-[13.5px] leading-relaxed text-mute">
+                                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                                <span>{x}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                         {(topic || video) && (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {topic && (
@@ -194,13 +214,34 @@ export default function AssistantPage() {
               </div>
             )}
 
-            <div className="flex flex-col gap-2">
+            {/* composer: the student can type anything */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                send(draft);
+              }}
+              className="flex items-center gap-2"
+            >
+              <input
+                className="field flex-1"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={d.assistant.placeholder}
+                maxLength={300}
+                aria-label={d.assistant.placeholder}
+              />
+              <Btn type="submit" size="lg" disabled={!draft.trim() || typing} className="shrink-0 !px-4">
+                <IconArrow size={18} />
+              </Btn>
+            </form>
+
+            <div className="mt-3 flex flex-wrap gap-2">
               {CHAT_TURNS.map((turn, i) => (
                 <button
                   key={i}
                   onClick={() => ask(i)}
                   disabled={typing}
-                  className="press rounded-2xl border border-line bg-coal px-4 py-3 text-left text-[14px] font-semibold hover:border-brand hover:bg-brand/6 disabled:opacity-50"
+                  className="press rounded-xl border border-line bg-coal px-3 py-2 text-left text-[12.5px] font-semibold text-mute hover:border-brand hover:text-brand disabled:opacity-50"
                 >
                   {pick(turn.q)}
                 </button>

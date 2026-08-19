@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { clearHash, readHashPayload } from "@/lib/share";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { SUBJECTS, defaultSubjects, subjectsForGoal } from "@/lib/content";
@@ -22,8 +23,24 @@ const GOAL_ICON: Record<Goal, typeof IconTarget> = {
 };
 
 export default function StartPage() {
-  const { role, user, space, ready, setRole } = useStore();
+  const { role, user, space, ready, setRole, joinByInvite, restoreProfile } = useStore();
   const router = useRouter();
+  const [banner, setBanner] = useState<string | null>(null);
+
+  // A link can carry a class invite or a whole profile; both are applied once.
+  useEffect(() => {
+    if (!ready) return;
+    const payload = readHashPayload();
+    if (!payload) return;
+    clearHash();
+    if (payload.kind === "join") {
+      const res = joinByInvite(payload.cls);
+      if (res.ok) setBanner(`${payload.cls.className} · ${payload.cls.teacherName}`);
+    } else if (payload.kind === "restore") {
+      restoreProfile(payload.student);
+      router.push("/dashboard");
+    }
+  }, [ready, joinByInvite, restoreProfile, router]);
 
   // Picking a role goes straight to that role's home when its profile
   // already exists, so switching back and forth is one click.
@@ -37,7 +54,7 @@ export default function StartPage() {
   if (!ready) return null;
 
   // The role decides everything below: it's the first question the site asks.
-  if (!role) return <RolePicker onPick={pickRole} />;
+  if (!role) return <RolePicker onPick={pickRole} banner={banner} />;
   if (role === "student" && !user) return <StudentSetup />;
   if (role === "teacher" && !space.teacher) return <TeacherSetup />;
   if (role === "parent" && !space.parent) return <ParentSetup />;
@@ -47,7 +64,7 @@ export default function StartPage() {
 
 /* ---------------- role picker ---------------- */
 
-function RolePicker({ onPick }: { onPick: (r: Role) => void }) {
+function RolePicker({ onPick, banner }: { onPick: (r: Role) => void; banner?: string | null }) {
   const { d } = useI18n();
   const { signInByEmail } = useStore();
   const router = useRouter();
@@ -83,6 +100,16 @@ function RolePicker({ onPick }: { onPick: (r: Role) => void }) {
             <LangSwitch />
           </div>
         </Reveal>
+
+        {banner && (
+          <div className="slide-up mb-4 flex items-center gap-3 rounded-2xl border border-brand/40 bg-brand/8 p-4">
+            <IconCheck size={20} />
+            <div className="min-w-0">
+              <div className="text-[14px] font-bold text-brand">{d.codes.joinedByLink}</div>
+              <div className="mt-0.5 truncate text-[13px] text-mute">{banner}</div>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           {cards.map((c, i) => (

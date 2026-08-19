@@ -194,6 +194,7 @@ export function demoSpace(): Space {
     activeStudent: me.code,
     students,
     classes: { [DEMO_CLASS_CODE]: demoClassRecord() },
+    pendingClass: null,
     teacher: {
       code: DEMO_CLASS_CODE,
       email: "teacher@example.kz",

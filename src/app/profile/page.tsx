@@ -9,9 +9,10 @@ import type { Goal, SubjectId } from "@/lib/types";
 import { Btn, Card, Modal, Reveal } from "@/components/ui";
 import { LangSwitch } from "@/components/Header";
 import { JoinClassModal } from "../dashboard/page";
+import { childShareLink, recoveryLink } from "@/lib/share";
 import {
   IconBolt, IconBook, IconCheck, IconClock, IconFlame, IconGlobe,
-  IconLock, IconRefresh, IconSpark, IconTarget, IconTeacher, IconTrophy, IconUser,
+  IconLock, IconParent, IconRefresh, IconSpark, IconTarget, IconTeacher, IconTrophy, IconUser,
 } from "@/components/Icons";
 
 const ACH_ICON = {
@@ -44,6 +45,7 @@ export default function ProfilePage() {
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [carried, setCarried] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState<"" | "child" | "recovery">("");
 
   useEffect(() => {
     if (!ready) return;
@@ -55,6 +57,17 @@ export default function ProfilePage() {
   const streak = streakLength(user.streakDates);
   const hours = totalSeconds(user.secondsByDay);
   const teacherName = user.classCode && space.teacher?.code === user.classCode ? space.teacher.name : null;
+
+  const copyLink = async (kind: "child" | "recovery") => {
+    if (!user) return;
+    try {
+      await navigator.clipboard.writeText(kind === "child" ? childShareLink(user) : recoveryLink(user));
+      setShared(kind);
+      window.setTimeout(() => setShared(""), 2400);
+    } catch {
+      // clipboard blocked — nothing else to fall back on here
+    }
+  };
 
   const copyCode = async () => {
     try {
@@ -110,6 +123,65 @@ export default function ProfilePage() {
             </Btn>
           </div>
         </Card>
+      </Reveal>
+
+      {/* cross-device links: these carry the data, so they work anywhere */}
+      <Reveal delay={55}>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Card>
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-soot text-mute">
+                <IconParent size={19} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[14px] font-bold">{d.codes.shareChild}</h3>
+                <p className="mt-1 text-[12px] leading-snug text-dim">{d.codes.shareChildHint}</p>
+                <Btn
+                  size="sm"
+                  variant={shared === "child" ? "primary" : "outline"}
+                  className="mt-3"
+                  onClick={() => copyLink("child")}
+                >
+                  {shared === "child" ? (
+                    <>
+                      <IconCheck size={14} />
+                      {d.codes.linkCopied}
+                    </>
+                  ) : (
+                    d.codes.copyLink
+                  )}
+                </Btn>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-soot text-mute">
+                <IconLock size={19} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[14px] font-bold">{d.codes.recovery}</h3>
+                <p className="mt-1 text-[12px] leading-snug text-dim">{d.codes.recoveryHint}</p>
+                <Btn
+                  size="sm"
+                  variant={shared === "recovery" ? "primary" : "outline"}
+                  className="mt-3"
+                  onClick={() => copyLink("recovery")}
+                >
+                  {shared === "recovery" ? (
+                    <>
+                      <IconCheck size={14} />
+                      {d.codes.linkCopied}
+                    </>
+                  ) : (
+                    d.codes.copyLink
+                  )}
+                </Btn>
+              </div>
+            </div>
+          </Card>
+        </div>
       </Reveal>
 
       {/* class membership */}

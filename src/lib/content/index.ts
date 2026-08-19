@@ -8,6 +8,9 @@ import { satLessons, satQuestions, satTopics } from "./sat";
 import { ieltsLessons, ieltsQuestions, ieltsTopics } from "./ielts";
 
 export { SUMMARIES, summaryOf } from "./summaries";
+export { RESOURCES, type Resource } from "./extra";
+
+import { EXTRA_SECTIONS, RESOURCES as RES } from "./extra";
 
 export const SUBJECTS: Subject[] = [
   {
@@ -57,6 +60,7 @@ export const TOPICS: Topic[] = [
   ...ieltsTopics,
 ];
 
+/** Core lessons with their extra lecture sections appended. */
 export const LESSONS: Lesson[] = [
   ...mathLessons,
   ...englishLessons,
@@ -64,7 +68,7 @@ export const LESSONS: Lesson[] = [
   ...historyLessons,
   ...satLessons,
   ...ieltsLessons,
-];
+].map((l) => ({ ...l, sections: [...l.sections, ...(EXTRA_SECTIONS[l.topic] ?? [])] }));
 
 export const QUESTIONS: Question[] = [
   ...mathQuestions,
@@ -81,6 +85,7 @@ export const subjectById = (id: SubjectId) => SUBJECTS.find((s) => s.id === id);
 export const topicsOf = (subject: SubjectId) => TOPICS.filter((x) => x.subject === subject);
 export const questionsOf = (subject: SubjectId) => QUESTIONS.filter((q) => q.subject === subject);
 export const subjectsForGoal = (goal: Goal) => SUBJECTS.filter((s) => s.goals.includes(goal));
+export const resourcesOf = (subject: SubjectId) => RES[subject] ?? [];
 
 /** Default selection offered when a student picks a goal. */
 export function defaultSubjects(goal: Goal): SubjectId[] {

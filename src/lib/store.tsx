@@ -10,6 +10,7 @@ import { defaultSubjects } from "./content";
 import { demoSpace, DEMO_CLASS_CODE, demoClassRecord } from "./mock";
 import { todayStr } from "./store-helpers";
 import { mockResultMessage, planMock } from "./advisor";
+import { slimStudent } from "./share";
 
 export { todayStr };
 export { streakLength, totalSeconds, weekSeconds, lastNDays, fmtHours } from "./store-helpers";
@@ -23,6 +24,7 @@ const emptySpace = (): Space => ({
   students: {},
   // The demo class always exists, so a code is never a dead end.
   classes: { [DEMO_CLASS_CODE]: demoClassRecord() },
+  pendingClass: null,
   teacher: null,
   parent: null,
   helpRequests: [],
@@ -86,7 +88,13 @@ interface StoreCtx {
   /** Signs back into a profile stored on this device by its email. */
   signInByEmail: (email: string) => Role | null;
   joinClass: (classCode: string) => JoinResult;
+  /** Joins a class carried inside an invite link — works on any device. */
+  joinByInvite: (cls: ClassRecord) => JoinResult;
   linkChild: (studentCode: string) => boolean;
+  /** Stores a child snapshot that arrived through a share link. */
+  adoptChild: (student: StudentState) => boolean;
+  /** Restores a profile from a recovery link, on any device. */
+  restoreProfile: (student: StudentState) => void;
   seedDemo: () => void;
   resetAll: () => void;
   switchRole: () => void;
@@ -125,6 +133,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(raw) as Space;
         // Older saves may predate the class registry; make sure it exists.
         if (!parsed.classes) parsed.classes = {};
+        if (parsed.pendingClass === undefined) parsed.pendingClass = null;
         if (!parsed.classes[DEMO_CLASS_CODE]) parsed.classes[DEMO_CLASS_CODE] = demoClassRecord();
         ref.current = parsed;
         setSpace(parsed);
@@ -193,9 +202,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const createStudent = useCallback((a: {
     name: string; email: string | null; grade: number; goal: Goal; subjects: SubjectId[]; examDate: string | null;
   }) => {
-    const st = freshStudent(a);
     const s = ref.current;
-    persist({ ...s, role: "student", activeStudent: st.code, students: { ...s.students, [st.code]: st } });
+    const st = freshStudent(a);
+    // An invite opened before signing up applies to this brand-new profile.
+    if (s.pendingClass && s.classes[s.pendingClass]) st.classCode = s.pendingClass;
+    persist({
+      ...s,
+      role: "student",
+      activeStudent: st.code,
+      students: { ...s.students, [st.code]: st },
+      pendingClass: null,
+    });
   }, [persist]);
 
   /** Creating a teacher also registers their class, so the code is joinable. */
@@ -267,6 +284,51 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
     });
     return { ok: true, className: record.className, teacherName: record.teacherName };
+  }, [persist]);
+
+  /**
+   * An invite link brings the class with it, so the class is registered here
+   * even though this browser never saw the teacher who created it.
+   */
+  const joinByInvite = useCallback((cls: ClassRecord): JoinResult => {
+    const s = ref.current;
+    const st = currentStudent(s);
+    const classes = { ...s.classes, [cls.code]: cls };
+    if (!st) {
+      // No profile yet: hold the invite so it lands on the next student created.
+      persist({ ...s, classes, pendingClass: cls.code });
+      return { ok: true, className: cls.className, teacherName: cls.teacherName };
+    }
+    persist({
+      ...s,
+      classes,
+      students: { ...s.students, [st.code]: { ...st, classCode: cls.code } },
+    });
+    return { ok: true, className: cls.className, teacherName: cls.teacherName };
+  }, [persist]);
+
+  /** A shared snapshot of a child, opened by a parent on their own phone. */
+  const adoptChild = useCallback((student: StudentState): boolean => {
+    const s = ref.current;
+    if (!student?.code) return false;
+    persist({
+      ...s,
+      role: "parent",
+      students: { ...s.students, [student.code]: student },
+      parent: { name: s.parent?.name ?? "", email: s.parent?.email ?? null, childCode: student.code },
+    });
+    return true;
+  }, [persist]);
+
+  /** Recovery link: the profile travels inside the URL, so any device can take it. */
+  const restoreProfile = useCallback((student: StudentState) => {
+    const s = ref.current;
+    persist({
+      ...s,
+      role: "student",
+      activeStudent: student.code,
+      students: { ...s.students, [student.code]: student },
+    });
   }, [persist]);
 
   const linkChild = useCallback((studentCode: string): boolean => {
@@ -463,7 +525,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         space, ready, user, viewedStudent, role: space.role,
         setRole, createStudent, createTeacher, createParent, signInByEmail,
-        joinClass, linkChild, seedDemo, resetAll, switchRole,
+        joinClass, joinByInvite, linkChild, adoptChild, restoreProfile,
+        seedDemo, resetAll, switchRole,
         recordAnswer, finishDiagnostic, finishCheckpoint, switchGoal,
         setActiveSubject, addSubject, toggleTask, addTask, addMaterial,
         addCustomTopic, requestHelp, unlock, classRoster,

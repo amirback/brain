@@ -200,6 +200,8 @@ export interface Space {
   students: Record<string, StudentState>;
   /** Every class that exists, keyed by its code — what a student joins. */
   classes: Record<string, ClassRecord>;
+  /** An invite opened before signing up; applied to the next student created. */
+  pendingClass: string | null;
   teacher: TeacherState | null;
   parent: ParentState | null;
   helpRequests: HelpRequest[];

@@ -283,7 +283,7 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-              <Btn href={`/practice?mock=${derived.mock.id}`} size="sm" className="w-full shrink-0 sm:w-auto">
+              <Btn href={`/mock?id=${derived.mock.id}`} size="sm" className="w-full shrink-0 sm:w-auto">
                 {d.mock.start}
               </Btn>
             </div>

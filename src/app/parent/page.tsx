@@ -3,25 +3,33 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
-import { fmtHours, streakLength, useStore, weekSeconds } from "@/lib/store";
+import { fmtHours, lastNDays, streakLength, totalSeconds, useStore, weekSeconds } from "@/lib/store";
 import { subjectById, topicById, topicsOf } from "@/lib/content";
+import { clearHash, readHashPayload } from "@/lib/share";
 import { formatForecast, readiness, recommend } from "@/lib/engine";
-import { Btn, Card, Modal, Reveal } from "@/components/ui";
+import { Bar, Btn, Card, MiniBars, Modal, Reveal } from "@/components/ui";
 import { IconCheck, IconParent, IconRefresh, IconUser } from "@/components/Icons";
 
 export default function ParentPage() {
   const { d, pick, lang } = useI18n();
-  const { space, ready, role, viewedStudent, linkChild } = useStore();
+  const { space, ready, role, viewedStudent, linkChild, adoptChild } = useStore();
   const router = useRouter();
 
   const [copied, setCopied] = useState(false);
   const [nonce, setNonce] = useState(0);
   const [linkOpen, setLinkOpen] = useState(false);
 
+  // A share link from the child carries their real progress with it.
   useEffect(() => {
     if (!ready) return;
+    const payload = readHashPayload();
+    if (payload?.kind === "child") {
+      clearHash();
+      adoptChild(payload.student);
+      return;
+    }
     if (role !== "parent") router.replace("/start");
-  }, [ready, role, router]);
+  }, [ready, role, router, adoptChild]);
 
   const child = role === "parent" ? viewedStudent : null;
 
@@ -139,6 +147,67 @@ export default function ParentPage() {
                   {d.codes.changeChild}
                 </Btn>
               </div>
+            </Card>
+          </Reveal>
+
+          {/* the child's actual numbers, not a description of them */}
+          <Reveal delay={70}>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {[
+                { l: d.common.elo, v: String(child.elo) },
+                { l: d.dash.streakTitle, v: String(streakLength(child.streakDates)) },
+                { l: d.dash.hours, v: (totalSeconds(child.secondsByDay) / 3600).toFixed(1) + d.common.hour },
+              ].map((x) => (
+                <Card key={x.l} pad="p-4">
+                  <div className="font-display text-xl font-extrabold tabular-nums">{x.v}</div>
+                  <div className="mt-0.5 text-[10.5px] uppercase tracking-wider text-dim">{x.l}</div>
+                </Card>
+              ))}
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <Card className="mt-3">
+              <h2 className="font-display mb-4 text-lg font-bold">{d.dash.mapTitle}</h2>
+              <div className="flex flex-col gap-3">
+                {topicsOf(child.activeSubject).map((tp) => {
+                  const m = child.mastery[tp.id] ?? 0;
+                  const a = child.attempts[tp.id] ?? 0;
+                  return (
+                    <div key={tp.id}>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                        <span className="truncate text-[14px] font-semibold">{pick(tp.title)}</span>
+                        <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-dim">
+                          {a === 0 ? "—" : `${Math.round(m * 100)}%`}
+                        </span>
+                      </div>
+                      <Bar value={m} tone={m < 0.35 ? "dim" : m < 0.7 ? "amber" : "brand"} h={7} />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-5 border-t border-line pt-4">
+                <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-dim">{d.dash.activity}</div>
+                <MiniBars
+                  values={lastNDays(child.secondsByDay, 14).map((x) => Math.round(x.seconds / 60))}
+                  labels={lastNDays(child.secondsByDay, 14).map((x) => x.date.slice(8))}
+                />
+              </div>
+              {child.mocks.some((m) => m.status === "done") && (
+                <div className="mt-5 border-t border-line pt-4">
+                  <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-dim">{d.mock.history}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {child.mocks
+                      .filter((m) => m.status === "done")
+                      .slice(-4)
+                      .map((m) => (
+                        <span key={m.id} className="rounded-xl border border-line2 px-3 py-1.5 text-[12.5px] font-bold tabular-nums">
+                          {m.score} / {m.size}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
             </Card>
           </Reveal>
 

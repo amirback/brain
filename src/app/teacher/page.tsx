@@ -7,6 +7,7 @@ import { streakLength, totalSeconds, useStore } from "@/lib/store";
 import { subjectById, topicById, topicsOf } from "@/lib/content";
 import type { StudentState, SubjectId } from "@/lib/types";
 import { Bar, Btn, Card, Modal, Reveal } from "@/components/ui";
+import { classInviteLink } from "@/lib/share";
 import {
   IconBolt, IconCheck, IconClock, IconFlame, IconGrid, IconHelp,
   IconLink, IconPlus, IconTeacher, IconUser,
@@ -21,6 +22,7 @@ export default function TeacherPage() {
   const [topicOpen, setTopicOpen] = useState(false);
   const [matOpen, setMatOpen] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,17 +120,44 @@ export default function TeacherPage() {
               <div className="text-[11px] font-bold uppercase tracking-wider text-brand">{d.codes.classCode}</div>
               <div className="font-display mt-1 text-3xl font-extrabold tracking-[0.12em]">{teacher.code}</div>
               <p className="mt-2 text-[13px] leading-relaxed text-mute">{d.codes.classCodeHint}</p>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-brand">{d.codes.linkHintTeacher}</p>
             </div>
-            <Btn size="sm" variant={codeCopied ? "outline" : "primary"} onClick={copyCode} className="shrink-0">
-              {codeCopied ? (
-                <>
-                  <IconCheck size={15} />
-                  {d.codes.copied}
-                </>
-              ) : (
-                d.codes.copy
-              )}
-            </Btn>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Btn size="sm" variant={codeCopied ? "outline" : "primary"} onClick={copyCode}>
+                {codeCopied ? (
+                  <>
+                    <IconCheck size={15} />
+                    {d.codes.copied}
+                  </>
+                ) : (
+                  d.codes.copy
+                )}
+              </Btn>
+              <Btn
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  const cls = space.classes[teacher.code];
+                  if (!cls) return;
+                  try {
+                    await navigator.clipboard.writeText(classInviteLink(cls));
+                    setLinkCopied(true);
+                    window.setTimeout(() => setLinkCopied(false), 2200);
+                  } catch {
+                    // clipboard blocked — the code above still works
+                  }
+                }}
+              >
+                {linkCopied ? (
+                  <>
+                    <IconCheck size={15} />
+                    {d.codes.copied}
+                  </>
+                ) : (
+                  d.codes.copyLink
+                )}
+              </Btn>
+            </div>
           </div>
         </Card>
       </Reveal>

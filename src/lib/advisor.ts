@@ -1,4 +1,4 @@
-import { QUESTIONS, topicById, topicsOf } from "./content";
+import { QUESTIONS, SUBJECTS, lessonByTopic, summaryOf, topicById, topicsOf, TOPICS } from "./content";
 import { formatForecast, isStuck, readiness } from "./engine";
 import { lastNDays, streakLength, totalSeconds, weekSeconds } from "./store-helpers";
 import type { InboxMessage, L, Lang, MockTest, StudentState, SubjectId } from "./types";
@@ -244,6 +244,18 @@ export const CHAT_TURNS: ChatTurn[] = [
 export const MOCK_LEAD_DAYS = 4;
 
 /**
+ * How far out to schedule: normally four days, but tighter when the exam is
+ * close, so the last weeks get more checks rather than fewer.
+ */
+function leadDays(st: StudentState): number {
+  if (!st.examDate) return MOCK_LEAD_DAYS;
+  const daysToExam = Math.ceil((new Date(st.examDate).getTime() - Date.now()) / 864e5);
+  if (daysToExam <= 14) return 2;
+  if (daysToExam <= 45) return 3;
+  return MOCK_LEAD_DAYS;
+}
+
+/**
  * Schedules a mock test once the student has covered enough ground, and gives
  * it a deadline a few days out so there is time to prepare.
  */
@@ -260,7 +272,7 @@ export function planMock(st: StudentState): MockTest | null {
     subject: st.activeSubject,
     topics: covered.map((c) => c.id),
     createdAt: Date.now(),
-    dueAt: Date.now() + MOCK_LEAD_DAYS * 864e5,
+    dueAt: Date.now() + leadDays(st) * 864e5,
     size: Math.min(10, covered.length * 4),
     status: "scheduled",
   };
@@ -294,6 +306,7 @@ export function buildMessages(st: StudentState, lang: Lang): InboxMessage[] {
   for (const m of st.mocks.filter((x) => x.status === "scheduled")) {
     const daysLeft = Math.ceil((m.dueAt - Date.now()) / 864e5);
     if (daysLeft <= MOCK_LEAD_DAYS && daysLeft >= 0) {
+      // one message per remaining day, so the reminder repeats as it nears
       const id = `mock-${m.id}-${daysLeft}`;
       if (already.has(id)) continue;
       const title = {
@@ -308,7 +321,7 @@ export function buildMessages(st: StudentState, lang: Lang): InboxMessage[] {
         en: `${m.size} questions on: ${names.join(", ")}. Review the summaries — no hints during the test.`,
       }[lang];
       const label = { ru: "Пройти сейчас", kk: "Қазір өту", en: "Take it now" }[lang];
-      msgs.push({ id, kind: "deadline", title, body, ts: Date.now(), read: false, action: { label, href: `/practice?mock=${m.id}` } });
+      msgs.push({ id, kind: "deadline", title, body, ts: Date.now(), read: false, action: { label, href: `/mock?id=${m.id}` } });
     }
   }
 
@@ -372,4 +385,208 @@ export function subjectLabel(id: SubjectId): string {
 
 export function totalStudyHours(st: StudentState): number {
   return totalSeconds(st.secondsByDay) / 3600;
+}
+
+/* ---------------- free-text answering ---------------- */
+
+export interface Reply {
+  text: string;
+  topic?: string;
+  /** Extra lines rendered as a list, e.g. the key points of a summary. */
+  bullets?: string[];
+}
+
+const norm = (s: string) =>
+  s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+
+const has = (q: string, words: string[]) => words.some((w) => q.includes(w));
+
+/** Finds a topic the student named, in any of the three languages. */
+function findTopic(q: string): string | undefined {
+  let best: { id: string; score: number } | undefined;
+  for (const tp of TOPICS) {
+    for (const title of [tp.title.ru, tp.title.kk, tp.title.en]) {
+      const words = norm(title).split(" ").filter((w) => w.length > 3);
+      const hits = words.filter((w) => q.includes(w.slice(0, Math.max(4, w.length - 2)))).length;
+      if (hits > 0 && (!best || hits > best.score)) best = { id: tp.id, score: hits };
+    }
+  }
+  // A few colloquial handles the titles don't cover.
+  const aliases: Record<string, string[]> = {
+    quadratic: ["дискриминант", "виет", "квадратн", "parabola"],
+    linear: ["линейн", "уравнени", "скобк"],
+    functions: ["график", "парабол", "функци", "наклон"],
+    "en-tenses": ["present perfect", "past simple", "времен", "tense"],
+    "en-articles": ["артикл", "предлог", "article"],
+    "en-vocab": ["суффикс", "приставк", "лексик", "vocab"],
+    "kz-septik": ["септик", "септік", "жалгау", "жалғау"],
+    "kz-etistik": ["етистик", "етістік", "шак", "шақ"],
+    "kz-soz": ["соз тап", "сөз тап", "сын есим", "зат есим"],
+    "hs-ancient": ["сак", "гунн", "каганат", "золотой человек", "алтын адам"],
+    "hs-khanate": ["ханств", "керей", "жанибек", "жүз", "жуз", "жонгар", "жоңғар"],
+    "hs-modern": ["независим", "тауелсиз", "тәуелсіз", "конституц", "астана"],
+    "sat-algebra": ["sat math", "sat алгебра"],
+    "sat-data": ["процент", "отношени", "percent"],
+    "sat-writing": ["reading writing", "запят", "пунктуац"],
+    "ie-reading": ["not given", "reading"],
+    "ie-writing": ["writing", "task 2", "эссе"],
+    "ie-vocab": ["парафраз", "синоним", "collocation"],
+  };
+  for (const [id, keys] of Object.entries(aliases)) {
+    if (keys.some((k) => q.includes(k)) && !best) best = { id, score: 1 };
+  }
+  return best?.id;
+}
+
+const L3 = (lang: Lang, ru: string, kk: string, en: string) => ({ ru, kk, en })[lang];
+
+/**
+ * Answers a typed question from the student's own data and the content
+ * library. Rule-based by design: everything it says is traceable to a number
+ * in the profile or to a line of the course material.
+ */
+export function answerQuestion(raw: string, st: StudentState, lang: Lang): Reply {
+  const q = norm(raw);
+  const topics = topicsOf(st.activeSubject);
+  const weak = weakestOf(st);
+
+  if (!q) return { text: L3(lang, "Напиши вопрос — отвечу по твоим данным.", "Сұрағыңды жаз — деректеріңе қарап жауап беремін.", "Type a question and I'll answer from your data.") };
+
+  // --- greetings ---
+  if (has(q, ["привет", "салам", "сәлем", "салем", "hi", "hello", "hey"]) && q.length < 20) {
+    return {
+      text: L3(lang,
+        `Привет, ${st.name}. Могу разобрать любую тему, сказать что делать сегодня, объяснить прогноз балла или подготовить к мок-тесту. Спрашивай своими словами.`,
+        `Сәлем, ${st.name}. Кез келген тақырыпты талдай аламын, бүгін не істеу керегін айтамын, балл болжамын түсіндіремін немесе мок-тестке дайындаймын. Өз сөзіңмен сұра.`,
+        `Hi, ${st.name}. I can break down any topic, tell you what to do today, explain your score forecast or prep you for the mock test. Ask in your own words.`),
+    };
+  }
+
+  if (has(q, ["спасиб", "рахмет", "рақмет", "thanks", "thank you"])) {
+    return { text: L3(lang, "Не за что. Возвращайся, когда застрянешь.", "Оқасы жоқ. Қиналсаң, қайта кел.", "Any time. Come back when you get stuck.") };
+  }
+
+  // --- explain a named topic ---
+  const named = findTopic(q);
+  if (named && has(q, ["объясн", "расскаж", "что такое", "как реш", "не понима", "тусиндир", "түсіндір", "explain", "how do i", "what is", "помоги"])) {
+    const tp = topicById(named);
+    const lesson = lessonByTopic(named);
+    const points = summaryOf(named).slice(0, 4).map((x) => x[lang]);
+    return {
+      topic: named,
+      text: lesson
+        ? `${tp ? tp.title[lang] + ". " : ""}${lesson.intro[lang]}`
+        : L3(lang, "По этой теме пока нет разбора.", "Бұл тақырып бойынша әзірге талдау жоқ.", "No breakdown for this topic yet."),
+      bullets: points,
+    };
+  }
+
+  // --- a topic was named without a verb: still show the essentials ---
+  if (named && q.split(" ").length <= 5) {
+    const tp = topicById(named);
+    const m = Math.round((st.mastery[named] ?? 0) * 100);
+    const a = st.attempts[named] ?? 0;
+    return {
+      topic: named,
+      text: a === 0
+        ? L3(lang,
+            `«${tp?.title.ru}» ты ещё не начинал. Начни с конспекта — это 5 минут, дальше сразу задачи.`,
+            `«${tp?.title.kk}» әлі басталмаған. Конспектіден баста — 5 минут, сосын бірден есептер.`,
+            `You haven't started "${tp?.title.en}" yet. Start with the summary — five minutes, then straight to problems.`)
+        : L3(lang,
+            `«${tp?.title.ru}»: освоено на ${m}%, решено ${a}. ${m < 50 ? "Пока слабое место — стоит перечитать конспект." : m < 75 ? "Идёт нормально, но до уверенного уровня ещё есть куда расти." : "Тема закреплена, можно только повторять."}`,
+            `«${tp?.title.kk}»: меңгерілуі ${m}%, шешілгені ${a}. ${m < 50 ? "Әзірге әлсіз тұс — конспектіні қайта оқы." : m < 75 ? "Қалыпты жүріп жатыр, бірақ өсуге орын бар." : "Тақырып бекітілді, тек қайталау қалды."}`,
+            `"${tp?.title.en}": ${m}% mastered, ${a} solved. ${m < 50 ? "Still a weak spot — re-read the summary." : m < 75 ? "Going fine, but not solid yet." : "Locked in; only review left."}`),
+      bullets: summaryOf(named).slice(0, 3).map((x) => x[lang]),
+    };
+  }
+
+  // --- formulas / cheat sheet ---
+  if (has(q, ["формул", "шпаргалк", "конспект", "кратко", "formula", "summary", "cheat"])) {
+    const id = named ?? weak?.id ?? topics[0]?.id;
+    if (!id) return { text: L3(lang, "Сначала выбери предмет.", "Алдымен пәнді таңда.", "Pick a subject first.") };
+    const tp = topicById(id);
+    return {
+      topic: id,
+      text: L3(lang, `Конспект по теме «${tp?.title.ru}»:`, `«${tp?.title.kk}» тақырыбының конспектісі:`, `Summary for "${tp?.title.en}":`),
+      bullets: summaryOf(id).map((x) => x[lang]),
+    };
+  }
+
+  // --- what to do today / plan ---
+  if (has(q, ["что делать", "сегодня", "план", "с чего начать", "не знаю что", "бугин", "бүгін", "жоспар", "what should i", "today", "plan"])) {
+    return { text: CHAT_TURNS[0].a(st)[lang], topic: CHAT_TURNS[0].topicOf?.(st) };
+  }
+
+  // --- stuck / hard ---
+  if (has(q, ["застря", "не получ", "тяжел", "сложн", "туплю", "қиын", "киын", "stuck", "hard", "difficult"])) {
+    return { text: CHAT_TURNS[1].a(st)[lang], topic: CHAT_TURNS[1].topicOf?.(st) };
+  }
+
+  // --- exam pacing ---
+  if (has(q, ["успе", "экзамен", "ент", "ұбт", "убт", "хватит времени", "емтихан", "in time", "exam", "ready"])) {
+    return { text: CHAT_TURNS[2].a(st)[lang] };
+  }
+
+  // --- mock tests ---
+  if (has(q, ["мок", "mock", "пробн", "тест когда", "тесте"])) {
+    return { text: CHAT_TURNS[3].a(st)[lang] };
+  }
+
+  // --- forecast ---
+  if (has(q, ["прогноз", "балл", "сколько получ", "score", "болжам", "forecast"])) {
+    const view = formatForecast(readiness(st, st.activeSubject), st.goal);
+    const covered = topics.filter((tp) => (st.attempts[tp.id] ?? 0) > 0);
+    const list = covered.map((tp) => `${tp.title[lang]} — ${Math.round((st.mastery[tp.id] ?? 0) * 100)}%`);
+    return {
+      text: L3(lang,
+        `Сейчас прогноз ${view.value} из ${view.max}. Он складывается из освоенности тем с учётом их веса в экзамене и поправки на твой рейтинг (${st.elo}), поэтому лёгкими задачами его не накрутить.`,
+        `Қазіргі болжам ${view.max}-ден ${view.value}. Ол тақырыптардың меңгерілуі мен емтихандағы салмағынан және рейтингіңе (${st.elo}) түзетуден құралады, сондықтан жеңіл есептермен көтеру мүмкін емес.`,
+        `Your forecast is ${view.value} of ${view.max}. It combines topic mastery weighted by exam share with a correction for your rating (${st.elo}), so easy problems can't inflate it.`),
+      bullets: list,
+    };
+  }
+
+  // --- stats: hours, streak, rating ---
+  if (has(q, ["сколько я", "часов", "стрик", "рейтинг", "статист", "сағат", "сагат", "hours", "streak", "rating", "elo"])) {
+    const hours = (totalSeconds(st.secondsByDay) / 3600).toFixed(1);
+    const week = Math.round(weekSeconds(st.secondsByDay) / 60);
+    const streak = streakLength(st.streakDates);
+    return {
+      text: L3(lang,
+        `Всего за задачами ${hours} ч, за эту неделю ${week} мин, стрик ${streak} ${ruPlural(streak, "день", "дня", "дней")}, рейтинг ${st.elo}.`,
+        `Барлығы ${hours} сағат, осы аптада ${week} мин, стрик ${streak} күн, рейтинг ${st.elo}.`,
+        `${hours} h total, ${week} min this week, a ${streak}-day streak, rating ${st.elo}.`),
+    };
+  }
+
+  // --- video ---
+  if (has(q, ["видео", "ютуб", "youtube", "видос", "video", "посмотреть"])) {
+    const id = named ?? weak?.id ?? topics[0]?.id;
+    const tp = id ? topicById(id) : null;
+    return {
+      topic: id,
+      text: tp
+        ? L3(lang, `Держи видео по теме «${tp.title.ru}» — кнопка ниже.`, `«${tp.title.kk}» тақырыбы бойынша видео — төмендегі түйме.`, `Here's a video on "${tp.title.en}" — button below.`)
+        : L3(lang, "Скажи, по какой теме нужно видео.", "Қай тақырып бойынша видео керегін айт.", "Tell me which topic you want a video on."),
+    };
+  }
+
+  // --- what subjects exist ---
+  if (has(q, ["предмет", "чему учить", "пән", "пан", "subject"])) {
+    return {
+      text: L3(lang, "Сейчас на платформе шесть направлений:", "Қазір платформада алты бағыт бар:", "Six tracks are available right now:"),
+      bullets: SUBJECTS.map((x) => `${x.title[lang]} — ${x.blurb[lang]}`),
+    };
+  }
+
+  // --- fallback: say what it can do, and give the most useful thing anyway ---
+  const fallbackTopic = weak?.id ?? topics[0]?.id;
+  return {
+    topic: fallbackTopic,
+    text: L3(lang,
+      "Я отвечаю по твоим данным и материалам курса, поэтому вопрос лучше задать конкретнее. Например: «объясни квадратные уравнения», «что делать сегодня», «почему я застрял», «какой у меня прогноз», «дай конспект», «нужно видео».",
+      "Мен сенің деректерің мен курс материалдары бойынша жауап беремін, сондықтан сұрақты нақтырақ қой. Мысалы: «квадрат теңдеулерді түсіндір», «бүгін не істеу керек», «неге тұрып қалдым», «болжамым қандай», «конспект бер», «видео керек».",
+      "I answer from your data and the course material, so a more specific question works best. For example: \"explain quadratic equations\", \"what should I do today\", \"why am I stuck\", \"what's my forecast\", \"give me the summary\", \"I need a video\"."),
+  };
 }
