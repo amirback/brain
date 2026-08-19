@@ -181,6 +181,10 @@ export const ru = {
     hello: "Привет",
     yourPlan: "Твой план на сегодня",
     weakTitle: "Слабые места",
+    railMore: "Коротко",
+    mapDone: "тем освоено",
+    noAlerts: "Всё под контролем",
+
     mapTitle: "Карта знаний",
     mapLegend: { strong: "освоено", mid: "в процессе", weak: "пробел", none: "не начато" },
     forecast: "Прогноз балла",

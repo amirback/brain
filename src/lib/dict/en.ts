@@ -183,6 +183,10 @@ export const en: Dict = {
     hello: "Hey",
     yourPlan: "Your plan for today",
     weakTitle: "Weak spots",
+    railMore: "In brief",
+    mapDone: "topics mastered",
+    noAlerts: "Nothing needs attention",
+
     mapTitle: "Knowledge map",
     mapLegend: { strong: "mastered", mid: "in progress", weak: "gap", none: "not started" },
     forecast: "Score forecast",

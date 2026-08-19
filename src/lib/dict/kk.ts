@@ -183,6 +183,10 @@ export const kk: Dict = {
     hello: "Сәлем",
     yourPlan: "Бүгінгі жоспарың",
     weakTitle: "Әлсіз тұстар",
+    railMore: "Қысқаша",
+    mapDone: "тақырып игерілді",
+    noAlerts: "Бәрі бақылауда",
+
     mapTitle: "Білім картасы",
     mapLegend: { strong: "меңгерілді", mid: "үдерісте", weak: "олқылық", none: "басталмаған" },
     forecast: "Балл болжамы",

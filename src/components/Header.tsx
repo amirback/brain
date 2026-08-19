@@ -107,7 +107,7 @@ export function Header() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3.5 py-2 rounded-xl text-[13.5px] font-medium transition-colors ${
+                className={`px-3 py-2 rounded-xl text-[13.5px] font-medium whitespace-nowrap transition-colors ${
                   isActive(l.href) ? "text-paper bg-white/8" : "text-mute hover:text-paper hover:bg-white/5"
                 }`}
               >

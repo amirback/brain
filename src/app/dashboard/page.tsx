@@ -88,6 +88,79 @@ export default function Dashboard() {
     user.goal === "sat" ? d.dash.forecastUnitSat : user.goal === "ielts" ? d.dash.forecastUnitIelts : d.dash.forecastUnit;
   const openTasks = user.tasks.filter((t) => !t.done);
 
+  /**
+   * Only genuinely time-critical items get an alert row. Anything that is
+   * merely "fine" drops to the rail as a one-line status, which is what keeps
+   * a healthy dashboard from filling up with cards that say nothing is wrong.
+   */
+  const alerts: {
+    key: string; tone: "amber" | "brand"; icon: React.ReactNode;
+    title: string; note: string; cta: string; href?: string; onClick?: () => void;
+  }[] = [];
+
+  if (derived.mock && derived.mockDays !== null && derived.mockDays <= 1) {
+    alerts.push({
+      key: "mock",
+      tone: "amber",
+      icon: <IconClock size={18} />,
+      title: d.mock.scheduled,
+      note: `${derived.mock.size} ${d.mock.questions} · ${
+        derived.mockDays > 0
+          ? `${d.mock.dueIn} ${derived.mockDays} ${d.common.day}`
+          : derived.mockDays === 0
+            ? d.mock.dueToday
+            : d.mock.overdue
+      }`,
+      cta: d.mock.start,
+      href: `/mock?id=${derived.mock.id}`,
+    });
+  }
+  if (derived.dueCheckpoint) {
+    alerts.push({
+      key: "checkpoint",
+      tone: "brand",
+      icon: <IconRefresh size={18} />,
+      title: d.dash.checkpoint,
+      note: d.dash.checkpointDue,
+      cta: d.dash.checkpointCta,
+      href: "/practice?mode=checkpoint",
+    });
+  }
+  if (!user.classCode) {
+    alerts.push({
+      key: "class",
+      tone: "amber",
+      icon: <IconTeacher size={18} />,
+      title: d.codes.notInClass,
+      note: d.codes.notInClassHint,
+      cta: d.codes.joinCta,
+      onClick: () => setJoinOpen(true),
+    });
+  }
+  if (user.goal === "sat" || user.goal === "ielts") {
+    alerts.push({
+      key: "exam",
+      tone: "brand",
+      icon: <IconTarget size={18} />,
+      title: user.goal === "sat" ? d.exam.satTitle : d.exam.ieltsTitle,
+      note: user.goal === "sat" ? d.exam.satBlurb : d.exam.ieltsBlurb,
+      cta: d.exam.start,
+      href: user.goal === "sat" ? "/sat" : "/ielts",
+    });
+  }
+
+  const mapRows = [
+    ...topicsOf(derived.subject).map((t) => ({ id: t.id, title: pick(t.title) })),
+    ...user.customTopics.filter((c) => c.subject === derived.subject).map((c) => ({ id: c.id, title: c.name })),
+  ];
+  const mapStats = {
+    total: mapRows.length,
+    mastered: mapRows.filter((t) => (user.mastery[t.id] ?? 0) >= 0.7).length,
+  };
+
+  /** The next three days of the plan — the rail's guaranteed content. */
+  const upcoming = (plan?.days ?? []).filter((day) => day.offset > 0).slice(0, 3);
+
   if (!user.diagnosticDone) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
@@ -159,369 +232,173 @@ export default function Dashboard() {
         </div>
       </Reveal>
 
-      {/* today's task — the first thing a returning student should see */}
+      {/* ================= TIER 1 — today =================
+          One task, one action, unmistakably the most important thing on the
+          page. Everything below is deliberately quieter so it cannot compete. */}
       {plan?.today && (
         <Reveal delay={40}>
-          <Card className={`mt-4 ${plan.today.status === "done" ? "" : "border-brand/45 bg-brand/6"}`}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <span
-                className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${
-                  plan.today.status === "done" ? "bg-brand/15 text-brand" : "bg-brand text-ink"
-                }`}
-              >
-                {plan.today.status === "done" ? <IconCheck size={22} /> : <IconBolt size={22} />}
+          <div
+            className={`mt-5 overflow-hidden rounded-3xl border ${
+              plan.today.status === "done" ? "border-line bg-card" : "border-brand/50 bg-brand/8"
+            }`}
+          >
+            <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+              {/* The icon set hard-codes brand orange, so a solid orange badge
+                  would hide the glyph. A tint keeps it legible; the emphasis
+                  comes from the panel and the solid CTA instead. */}
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-brand/30 bg-brand/15">
+                {plan.today.status === "done" ? <IconCheck size={26} /> : <IconBolt size={26} />}
               </span>
+
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold uppercase tracking-wider text-brand">
-                  <span>{plan.today.status === "done" ? d.plan.doneToday : d.plan.todayTask}</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-wider">
+                  <span className="text-brand">
+                    {plan.today.status === "done" ? d.plan.doneToday : d.plan.todayTask}
+                  </span>
                   {plan.target.daysLeft !== null && (
                     <span className="text-dim">
                       · {plan.target.daysLeft} {d.plan.days}{" "}
                       {plan.target.kind === "mock" ? d.plan.daysLeftToMock : d.plan.daysLeftToExam}
                     </span>
                   )}
+                  <span className="text-dim">· {plan.today.minutes} {d.common.min}</span>
                 </div>
-                <h3 className="font-display mt-1 text-[17px] font-extrabold leading-snug">
+                <h2 className="font-display mt-1.5 text-[clamp(19px,3.4vw,25px)] font-extrabold leading-tight">
                   {pick(plan.today.title)}
-                </h3>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
+                </h2>
+                <p className="mt-1.5 max-w-lg text-[13.5px] leading-relaxed text-mute">
                   {plan.today.status === "done" ? d.plan.doneTodayNote : pick(plan.today.detail)}
                 </p>
               </div>
-              <div className="flex shrink-0 flex-col gap-2 sm:w-auto">
+
+              <div className="flex shrink-0 flex-col gap-2 sm:w-[150px]">
                 {plan.today.status !== "done" && (
-                  <Btn href={plan.today.href} size="sm" className="w-full sm:w-auto">
+                  <Btn href={plan.today.href} size="lg" full>
                     {d.plan.startNow}
                   </Btn>
                 )}
-                <Btn href="/plan" variant="outline" size="sm" className="w-full sm:w-auto">
+                <Btn href="/plan" variant="outline" size={plan.today.status === "done" ? "lg" : "sm"} full>
                   {d.plan.open}
                 </Btn>
               </div>
             </div>
-          </Card>
+          </div>
         </Reveal>
       )}
 
-      {/* class link status — this is how a teacher can see this student at all */}
-      {!user.classCode && (
-        <Reveal delay={50}>
-          <Card className="mt-4 border-amber/35 bg-amber/6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber/15 text-amber">
-                <IconTeacher size={21} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-display text-[15px] font-bold">{d.codes.notInClass}</h3>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-mute">{d.codes.notInClassHint}</p>
+      {/* ================= TIER 2 — alerts =================
+          Only things that are actually time-critical, as single compact rows.
+          A status that is fine does not get a card here; it drops to the rail. */}
+      {(alerts.length > 0) && (
+        <Reveal delay={60}>
+          <div className="mt-3 flex flex-col gap-2">
+            {alerts.map((a) => (
+              <div
+                key={a.key}
+                className={`flex flex-col gap-3 rounded-2xl border px-4 py-3 min-[420px]:flex-row min-[420px]:items-center ${
+                  a.tone === "amber" ? "border-amber/40 bg-amber/8" : "border-brand/40 bg-brand/8"
+                }`}
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className={`shrink-0 ${a.tone === "amber" ? "text-amber" : "text-brand"}`}>{a.icon}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13.5px] font-bold leading-snug">{a.title}</span>
+                    <span className="line-clamp-2 text-[12.5px] leading-snug text-mute">{a.note}</span>
+                  </span>
+                </span>
+                {a.href ? (
+                  <Btn href={a.href} size="sm" className="w-full shrink-0 min-[420px]:w-auto">{a.cta}</Btn>
+                ) : (
+                  <Btn size="sm" className="w-full shrink-0 min-[420px]:w-auto" onClick={a.onClick}>{a.cta}</Btn>
+                )}
               </div>
-              <Btn size="sm" onClick={() => setJoinOpen(true)} className="w-full shrink-0 sm:w-auto">
-                {d.codes.joinCta}
-              </Btn>
-            </div>
-          </Card>
+            ))}
+          </div>
         </Reveal>
       )}
 
-      {/* stats */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Reveal delay={40}>
-          <Card className="h-full">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-dim">{d.dash.eloTitle}</span>
-              <IconBolt size={16} />
+      {/* ================= TIER 3 — momentum =================
+          Four numbers that answer "am I moving", at a quarter of the visual
+          weight of the hero. Two columns on a phone rather than four tall
+          stacked cards. */}
+      <div className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <Reveal delay={70}>
+          <StatTile label={d.dash.eloTitle} icon={<IconBolt size={14} />} value={String(user.elo)}>
+            <div className="-mb-1 mt-1.5">
+              <Sparkline points={user.eloHistory.slice(-14).map((p) => p.elo)} h={26} />
             </div>
-            <div className="font-display mt-1.5 text-3xl font-extrabold tabular-nums">{user.elo}</div>
-            <div className="mt-2 -mb-1">
-              <Sparkline points={user.eloHistory.slice(-14).map((p) => p.elo)} h={40} />
-            </div>
-          </Card>
+          </StatTile>
         </Reveal>
 
-        <Reveal delay={80}>
-          <Card className="h-full">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-dim">{d.dash.streakTitle}</span>
-              <IconFlame size={16} />
-            </div>
-            <div className="font-display mt-1.5 flex items-end gap-2 text-3xl font-extrabold tabular-nums">
-              {derived.streak}
-              <span className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-dim">{d.dash.streakUnit}</span>
-            </div>
-            <div className="mt-3 flex gap-1">
+        <Reveal delay={95}>
+          <StatTile
+            label={d.dash.streakTitle}
+            icon={<IconFlame size={14} />}
+            value={String(derived.streak)}
+            suffix={d.dash.streakUnit}
+          >
+            <div className="mt-2 flex gap-1">
               {derived.days.slice(-7).map((day) => (
                 <span
                   key={day.date}
-                  className="h-6 flex-1 rounded-md"
+                  className="h-4 flex-1 rounded"
                   style={{ background: day.seconds > 0 ? "#ff5c00" : "#2a2c33" }}
                   title={day.date}
                 />
               ))}
             </div>
-          </Card>
+          </StatTile>
         </Reveal>
 
         <Reveal delay={120}>
-          <Card className="h-full">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-dim">{d.dash.hours}</span>
-              <IconClock size={16} />
-            </div>
-            <div className="font-display mt-1.5 text-3xl font-extrabold tabular-nums">
-              {(derived.total / 3600).toFixed(1)}
-              <span className="text-lg text-dim">{d.common.hour}</span>
-            </div>
-            <div className="mt-1 text-[12px] text-dim">
+          <StatTile
+            label={d.dash.hours}
+            icon={<IconClock size={14} />}
+            value={(derived.total / 3600).toFixed(1)}
+            suffix={d.common.hour}
+          >
+            <div className="mt-2 truncate text-[11.5px] text-dim">
               {fmtHours(derived.week, d.common.hour, d.common.min)} · {d.dash.hoursWeek}
             </div>
-          </Card>
+          </StatTile>
         </Reveal>
 
-        <Reveal delay={160}>
-          <Card className="h-full">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-dim">{d.dash.forecast}</span>
-              <IconTrend size={16} />
-            </div>
-            <div className="font-display mt-1.5 flex items-end gap-2 text-3xl font-extrabold tabular-nums">
-              {derived.view.value}
-              <span className="mb-1 text-lg text-dim">/ {derived.view.max}</span>
-              {derived.delta !== 0 && (
-                <span className={`mb-1.5 text-[12px] font-bold ${derived.delta > 0 ? "text-brand" : "text-dim"}`}>
-                  {derived.delta > 0 ? "+" : ""}
-                  {derived.delta}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 text-[12px] text-dim">{forecastUnit}</div>
-          </Card>
+        <Reveal delay={145}>
+          <StatTile
+            label={d.dash.forecast}
+            icon={<IconTrend size={14} />}
+            value={derived.view.value}
+            suffix={`/ ${derived.view.max}`}
+            delta={derived.delta}
+          >
+            <div className="mt-2 truncate text-[11.5px] text-dim">{forecastUnit}</div>
+          </StatTile>
         </Reveal>
       </div>
 
-      {/* what the mentor says today */}
-      {derived.tip && (
-        <Reveal delay={60}>
-          <Card className="mt-3 border-brand/30 bg-brand/5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-start gap-3.5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand">
-                  <IconSpark size={19} />
-                </span>
-                <p className="pt-0.5 text-[14px] leading-relaxed text-mute">{pick(derived.tip.text)}</p>
-              </div>
-              <Btn href="/assistant" size="sm" variant="outline" className="w-full shrink-0 sm:w-auto">
-                {d.assistant.open}
-              </Btn>
-            </div>
-          </Card>
-        </Reveal>
-      )}
-
-      {/* the exam trainer, for the goals that have one */}
-      {(user.goal === "sat" || user.goal === "ielts") && (
-        <Reveal delay={65}>
-          <Card className="mt-3 border-brand/35">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-start gap-3.5">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand/12 text-brand">
-                  <IconTarget size={20} />
-                </span>
-                <div className="min-w-0">
-                  <div className="font-display text-[15.5px] font-extrabold">
-                    {user.goal === "sat" ? d.exam.satTitle : d.exam.ieltsTitle}
-                  </div>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
-                    {user.goal === "sat" ? d.exam.satBlurb : d.exam.ieltsBlurb}
-                  </p>
-                </div>
-              </div>
-              <Btn href={user.goal === "sat" ? "/sat" : "/ielts"} size="sm" className="w-full shrink-0 sm:w-auto">
-                {d.exam.start}
-              </Btn>
-            </div>
-          </Card>
-        </Reveal>
-      )}
-
-      {/* scheduled mock test with its deadline */}
-      {derived.mock && (
-        <Reveal delay={70}>
-          <Card className={`mt-3 ${derived.mockDays !== null && derived.mockDays <= 1 ? "border-amber/45 bg-amber/6" : ""}`}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-start gap-3.5">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber/40 bg-amber/12 text-amber">
-                  <IconClock size={20} />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="font-display text-[15px] font-bold">{d.mock.scheduled}</h3>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
-                    {derived.mock.size} {d.mock.questions} ·{" "}
-                    {derived.mockDays !== null && derived.mockDays > 0
-                      ? `${d.mock.dueIn} ${derived.mockDays} ${d.common.day}`
-                      : derived.mockDays === 0
-                        ? d.mock.dueToday
-                        : d.mock.overdue}
-                  </p>
-                </div>
-              </div>
-              <Btn href={`/mock?id=${derived.mock.id}`} size="sm" className="w-full shrink-0 sm:w-auto">
-                {d.mock.start}
-              </Btn>
-            </div>
-          </Card>
-        </Reveal>
-      )}
-
-      {/* resume the lesson the student left */}
-      {derived.resume && (
-        <Reveal delay={75}>
-          <Link href={`/learn?t=${derived.resume.id}`} className="group mt-3 block">
-            <Card hover className="flex items-center gap-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot text-mute">
-                <IconBook size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-dim">{d.lesson.resumeSub}</span>
-                <span className="mt-0.5 block truncate text-[15px] font-bold">{pick(derived.resume.title)}</span>
-              </span>
-              <span className="inline-flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-brand">
-                <span className="hidden sm:inline">{d.lesson.resume}</span>
-                <IconArrow size={14} />
-              </span>
-            </Card>
-          </Link>
-        </Reveal>
-      )}
-
-      <div className="mt-3 grid gap-3 lg:grid-cols-[1.35fr_1fr]">
+      {/* ================= TIER 4 — the work =================
+          Left holds the tall signature content, right is a rail of short
+          actionable lists. The rail is never empty because the plan always
+          produces days, so no placeholder ever has to stretch. */}
+      <div className="mt-3 grid gap-3 lg:grid-cols-[1.45fr_1fr] lg:items-start">
+        {/* ---- left: knowledge map ---- */}
         <div className="flex flex-col gap-3">
-          <Reveal delay={80}>
-            <Card>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold">{d.dash.yourPlan}</h2>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-dim">{d.common.today}</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {derived.recs.map((r, i) => {
-                  const t = topicById(r.topic);
-                  if (!t) return null;
-                  const m = user.mastery[r.topic] ?? 0;
-                  const label = r.kind === "start" ? d.dash.startTopic : r.kind === "review" ? d.dash.repeatTopic : d.dash.continueTopic;
-                  return (
-                    <Link
-                      key={r.topic}
-                      href={`/learn?t=${r.topic}`}
-                      className="group flex items-center gap-4 rounded-2xl border border-line bg-coal p-3.5 press hover:border-brand/50 hover:bg-brand/5"
-                    >
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-soot text-[13px] font-extrabold tabular-nums text-mute">
-                        {i + 1}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-bold">{pick(t.title)}</span>
-                        <span className="mt-1.5 block">
-                          <Bar value={m} h={5} tone={m < 0.35 ? "dim" : m < 0.7 ? "amber" : "brand"} />
-                        </span>
-                      </span>
-                      <span className="inline-flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-brand">
-                        <span className="hidden sm:inline">{label}</span>
-                        <IconArrow size={14} />
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </Card>
-          </Reveal>
-
-          <Reveal delay={120}>
-            <Card className={derived.dueCheckpoint ? "border-brand/45 bg-brand/6" : ""}>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="flex min-w-0 flex-1 items-start gap-4">
-                  <span
-                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl border ${
-                      derived.dueCheckpoint ? "border-brand/40 bg-brand/12 text-brand" : "border-line2 bg-soot text-mute"
-                    }`}
-                  >
-                    <IconRefresh size={21} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-display text-[15px] font-bold">{d.dash.checkpoint}</h3>
-                    <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
-                      {derived.dueCheckpoint
-                        ? d.dash.checkpointDue
-                        : `${d.dash.checkpointFresh} ${daysUntilCheckpoint(user.lastCheckpoint, user.createdAt)} ${d.common.day}`}
-                    </p>
-                  </div>
-                </div>
-                {derived.dueCheckpoint && (
-                  <Btn href="/practice?mode=checkpoint" size="sm" className="w-full shrink-0 sm:w-auto">
-                    {d.dash.checkpointCta}
-                  </Btn>
-                )}
-              </div>
-            </Card>
-          </Reveal>
-
           <Reveal delay={160}>
             <Card>
-              <h2 className="font-display mb-3.5 text-lg font-bold">{d.dash.tasksTitle}</h2>
-              {user.tasks.length === 0 ? (
-                <p className="text-[13.5px] leading-relaxed text-dim">{d.dash.tasksEmpty}</p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {user.tasks.map((t) => {
-                    const topic = topicById(t.topic);
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => toggleTask(t.id)}
-                        className={`flex items-center gap-3 rounded-2xl border p-3.5 text-left press ${
-                          t.done ? "border-line bg-coal/50 opacity-60" : "border-line bg-coal hover:border-line2"
-                        }`}
-                      >
-                        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 ${t.done ? "border-brand bg-brand" : "border-line2"}`}>
-                          {t.done && (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#121317" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className={`block truncate text-[14.5px] font-semibold ${t.done ? "line-through" : ""}`}>{t.title}</span>
-                          <span className="mt-0.5 block text-[12px] text-dim">
-                            {topic ? pick(topic.title) : t.topic} · {d.dash.taskDue} {t.due} · {t.from}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {openTasks.length > 0 && (
-                <div className="mt-3 text-[12px] text-dim tabular-nums">
-                  {openTasks.length} / {user.tasks.length}
-                </div>
-              )}
-            </Card>
-          </Reveal>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <Reveal delay={100}>
-            <Card>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display flex items-center gap-2 text-lg font-bold">
-                  <IconMap size={18} />
+              <div className="mb-4 flex items-baseline justify-between gap-3">
+                <h2 className="font-display flex items-center gap-2 text-[17px] font-bold">
+                  <IconMap size={17} />
                   {d.dash.mapTitle}
                 </h2>
+                {/* The wording is dropped on a phone so the heading stops wrapping. */}
+                <span className="shrink-0 text-[11.5px] font-semibold tabular-nums text-dim">
+                  {mapStats.mastered} / {mapStats.total}
+                  <span className="hidden sm:inline"> {d.dash.mapDone}</span>
+                </span>
               </div>
-              <div className="flex flex-col gap-3">
-                {[
-                  ...topicsOf(derived.subject).map((t) => ({ id: t.id, title: pick(t.title) })),
-                  ...user.customTopics
-                    .filter((c) => c.subject === derived.subject)
-                    .map((c) => ({ id: c.id, title: c.name })),
-                ].map((t) => {
+
+              <div className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {mapRows.map((t) => {
                   const m = user.mastery[t.id] ?? 0;
                   const a = user.attempts[t.id] ?? 0;
                   const band = masteryBand(m, a);
@@ -529,16 +406,19 @@ export default function Dashboard() {
                   return (
                     <Link key={t.id} href={`/learn?t=${t.id}`} className="group block">
                       <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                        <span className="truncate text-[14px] font-semibold transition-colors group-hover:text-brand">{t.title}</span>
-                        <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-dim">
+                        <span className="truncate text-[13.5px] font-semibold transition-colors group-hover:text-brand">
+                          {t.title}
+                        </span>
+                        <span className="shrink-0 text-[11px] font-bold tabular-nums text-dim">
                           {a === 0 ? "—" : `${Math.round(m * 100)}%`}
                         </span>
                       </div>
-                      <Bar value={m} tone={tone[band]} h={7} />
+                      <Bar value={m} tone={tone[band]} h={6} />
                     </Link>
                   );
                 })}
               </div>
+
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3.5 text-[11px] text-dim">
                 {[
                   { c: "#ff5c00", l: d.dash.mapLegend.strong },
@@ -555,26 +435,26 @@ export default function Dashboard() {
           </Reveal>
 
           {derived.weak.length > 0 && (
-            <Reveal delay={140}>
+            <Reveal delay={185}>
               <Card>
-                <h2 className="font-display mb-3.5 text-lg font-bold">{d.dash.weakTitle}</h2>
-                <div className="flex flex-col gap-2">
-                  {derived.weak.slice(0, 2).map((w) => (
+                <h2 className="font-display mb-3.5 text-[17px] font-bold">{d.dash.weakTitle}</h2>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {derived.weak.slice(0, 4).map((w) => (
                     <Link
                       key={w.t.id}
                       href={`/practice?t=${w.t.id}`}
-                      className="flex items-center gap-3.5 rounded-2xl border border-line bg-coal p-3 press hover:border-brand/50"
+                      className="press flex items-center gap-3 rounded-2xl border border-line bg-coal p-3 hover:border-brand/50"
                     >
-                      <Ring value={w.m} size={44} stroke={5}>
-                        <span className="text-[10.5px] font-extrabold tabular-nums">{Math.round(w.m * 100)}</span>
+                      <Ring value={w.m} size={40} stroke={5}>
+                        <span className="text-[10px] font-extrabold tabular-nums">{Math.round(w.m * 100)}</span>
                       </Ring>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[14px] font-bold">{pick(w.t.title)}</span>
-                        <span className="block text-[12px] text-dim">
+                        <span className="block truncate text-[13.5px] font-bold">{pick(w.t.title)}</span>
+                        <span className="block text-[11.5px] text-dim">
                           {w.a} {d.dash.solved}
                         </span>
                       </span>
-                      <IconArrow size={16} />
+                      <IconArrow size={15} />
                     </Link>
                   ))}
                 </div>
@@ -582,58 +462,13 @@ export default function Dashboard() {
             </Reveal>
           )}
 
-          {derived.rival && (
-            <Reveal delay={180}>
-              <Card>
-                <div className="flex items-center gap-3.5">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-soot text-[15px] font-extrabold text-mute">
-                    {derived.rival.name.slice(0, 1)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-bold">
-                      {d.dash.rivalCatch} {derived.rival.name}
-                    </div>
-                    <div className="mt-0.5 text-[12px] text-dim tabular-nums">
-                      {derived.rival.elo - user.elo} {d.common.elo} {d.dash.rivalAhead} {derived.rival.elo}
-                    </div>
-                  </div>
-                  <Btn href="/league" variant="outline" size="sm">
-                    <IconTrophy size={14} />
-                  </Btn>
-                </div>
-                <div className="mt-3">
-                  <Bar value={user.elo / derived.rival.elo} h={6} />
-                </div>
-              </Card>
-            </Reveal>
-          )}
-
-          <Reveal delay={200}>
-            <Link href="/inbox" className="group block">
-              <Card hover className="flex items-center gap-3.5">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot text-mute">
-                  <IconSpark size={20} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-bold">{d.inbox.title}</span>
-                  <span className="block text-[12px] text-dim">
-                    {derived.unread > 0 ? `${derived.unread} ${d.inbox.unread}` : d.inbox.sub}
-                  </span>
-                </span>
-                {derived.unread > 0 && (
-                  <span className="grid h-6 min-w-6 shrink-0 place-items-center rounded-full bg-brand px-1.5 text-[11px] font-extrabold text-ink tabular-nums">
-                    {derived.unread}
-                  </span>
-                )}
-              </Card>
-            </Link>
-          </Reveal>
-
-          <Reveal delay={220}>
+          {/* Kept in the left column: the map plus weak spots alone leave the
+              two sides badly uneven, and this is the taller of the two fillers. */}
+          <Reveal delay={205}>
             <Card>
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold">{d.dash.activity}</h2>
-                <IconCheck size={16} />
+                <h2 className="font-display text-[17px] font-bold">{d.dash.activity}</h2>
+                <IconCheck size={15} />
               </div>
               <MiniBars
                 values={derived.days.map((x) => Math.round(x.seconds / 60))}
@@ -642,10 +477,216 @@ export default function Dashboard() {
             </Card>
           </Reveal>
         </div>
+
+        {/* ---- right: the rail ---- */}
+        <div className="flex flex-col gap-3">
+          {/* the run-up, which always has content */}
+          {upcoming.length > 0 && (
+            <Reveal delay={175}>
+              <Card>
+                <div className="mb-3.5 flex items-baseline justify-between gap-3">
+                  <h2 className="font-display text-[17px] font-bold">{d.plan.ahead}</h2>
+                  <Link href="/plan" className="shrink-0 text-[12px] font-bold text-brand hover:underline">
+                    {d.plan.open}
+                  </Link>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {upcoming.map((day) => (
+                    <Link
+                      key={day.date}
+                      href={day.href}
+                      className="press flex items-center gap-3 rounded-2xl border border-line bg-coal px-3.5 py-2.5 hover:border-brand/45"
+                    >
+                      {/* No fixed width: "TOMORROW" is far wider than "ЗАВТРА"
+                          and a hard-coded column made them collide. */}
+                      <span className="shrink-0 whitespace-nowrap text-[10.5px] font-bold uppercase tracking-wider text-dim">
+                        {day.offset === 1 ? d.plan.tomorrow : `+${day.offset} ${d.plan.days}`}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-right text-[13.5px] font-semibold">
+                        {pick(day.title)}
+                      </span>
+                      <IconArrow size={14} />
+                    </Link>
+                  ))}
+                </div>
+              </Card>
+            </Reveal>
+          )}
+
+          {/* only rendered when a teacher actually assigned something */}
+          {user.tasks.length > 0 && (
+            <Reveal delay={195}>
+              <Card>
+                <div className="mb-3.5 flex items-baseline justify-between gap-3">
+                  <h2 className="font-display text-[17px] font-bold">{d.dash.tasksTitle}</h2>
+                  <span className="shrink-0 text-[11.5px] font-bold tabular-nums text-dim">
+                    {openTasks.length} / {user.tasks.length}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {user.tasks.map((t) => {
+                    const topic = topicById(t.topic);
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => toggleTask(t.id)}
+                        className={`press flex items-center gap-3 rounded-2xl border p-3 text-left ${
+                          t.done ? "border-line bg-coal/50 opacity-60" : "border-line bg-coal hover:border-line2"
+                        }`}
+                      >
+                        <span
+                          className={`grid h-5.5 w-5.5 shrink-0 place-items-center rounded-md border-2 ${
+                            t.done ? "border-brand bg-brand" : "border-line2"
+                          }`}
+                          style={{ height: 22, width: 22 }}
+                        >
+                          {t.done && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#121317" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className={`block truncate text-[13.5px] font-semibold ${t.done ? "line-through" : ""}`}>
+                            {t.title}
+                          </span>
+                          <span className="mt-0.5 block truncate text-[11.5px] text-dim">
+                            {topic ? pick(topic.title) : t.topic} · {t.from}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </Card>
+            </Reveal>
+          )}
+
+          {/* everything that is merely a status, as one-line rows */}
+          <Reveal delay={215}>
+            <Card pad="p-3">
+              <div className="px-1.5 pb-1 pt-0.5 text-[11px] font-bold uppercase tracking-wider text-dim">
+                {d.dash.railMore}
+              </div>
+              <div className="flex flex-col">
+                {derived.resume && (
+                  <RailRow
+                    href={`/learn?t=${derived.resume.id}`}
+                    icon={<IconBook size={16} />}
+                    title={pick(derived.resume.title)}
+                    note={d.lesson.resumeSub}
+                  />
+                )}
+                <RailRow
+                  href="/inbox"
+                  icon={<IconSpark size={16} />}
+                  title={d.inbox.title}
+                  note={derived.unread > 0 ? `${derived.unread} ${d.inbox.unread}` : d.inbox.sub}
+                  badge={derived.unread > 0 ? derived.unread : undefined}
+                />
+                {!derived.dueCheckpoint && (
+                  <RailRow
+                    icon={<IconRefresh size={16} />}
+                    title={d.dash.checkpoint}
+                    note={`${d.dash.checkpointFresh} ${daysUntilCheckpoint(user.lastCheckpoint, user.createdAt)} ${d.common.day}`}
+                  />
+                )}
+                {derived.rival && (
+                  <RailRow
+                    href="/league"
+                    icon={<IconTrophy size={16} />}
+                    title={`${d.dash.rivalCatch} ${derived.rival.name}`}
+                    note={`${derived.rival.elo - user.elo} ${d.common.elo} ${d.dash.rivalAhead} ${derived.rival.elo}`}
+                  />
+                )}
+                {derived.tip && (
+                  <RailRow
+                    href="/assistant"
+                    icon={<IconSpark size={16} />}
+                    title={d.assistant.title}
+                    note={pick(derived.tip.text)}
+                  />
+                )}
+              </div>
+            </Card>
+          </Reveal>
+
+        </div>
       </div>
 
       <JoinClassModal open={joinOpen} onClose={() => setJoinOpen(false)} onJoin={joinClass} />
     </div>
+  );
+}
+
+/** A momentum number: quiet by design, so it cannot compete with the hero. */
+function StatTile({
+  label, icon, value, suffix, delta, children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  suffix?: string;
+  delta?: number;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="h-full rounded-2xl border border-line bg-card p-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-[10.5px] font-bold uppercase tracking-wider text-dim">{label}</span>
+        <span className="shrink-0 text-dim">{icon}</span>
+      </div>
+      <div className="font-display mt-1 flex items-end gap-1.5 text-[clamp(20px,4.5vw,26px)] font-extrabold leading-none tabular-nums">
+        {value}
+        {suffix && <span className="mb-0.5 text-[11px] font-semibold text-dim">{suffix}</span>}
+        {delta !== undefined && delta !== 0 && (
+          <span className={`mb-0.5 text-[11px] font-bold ${delta > 0 ? "text-brand" : "text-dim"}`}>
+            {delta > 0 ? "+" : ""}
+            {delta}
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * A one-line status. Rows sit flush against each other with a hairline rule
+ * rather than becoming separate cards, so five statuses cost the height of one.
+ */
+function RailRow({
+  href, icon, title, note, badge,
+}: {
+  href?: string;
+  icon: React.ReactNode;
+  title: string;
+  note: string;
+  badge?: number;
+}) {
+  const inner = (
+    <span className="flex items-center gap-3 rounded-xl px-1.5 py-2.5 transition-colors">
+      <span className="shrink-0 text-dim">{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13.5px] font-semibold">{title}</span>
+        <span className="block truncate text-[11.5px] text-dim">{note}</span>
+      </span>
+      {badge !== undefined && (
+        <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-brand px-1.5 text-[10.5px] font-extrabold tabular-nums text-ink">
+          {badge}
+        </span>
+      )}
+      {href && <IconArrow size={14} />}
+    </span>
+  );
+
+  const cls = "block border-t border-line first:border-t-0";
+  return href ? (
+    <Link href={href} className={`${cls} press hover:text-brand`}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={cls}>{inner}</div>
   );
 }
 
