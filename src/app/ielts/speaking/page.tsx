@@ -70,6 +70,9 @@ function SpeakingInner() {
   }, [ready, user, role, router]);
 
   useEffect(() => {
+    // Same reason as the synthesis check: the page is prerendered, so the browser
+    // capability can only be read once hydration has happened.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSupported(createRecognition() !== null);
   }, []);
 

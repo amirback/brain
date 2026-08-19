@@ -4,14 +4,19 @@ import type {
 
 /* ---------------- answer checking ---------------- */
 
-/** Grid-ins and gap-fills: ignore case, spacing, articles and trailing periods. */
+/**
+ * Grid-ins and gap-fills: ignore case, spacing, articles and trailing periods.
+ * Whitespace is collapsed and trimmed *before* the article is stripped — otherwise
+ * a leading space stops the pattern from anchoring and " the bookshop" is marked
+ * wrong while "the bookshop" is accepted.
+ */
 export function normalise(raw: string): string {
   return raw
     .toLowerCase()
     .replace(/[.,;:!?"'`]/g, "")
-    .replace(/^(a|an|the)\s+/, "")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .replace(/^(a|an|the)\s+/, "");
 }
 
 /** Numeric answers accept 1/2, 0.5 and .5 as the same value. */

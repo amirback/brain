@@ -42,7 +42,10 @@ export function AudioScript({
   );
 
   useEffect(() => {
+    // Feature detection has to happen after hydration: the page is prerendered, so
+    // reading `window` during render would make the server and client disagree.
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSupported(false);
       return;
     }
@@ -99,9 +102,13 @@ export function AudioScript({
     });
   }, [flat, supported]);
 
+  // Starting playback is a command to an external system (the synthesis queue);
+  // the state it sets mirrors that system rather than deriving render state.
+  // `played` guards it to once per set and is deliberately not a dependency.
   useEffect(() => {
-    if (autoPlay && supported && !played) play();
-    // Only ever fires for the first render of a set.
+    if (!autoPlay || !supported || played) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    play();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlay, supported]);
 

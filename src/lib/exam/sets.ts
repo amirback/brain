@@ -1,10 +1,20 @@
 import type { ExamItem, ItemSet, Level } from "./types";
 import { SAT_RW_CRAFT } from "./content/sat-rw-craft";
 import { SAT_RW_CONVENTIONS } from "./content/sat-rw-conventions";
+import { SAT_RW_CRAFT_2 } from "./content/sat-rw-craft-2";
+import { SAT_RW_CONVENTIONS_2 } from "./content/sat-rw-conventions-2";
 import { SAT_MATH_ALGEBRA } from "./content/sat-math-algebra";
 import { SAT_MATH_DATA } from "./content/sat-math-data";
 
-export const SAT_RW_POOL: ExamItem[] = [...SAT_RW_CRAFT, ...SAT_RW_CONVENTIONS];
+/**
+ * The pools must be large enough that a full mock can draw two modules per section
+ * without reusing an item — 54 for Reading & Writing, 44 for Math. `scripts/exam-smoke.ts`
+ * asserts this, because a pool that is one item short silently produces a shorter
+ * module 2 rather than an error.
+ */
+export const SAT_RW_POOL: ExamItem[] = [
+  ...SAT_RW_CRAFT, ...SAT_RW_CRAFT_2, ...SAT_RW_CONVENTIONS, ...SAT_RW_CONVENTIONS_2,
+];
 export const SAT_MATH_POOL: ExamItem[] = [...SAT_MATH_ALGEBRA, ...SAT_MATH_DATA];
 
 /* ---------------- deterministic shuffling ---------------- */
@@ -125,9 +135,9 @@ export const SAT_SETS: ItemSet[] = [
     id: "sat-rw-craft",
     section: "rw",
     title: "Craft, Structure and Ideas",
-    minutes: 24,
+    minutes: 40,
     difficulty: "medium",
-    items: SAT_RW_CRAFT,
+    items: [...SAT_RW_CRAFT, ...SAT_RW_CRAFT_2],
     ru: "Слова в контексте, структура текста, главная мысль, работа с доказательствами и выводы.",
     en: "Words in context, text structure, central ideas, command of evidence and inferences.",
   }),
@@ -135,9 +145,9 @@ export const SAT_SETS: ItemSet[] = [
     id: "sat-rw-conventions",
     section: "rw",
     title: "Conventions and Expression",
-    minutes: 22,
+    minutes: 38,
     difficulty: "medium",
-    items: SAT_RW_CONVENTIONS,
+    items: [...SAT_RW_CONVENTIONS, ...SAT_RW_CONVENTIONS_2],
     ru: "Пунктуация и границы предложений, согласование, связки и риторический синтез — самый быстрый раздел для роста балла.",
     en: "Punctuation and sentence boundaries, agreement, transitions and rhetorical synthesis — the fastest section to improve.",
   }),

@@ -20,11 +20,8 @@ export default function SatHub() {
     if (!user || role !== "student") router.replace("/start");
   }, [ready, user, role, router]);
 
-  const attempts = user?.examAttempts ?? [];
-  const lastMock = useMemo(
-    () => attempts.find((a) => a.kind === "sat-mock"),
-    [attempts]
-  );
+  const attempts = useMemo(() => user?.examAttempts ?? [], [user]);
+  const lastMock = useMemo(() => attempts.find((a) => a.kind === "sat-mock"), [attempts]);
 
   const totalQuestions = SAT_BLUEPRINT.reduce((n, m) => n + m.count, 0);
   const totalMinutes = SAT_BLUEPRINT.reduce((n, m) => n + m.minutes, 0);

@@ -67,7 +67,9 @@ export function Runner({
   // Per-question time is what makes the "you spent 4 minutes on question 3"
   // feedback possible, so we bank the elapsed time every time the index moves.
   const spent = useRef<Record<string, number>>({});
-  const enteredAt = useRef<number>(Date.now());
+  // Stamped on mount rather than during render, so the value does not shift if
+  // React re-renders the component before the student has answered anything.
+  const enteredAt = useRef<number>(0);
   const submitted = useRef(false);
 
   const total = items.length;
@@ -76,7 +78,9 @@ export function Runner({
 
   const bank = useCallback(() => {
     const id = items[index]?.id;
-    if (!id) return;
+    // enteredAt is zero until the mount effect stamps it; banking against that
+    // would credit the question with fifty-odd years of thinking time.
+    if (!id || enteredAt.current === 0) return;
     const dt = (Date.now() - enteredAt.current) / 1000;
     spent.current[id] = (spent.current[id] ?? 0) + dt;
     enteredAt.current = Date.now();
@@ -95,6 +99,7 @@ export function Runner({
   }, [answers, bank, onDone]);
 
   useEffect(() => {
+    enteredAt.current = Date.now();
     const iv = window.setInterval(() => {
       setLeft((v) => {
         if (v <= 1) {

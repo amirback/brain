@@ -38,15 +38,14 @@ export default function SatMockPage() {
   const [routed, setRouted] = useState<{ rw: boolean; math: boolean }>({ rw: false, math: false });
   const [breakLeft, setBreakLeft] = useState(SAT_BREAK_MINUTES * 60);
   const [fire, setFire] = useState(0);
-  const seed = useRef(Date.now());
-  const startedAt = useRef(Date.now());
+  // Both are stamped when the test actually begins, not during render.
+  const seed = useRef(0);
+  const startedAt = useRef(0);
 
   useEffect(() => {
     if (!ready) return;
     if (!user || role !== "student") router.replace("/start");
   }, [ready, user, role, router]);
-
-  const used = useMemo(() => new Set(modules.flat().map((i) => i.id)), [modules]);
 
   /** Builds the module about to be shown, using the routing decided so far. */
   const buildStage = useCallback((index: number, routing: { rw: boolean; math: boolean }, prior: ExamItem[][]) => {
@@ -97,17 +96,22 @@ export default function SatMockPage() {
     const nextModule = buildStage(nextStage, nextRouting, modules);
     setModules((m) => [...m, nextModule]);
     setStage(nextStage);
-    setPhase(spec.id === SAT_BREAK_AFTER ? "break" : "module");
+    if (spec.id === SAT_BREAK_AFTER) {
+      setBreakLeft(SAT_BREAK_MINUTES * 60);
+      setPhase("break");
+    } else {
+      setPhase("module");
+    }
   }, [stage, modules, results, routed, buildStage]);
 
-  /* The break clock. */
+  /* The break clock, which resumes the test on its own when it runs out. */
   useEffect(() => {
     if (phase !== "break") return;
-    setBreakLeft(SAT_BREAK_MINUTES * 60);
     const iv = window.setInterval(() => {
       setBreakLeft((v) => {
         if (v <= 1) {
           window.clearInterval(iv);
+          setPhase("module");
           return 0;
         }
         return v - 1;
@@ -115,10 +119,6 @@ export default function SatMockPage() {
     }, 1000);
     return () => window.clearInterval(iv);
   }, [phase]);
-
-  useEffect(() => {
-    if (phase === "break" && breakLeft === 0) setPhase("module");
-  }, [phase, breakLeft]);
 
   /* The report, assembled once every module is in. */
   const report = useMemo(() => {
