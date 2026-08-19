@@ -190,6 +190,79 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ---------------- a day inside the product ----------------
+          The site explained what Brain does but never what the student
+          actually does. This section walks one loop end to end, with the
+          generated plan shown next to it so the promise is concrete. */}
+      <section className="relative overflow-hidden border-y border-line bg-coal/40">
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
+          <Reveal>
+            <h2 className="font-display max-w-2xl text-[clamp(28px,5vw,46px)] font-extrabold leading-[1.08] tracking-[-0.02em]">
+              {d.landing.dayTitle}
+              <br />
+              <span className="text-brand">{d.landing.dayTitle2}</span>
+            </h2>
+            <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-mute">{d.landing.dayBody}</p>
+          </Reveal>
+
+          <div className="mt-12 grid gap-8 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+            {/* the loop */}
+            <ol className="relative flex flex-col gap-3">
+              {d.landing.cycle.map((c, i) => (
+                <Reveal key={i} delay={i * 70}>
+                  <li className="relative flex gap-4 rounded-3xl border border-line bg-card p-5">
+                    <span className="font-display grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/12 text-[13px] font-extrabold tabular-nums text-brand">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-display text-[16px] font-extrabold leading-snug">{c.t}</h3>
+                      <p className="mt-1.5 text-[14px] leading-relaxed text-mute">{c.d}</p>
+                    </div>
+                    {i === d.landing.cycle.length - 1 && (
+                      <span className="absolute -bottom-2 right-6 text-[11px] font-bold uppercase tracking-wider text-brand">
+                        ↺
+                      </span>
+                    )}
+                  </li>
+                </Reveal>
+              ))}
+            </ol>
+
+            {/* the plan it produces */}
+            <Reveal delay={140}>
+              <div className="rounded-3xl border border-brand/35 bg-card p-6 lg:sticky lg:top-24">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-dim">
+                  {d.landing.dayPlanSub}
+                </div>
+                <h3 className="font-display mt-1.5 text-[19px] font-extrabold">{d.landing.dayPlanTitle}</h3>
+                <div className="mt-5 flex flex-col gap-2">
+                  {d.landing.dayPlanRows.map((r, i) => {
+                    const last = i === d.landing.dayPlanRows.length - 1;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 ${
+                          last ? "border-brand/45 bg-brand/8" : "border-line bg-coal"
+                        }`}
+                      >
+                        <span
+                          className={`w-[52px] shrink-0 text-[11px] font-bold uppercase tracking-wider ${
+                            last ? "text-brand" : "text-dim"
+                          }`}
+                        >
+                          {r.d}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{r.t}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
       {/* ---------------- features ---------------- */}
       <section className="relative overflow-hidden border-y border-line bg-coal/40">
         <div className="glow-orb -right-40 top-0 h-[360px] w-[360px] opacity-50" aria-hidden="true" />
