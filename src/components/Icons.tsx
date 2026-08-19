@@ -257,6 +257,27 @@ export function IconGrid({ size = 24, className }: P) {
   );
 }
 
+export function IconTelegram({ size = 24, className }: P) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path
+        d="M21.6 4.3 2.9 11.5c-.9.35-.88 1.62.03 1.94l4.6 1.6 1.75 5.4c.24.75 1.2.95 1.72.36l2.5-2.8 4.6 3.4c.62.46 1.5.12 1.66-.63l3-14.2c.18-.86-.66-1.58-1.46-1.27z"
+        fill="currentColor"
+      />
+      <path d="m7.6 15.1 9.5-6.3-7.9 7.4-.2 3.1" stroke="#14161a" strokeWidth="1" strokeLinejoin="round" fill="none" opacity=".45" />
+    </svg>
+  );
+}
+
+export function IconMail({ size = 24, className }: P) {
+  return (
+    <svg {...base(size)} className={className}>
+      <rect x="2.6" y="5" width="18.8" height="14" rx="3" stroke="currentColor" {...S} />
+      <path d="m3.6 7.6 7.5 5.2c.55.38 1.25.38 1.8 0l7.5-5.2" stroke="currentColor" {...S} />
+    </svg>
+  );
+}
+
 /** The wordmark: br<AI>n with the AI highlighted. */
 export function Wordmark({ className = "", size = 26 }: { className?: string; size?: number }) {
   return (

@@ -283,16 +283,23 @@ function LinkChildModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onLink: (code: string) => boolean;
+  onLink: (code: string) => Promise<boolean>;
   knownCodes: string[];
 }) {
   const { d } = useI18n();
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [ok, setOk] = useState(false);
 
-  const submit = () => {
-    if (onLink(code)) {
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    // A pasted share link carries the code inside it.
+    const fromLink = code.match(/ST-[A-Z0-9]{4}/i)?.[0] ?? code;
+    const found = await onLink(fromLink);
+    setBusy(false);
+    if (found) {
       setOk(true);
       setError(false);
       window.setTimeout(() => {
@@ -339,8 +346,8 @@ function LinkChildModal({
               ))}
             </div>
           )}
-          <Btn full size="lg" className="mt-4" disabled={code.trim().length < 4} onClick={submit}>
-            {d.common.continue}
+          <Btn full size="lg" className="mt-4" disabled={code.trim().length < 4 || busy} onClick={submit}>
+            {busy ? d.common.loading : d.common.continue}
           </Btn>
         </>
       )}

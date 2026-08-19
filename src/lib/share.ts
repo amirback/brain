@@ -80,8 +80,35 @@ export function classInviteLink(cls: ClassRecord): string {
   return `${base()}/start/#join=${pack({ kind: "join", cls } satisfies SharePayload)}`;
 }
 
+/**
+ * The parent view needs aggregates, not a full history, so the link carries a
+ * compact profile: dropping the answer log and old daily buckets keeps the URL
+ * short enough to paste into a messenger.
+ */
+function forParent(st: StudentState): StudentState {
+  const recent: Record<string, number> = {};
+  for (const [day, secs] of Object.entries(st.secondsByDay)) {
+    if (new Date(day).getTime() >= Date.now() - 21 * 864e5) recent[day] = secs;
+  }
+  return {
+    ...st,
+    email: null,
+    answers: [],
+    eloHistory: st.eloHistory.slice(-6),
+    forecastHistory: st.forecastHistory.slice(-6),
+    streakDates: st.streakDates.slice(-21),
+    secondsByDay: recent,
+    tasks: [],
+    materials: [],
+    customTopics: [],
+    inbox: [],
+    mocks: st.mocks.filter((m) => m.status === "done").slice(-4).map((m) => ({ ...m, wrongQids: [] })),
+    lessonProgress: {},
+  };
+}
+
 export function childShareLink(st: StudentState): string {
-  return `${base()}/parent/#child=${pack({ kind: "child", student: slimStudent(st) } satisfies SharePayload)}`;
+  return `${base()}/parent/#child=${pack({ kind: "child", student: forParent(st) } satisfies SharePayload)}`;
 }
 
 export function recoveryLink(st: StudentState): string {

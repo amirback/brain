@@ -11,6 +11,7 @@ import { demoSpace, DEMO_CLASS_CODE, demoClassRecord } from "./mock";
 import { todayStr } from "./store-helpers";
 import { mockResultMessage, planMock } from "./advisor";
 import { slimStudent } from "./share";
+import { joinRoster, lookupClass, lookupStudent, publishClass, publishStudent, pullRoster } from "./sync";
 
 export { todayStr };
 export { streakLength, totalSeconds, weekSeconds, lastNDays, fmtHours } from "./store-helpers";
@@ -87,10 +88,12 @@ interface StoreCtx {
   createParent: (a: { name: string; email: string | null }) => void;
   /** Signs back into a profile stored on this device by its email. */
   signInByEmail: (email: string) => Role | null;
-  joinClass: (classCode: string) => JoinResult;
+  joinClass: (classCode: string) => Promise<JoinResult>;
   /** Joins a class carried inside an invite link — works on any device. */
   joinByInvite: (cls: ClassRecord) => JoinResult;
-  linkChild: (studentCode: string) => boolean;
+  /** Leaves the current class, keeping all progress. */
+  leaveClass: () => void;
+  linkChild: (studentCode: string) => Promise<boolean>;
   /** Stores a child snapshot that arrived through a share link. */
   adoptChild: (student: StudentState) => boolean;
   /** Restores a profile from a recovery link, on any device. */
@@ -112,6 +115,8 @@ interface StoreCtx {
   requestHelp: (topic: string) => void;
   unlock: (a: string) => void;
   classRoster: () => StudentState[];
+  /** Pulls classmates who joined from other devices. */
+  refreshRoster: () => Promise<number>;
 
   saveLessonProgress: (topic: string, section: number) => void;
   finishMock: (mockId: string, score: number, wrongQids: string[], lang: Lang) => void;
@@ -154,6 +159,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const currentStudent = (s: Space): StudentState | null =>
     s.activeStudent ? (s.students[s.activeStudent] ?? null) : null;
+
+  // Snapshots go out at most once a minute, and only for students who joined
+  // a class or handed out a parent code — nobody else needs to be reachable.
+  const lastPush = useRef(0);
+  const pushSnapshot = useCallback((st: StudentState, force = false) => {
+    if (!force && Date.now() - lastPush.current < 60000) return;
+    lastPush.current = Date.now();
+    void publishStudent(st);
+  }, []);
 
   // Returning the same object from `fn` means "nothing changed" — persisting
   // anyway would hand React a new reference every time and spin any effect
@@ -231,6 +245,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       createdAt: Date.now(),
     };
     persist({ ...s, role: "teacher", teacher, classes: { ...s.classes, [code]: record } });
+    void publishClass(record);
   }, [persist]);
 
   const createParent = useCallback((a: { name: string; email: string | null }) => {
@@ -259,32 +274,41 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return null;
   }, [persist]);
 
-  /** A student types the code their teacher read out in class. */
-  const joinClass = useCallback((classCode: string): JoinResult => {
+  /**
+   * A student types the code their teacher read out. The class is looked up
+   * locally first, then in the shared store so a code from another device works.
+   */
+  const joinClass = useCallback(async (classCode: string): Promise<JoinResult> => {
     const s = ref.current;
     const st = currentStudent(s);
     const code = classCode.trim().toUpperCase();
     if (!st) return { ok: false };
-    const record = s.classes[code];
+
+    const record: ClassRecord | null = s.classes[code] ?? (await lookupClass(code));
     if (!record) return { ok: false };
-    // Work already handed out to this class is copied over on join, so a
-    // student who arrives late still sees the assignments.
+
     const classmate = Object.values(s.students).find((x) => x.classCode === code && x.code !== st.code);
+    const joined: StudentState = {
+      ...st,
+      classCode: code,
+      tasks: st.tasks.length > 0 ? st.tasks : (classmate?.tasks ?? []),
+      materials: st.materials.length > 0 ? st.materials : (classmate?.materials ?? []),
+      customTopics: st.customTopics.length > 0 ? st.customTopics : (classmate?.customTopics ?? []),
+    };
     persist({
-      ...s,
-      students: {
-        ...s.students,
-        [st.code]: {
-          ...st,
-          classCode: code,
-          tasks: st.tasks.length > 0 ? st.tasks : (classmate?.tasks ?? []),
-          materials: st.materials.length > 0 ? st.materials : (classmate?.materials ?? []),
-          customTopics: st.customTopics.length > 0 ? st.customTopics : (classmate?.customTopics ?? []),
-        },
-      },
+      ...ref.current,
+      classes: { ...ref.current.classes, [code]: record },
+      students: { ...ref.current.students, [st.code]: joined },
     });
+    // Announce the student so the teacher's panel can find them.
+    void joinRoster(code, st.code).then(() => pushSnapshot(joined, true));
     return { ok: true, className: record.className, teacherName: record.teacherName };
-  }, [persist]);
+  }, [persist, pushSnapshot]);
+
+  /** Leaves the current class without touching any progress. */
+  const leaveClass = useCallback(() => {
+    mutateStudent((st) => (st.classCode ? { ...st, classCode: null } : st));
+  }, [mutateStudent]);
 
   /**
    * An invite link brings the class with it, so the class is registered here
@@ -299,13 +323,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       persist({ ...s, classes, pendingClass: cls.code });
       return { ok: true, className: cls.className, teacherName: cls.teacherName };
     }
-    persist({
-      ...s,
-      classes,
-      students: { ...s.students, [st.code]: { ...st, classCode: cls.code } },
-    });
+    const joined = { ...st, classCode: cls.code };
+    persist({ ...s, classes, students: { ...s.students, [st.code]: joined } });
+    void joinRoster(cls.code, st.code).then(() => pushSnapshot(joined, true));
     return { ok: true, className: cls.className, teacherName: cls.teacherName };
-  }, [persist]);
+  }, [persist, pushSnapshot]);
 
   /** A shared snapshot of a child, opened by a parent on their own phone. */
   const adoptChild = useCallback((student: StudentState): boolean => {
@@ -331,11 +353,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, [persist]);
 
-  const linkChild = useCallback((studentCode: string): boolean => {
+  const linkChild = useCallback(async (studentCode: string): Promise<boolean> => {
     const s = ref.current;
     const code = studentCode.trim().toUpperCase();
-    if (!s.students[code]) return false;
-    persist({ ...s, parent: { name: s.parent?.name ?? "", email: s.parent?.email ?? null, childCode: code } });
+    const child: StudentState | null = s.students[code] ?? (await lookupStudent(code));
+    if (!child) return false;
+    persist({
+      ...ref.current,
+      students: { ...ref.current.students, [code]: child },
+      parent: { name: ref.current.parent?.name ?? "", email: ref.current.parent?.email ?? null, childCode: code },
+    });
     return true;
   }, [persist]);
 
@@ -370,12 +397,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const mock = planMock(next);
     if (mock) next.mocks = [...next.mocks, mock];
     persist({ ...s, students: { ...s.students, [st.code]: next } });
+    pushSnapshot(next);
     return { delta, elo };
   }, [persist]);
 
   const finishDiagnostic = useCallback(() => {
-    mutateStudent((st) => (st.diagnosticDone ? st : { ...st, diagnosticDone: true }));
-  }, [mutateStudent]);
+    mutateStudent((st) => {
+      if (st.diagnosticDone) return st;
+      const next = { ...st, diagnosticDone: true };
+      pushSnapshot(next, true);
+      return next;
+    });
+  }, [mutateStudent, pushSnapshot]);
 
   const finishCheckpoint = useCallback(() => {
     mutateStudent((st) => ({
@@ -470,6 +503,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return Object.values(s.students).filter((st) => st.classCode === s.teacher!.code);
   }, []);
 
+  /** Pulls students who joined this class from other devices. */
+  const refreshRoster = useCallback(async (): Promise<number> => {
+    const s = ref.current;
+    if (!s.teacher) return 0;
+    const remote = await pullRoster(s.teacher.code);
+    if (remote.length === 0) return 0;
+    const students = { ...ref.current.students };
+    let added = 0;
+    for (const r of remote) {
+      if (!students[r.code]) added += 1;
+      students[r.code] = { ...r, classCode: s.teacher.code };
+    }
+    persist({ ...ref.current, students });
+    return added;
+  }, [persist]);
+
   const saveLessonProgress = useCallback((topic: string, section: number) => {
     mutateStudent((st) => {
       const reached = Math.max(st.lessonProgress[topic] ?? 0, section);
@@ -525,11 +574,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         space, ready, user, viewedStudent, role: space.role,
         setRole, createStudent, createTeacher, createParent, signInByEmail,
-        joinClass, joinByInvite, linkChild, adoptChild, restoreProfile,
+        joinClass, joinByInvite, leaveClass, linkChild, adoptChild, restoreProfile,
         seedDemo, resetAll, switchRole,
         recordAnswer, finishDiagnostic, finishCheckpoint, switchGoal,
         setActiveSubject, addSubject, toggleTask, addTask, addMaterial,
-        addCustomTopic, requestHelp, unlock, classRoster,
+        addCustomTopic, requestHelp, unlock, classRoster, refreshRoster,
         saveLessonProgress, finishMock, syncInbox, markInboxRead,
       }}
     >

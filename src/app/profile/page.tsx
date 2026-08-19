@@ -36,7 +36,7 @@ const GOAL_ICON: Record<Goal, typeof IconTarget> = {
 
 export default function ProfilePage() {
   const { d, pick } = useI18n();
-  const { user, ready, role, switchGoal, resetAll, addSubject, setActiveSubject, joinClass, space } = useStore();
+  const { user, ready, role, switchGoal, resetAll, addSubject, setActiveSubject, joinClass, leaveClass, space } = useStore();
   const router = useRouter();
 
   const [switchOpen, setSwitchOpen] = useState(false);
@@ -194,8 +194,13 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1">
               {user.classCode ? (
                 <>
-                  <div className="text-[14px] font-bold">{teacherName ?? d.codes.classCode}</div>
-                  <div className="mt-0.5 text-[12.5px] tabular-nums text-dim">{user.classCode}</div>
+                  <div className="text-[14px] font-bold">
+                    {space.classes[user.classCode]?.className ?? teacherName ?? d.codes.classCode}
+                  </div>
+                  <div className="mt-0.5 text-[12.5px] text-dim">
+                    <span className="tabular-nums">{user.classCode}</span>
+                    {space.classes[user.classCode]?.teacherName ? ` · ${space.classes[user.classCode].teacherName}` : ""}
+                  </div>
                 </>
               ) : (
                 <>
@@ -204,7 +209,19 @@ export default function ProfilePage() {
                 </>
               )}
             </div>
-            {!user.classCode && (
+            {user.classCode ? (
+              <Btn
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => {
+                  leaveClass();
+                  setJoinOpen(true);
+                }}
+              >
+                {d.codes.changeClass}
+              </Btn>
+            ) : (
               <Btn size="sm" variant="outline" onClick={() => setJoinOpen(true)} className="shrink-0">
                 {d.codes.joinCta}
               </Btn>

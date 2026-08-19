@@ -74,9 +74,9 @@ export default function Landing() {
               <Reveal delay={320}>
                 <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
                   {[
-                    { v: "6", l: d.subjects.title },
-                    { v: "3", l: d.profile.lang },
-                    { v: "0 ₸", l: d.roles.student.t },
+                    { v: "6", l: d.landing.statSubjects },
+                    { v: "3", l: d.landing.statLangs },
+                    { v: "0 ₸", l: d.landing.statPrice },
                   ].map((x) => (
                     <div key={x.l} className="text-xs leading-snug text-dim">
                       <span className="font-display block text-lg font-extrabold text-paper tabular-nums">{x.v}</span>
@@ -178,8 +178,8 @@ export default function Landing() {
             <Reveal key={i} delay={i * 90}>
               <div className="step-card group h-full rounded-3xl border border-line bg-card p-6 card-hover">
                 <div className="flex items-start gap-5">
-                  <span className="step-num shrink-0">{i + 1}</span>
-                  <div className="pt-2">
+                  <span className="step-num shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                  <div>
                     <h3 className="font-display text-lg font-bold leading-snug">{s.t}</h3>
                     <p className="mt-2 text-[14.5px] leading-relaxed text-mute">{s.d}</p>
                   </div>

@@ -387,6 +387,115 @@ export function totalStudyHours(st: StudentState): number {
   return totalSeconds(st.secondsByDay) / 3600;
 }
 
+
+/* ---------------- life questions ---------------- */
+
+/**
+ * Studying fails for human reasons far more often than for academic ones.
+ * These answers are grounded in the student's own numbers where possible and
+ * in ordinary, non-preachy advice where not.
+ */
+function lifeAnswer(q: string, st: StudentState, lang: Lang): Reply | null {
+  const streak = streakLength(st.streakDates);
+  const week = Math.round(weekSeconds(st.secondsByDay) / 60);
+  const weak = weakestOf(st);
+
+  // motivation, burnout, "I don't want to"
+  if (has(q, ["мотивац", "не хочу", "лень", "надоел", "устал", "выгор", "смысл", "заброс", "руки опуст",
+              "мотивация жоқ", "жалық", "шаршад", "motivation", "lazy", "tired", "burn", "give up", "pointless"])) {
+    return {
+      topic: weak?.id,
+      text: L3(lang,
+        `Мотивация не приходит до действия — она приходит после. Поэтому правило простое: не «сесть за учёбу», а «сделать 3 задачи». Три задачи — это 6 минут, на них решимость не нужна.${streak > 0 ? ` У тебя уже ${streak} ${ruPlural(streak, "день", "дня", "дней")} подряд, ломать эту серию из-за одного плохого дня — обиднее всего.` : ""}`,
+        `Мотивация әрекеттен бұрын келмейді — кейін келеді. Сондықтан ереже қарапайым: «оқуға отыру» емес, «3 есеп шығару». Үш есеп — 6 минут, оған батылдық керек емес.${streak > 0 ? ` Сенде қазірдің өзінде ${streak} күн қатарынан, бір жаман күн үшін бұл сериялықты бұзу — ең өкініштісі.` : ""}`,
+        `Motivation doesn't arrive before action — it follows it. So the rule is simple: don't "sit down to study", do three problems. Three problems is six minutes; that needs no resolve.${streak > 0 ? ` You're on a ${streak}-day streak — breaking it over one bad day is the worst trade.` : ""}`),
+      bullets: [
+        L3(lang, "Начни с самой лёгкой задачи, а не с самой важной", "Ең маңыздысынан емес, ең жеңілінен баста", "Start with the easiest problem, not the most important one"),
+        L3(lang, "Ставь таймер на 10 минут — после звонка можно честно встать", "10 минутқа таймер қой — қоңыраудан кейін тұруға болады", "Set a 10-minute timer — when it rings you may honestly stop"),
+        L3(lang, "Считай не «сколько осталось», а «сколько уже сделано»", "«Қанша қалды» емес, «қанша істелді» деп сана", "Count what's done, not what's left"),
+      ],
+    };
+  }
+
+  // distractions: phone, games, people, relationships
+  if (has(q, ["отвлека", "мешают", "мешает", "телефон", "тикток", "инстаграм", "игр", "девочк", "девушк", "парн", "друзь", "шум",
+              "алаңдат", "телефон", "ойын", "distract", "phone", "tiktok", "instagram", "games", "girls", "friends", "noise"])) {
+    return {
+      text: L3(lang,
+        "Внимание не про силу воли, а про расстояние до соблазна. Телефон в другой комнате работает лучше любого обещания себе. То же и с людьми: договорись заранее, что два часа ты не на связи — это честнее, чем отвечать между задачами и не сделать ни то, ни другое.",
+        "Зейін ерік күшінде емес, азғырудан қашықтықта. Басқа бөлмедегі телефон кез келген уәдеден жақсы жұмыс істейді. Адамдармен де солай: екі сағат байланыста болмайтыныңды алдын ала келіс — есеп арасында жауап беріп, екеуін де істемегеннен адал.",
+        "Focus isn't willpower, it's distance from the temptation. A phone in another room beats any promise to yourself. Same with people: agree in advance that you're offline for two hours — that's more honest than half-answering between problems and doing neither well."),
+      bullets: [
+        L3(lang, "Телефон — в другую комнату, не «экраном вниз»", "Телефонды басқа бөлмеге, «экранын төмен» емес", "Phone in another room, not just face-down"),
+        L3(lang, "Занимайся блоками по 25 минут с перерывом в 5", "25 минуттық блокпен, 5 минут үзіліспен оқы", "Work in 25-minute blocks with 5-minute breaks"),
+        L3(lang, "Договорись с близкими о времени, когда ты недоступен", "Жақындарыңмен қолжетімсіз уақытты келіс", "Tell the people around you when you're unavailable"),
+      ],
+    };
+  }
+
+  // stress and exam anxiety
+  if (has(q, ["волну", "боюсь", "страх", "паник", "тревог", "стресс", "не сдам", "провал",
+              "қорқ", "уайым", "стресс", "afraid", "scared", "anxiety", "panic", "stress", "fail"])) {
+    const view = formatForecast(readiness(st, st.activeSubject), st.goal);
+    return {
+      text: L3(lang,
+        `Страх экзамена обычно живёт на неопределённости. У тебя её меньше, чем кажется: прогноз ${view.value} из ${view.max} посчитан по твоим реальным ответам, а не по ощущениям. Смотри на него как на факт, а не на приговор — он двигается каждую неделю.`,
+        `Емтихан қорқынышы белгісіздіктен туады. Сенде ол ойлағаннан аз: ${view.max}-ден ${view.value} болжам сезім бойынша емес, нақты жауаптарың бойынша есептелген. Оны үкім емес, факт ретінде қара — ол апта сайын өзгереді.`,
+        `Exam fear lives on uncertainty. You have less of it than it feels: the ${view.value} of ${view.max} forecast comes from your real answers, not your mood. Treat it as a fact, not a verdict — it moves every week.`),
+      bullets: [
+        L3(lang, "Перед сном не разбирай новые темы — только повторение", "Ұйқы алдында жаңа тақырып алма — тек қайталау", "No new topics before bed — review only"),
+        L3(lang, "Пройди мок-тест: знакомый формат снимает половину страха", "Мок-тесттен өт: таныс формат қорқыныштың жартысын алады", "Take a mock test: a familiar format removes half the fear"),
+        L3(lang, "Разбор ошибок успокаивает сильнее, чем новые задачи", "Қателерді талдау жаңа есептерден күштірек тыныштандырады", "Reviewing mistakes calms you more than new problems"),
+      ],
+    };
+  }
+
+  // time management and sleep
+  if (has(q, ["не успева", "мало времени", "как совмещ", "расписан", "режим", "сон", "спать", "высып",
+              "үлгермей", "уақыт жоқ", "ұйқы", "no time", "schedule", "sleep", "manage time", "balance"])) {
+    return {
+      text: L3(lang,
+        `Времени почти всегда хватает — не хватает порядка. За эту неделю у тебя ${week} ${ruPlural(week, "минута", "минуты", "минут")} занятий; чтобы прогноз рос стабильно, обычно достаточно 30–40 минут в день, но каждый день. Недосып съедает больше, чем даёт лишний час ночью: на невыспавшуюся голову задачи решаются вдвое медленнее.`,
+        `Уақыт әрдайым дерлік жетеді — тәртіп жетпейді. Осы аптада ${week} минут оқыдың; болжам тұрақты өсуі үшін әдетте күніне 30–40 минут жеткілікті, бірақ күн сайын. Ұйқысыздық түнгі қосымша сағаттан көбірек алады: ұйқысы қанбаған бас есепті екі есе баяу шығарады.`,
+        `There's almost always enough time — what's missing is order. You logged ${week} minutes this week; 30–40 minutes a day, every day, is usually enough to keep the forecast climbing. Skipping sleep costs more than the extra hour gives: tired heads solve at half speed.`),
+      bullets: [
+        L3(lang, "Одно и то же время каждый день работает лучше длинных марафонов", "Күн сайын бір уақыт ұзақ марафоннан жақсы жұмыс істейді", "The same slot every day beats long marathons"),
+        L3(lang, "Планируй по задачам, а не по часам: «6 задач» вместо «час»", "Сағатпен емес, есеппен жоспарла: «сағат» емес «6 есеп»", "Plan in problems, not hours: \"six problems\", not \"an hour\""),
+      ],
+    };
+  }
+
+  // memory / how to study
+  if (has(q, ["как запомин", "забыва", "память", "как учить", "как готовит", "не помню",
+              "есте сақт", "ұмыт", "how to remember", "forget", "memor", "how to study"])) {
+    return {
+      topic: weak?.id,
+      text: L3(lang,
+        "Материал держится не от перечитывания, а от вспоминания. Прочитал конспект — закрой его и перескажи по памяти, потом сверься. Это неприятно и именно поэтому работает: мозг запоминает то, что пришлось доставать с усилием.",
+        "Материал қайта оқудан емес, еске түсіруден сақталады. Конспектіні оқыдың — жауып, жатқа айт, сосын салыстыр. Бұл жағымсыз, дәл сондықтан жұмыс істейді: ми күш салып алынған нәрсені есте сақтайды.",
+        "Material sticks from recall, not rereading. Read the summary, close it, say it back from memory, then check. It feels worse, which is exactly why it works — the brain keeps what it had to dig for."),
+      bullets: [
+        L3(lang, "Повторяй через день, а не пять раз подряд в один вечер", "Бір кеште бес рет емес, күн ара қайтала", "Space it a day apart instead of five times one evening"),
+        L3(lang, "Объясни тему вслух, будто учишь друга", "Тақырыпты досыңа үйретіп тұрғандай дауыстап түсіндір", "Explain the topic out loud as if teaching a friend"),
+        L3(lang, "Ошибки разбирай сразу, пока помнишь ход мысли", "Қателерді ойың есіңде тұрғанда бірден талда", "Review mistakes while your reasoning is fresh"),
+      ],
+    };
+  }
+
+  // what to choose / future
+  if (has(q, ["куда поступ", "какую професс", "кем стать", "выбрать специальн", "университет",
+              "қай маман", "университет", "which university", "career", "what should i study"])) {
+    return {
+      text: L3(lang,
+        "Я не знаю твоих обстоятельств настолько, чтобы советовать профессию, и любой, кто берётся, тоже. Но с цифрами помочь могу: посмотри, какие предметы у тебя идут легче по карте знаний — это не приговор, но полезный сигнал. Дальше решай с теми, кто знает тебя лично.",
+        "Мамандық таңдауға кеңес беретіндей жағдайыңды білмеймін, оған бел буғандар да білмейді. Бірақ сандармен көмектесе аламын: білім картасында қай пән жеңіл жүріп жатқанын қара — бұл үкім емес, пайдалы сигнал. Әрі қарай сені жақсы білетіндермен шеш.",
+        "I don't know your situation well enough to pick a career for you, and neither does anyone who offers to. I can help with the numbers though: look at which subjects run easier on your knowledge map. That's a signal, not a verdict — decide the rest with people who know you."),
+    };
+  }
+
+  return null;
+}
+
 /* ---------------- free-text answering ---------------- */
 
 export interface Reply {
@@ -465,6 +574,10 @@ export function answerQuestion(raw: string, st: StudentState, lang: Lang): Reply
   if (has(q, ["спасиб", "рахмет", "рақмет", "thanks", "thank you"])) {
     return { text: L3(lang, "Не за что. Возвращайся, когда застрянешь.", "Оқасы жоқ. Қиналсаң, қайта кел.", "Any time. Come back when you get stuck.") };
   }
+
+  // Human reasons come before academic ones — they're why people stop.
+  const life = lifeAnswer(q, st, lang);
+  if (life) return life;
 
   // --- explain a named topic ---
   const named = findTopic(q);

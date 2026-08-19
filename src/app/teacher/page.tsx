@@ -10,12 +10,12 @@ import { Bar, Btn, Card, Modal, Reveal } from "@/components/ui";
 import { classInviteLink } from "@/lib/share";
 import {
   IconBolt, IconCheck, IconClock, IconFlame, IconGrid, IconHelp,
-  IconLink, IconPlus, IconTeacher, IconUser,
+  IconLink, IconPlus, IconRefresh, IconTeacher, IconUser,
 } from "@/components/Icons";
 
 export default function TeacherPage() {
   const { d, pick } = useI18n();
-  const { space, ready, role, addTask, addMaterial, addCustomTopic, classRoster } = useStore();
+  const { space, ready, role, addTask, addMaterial, addCustomTopic, refreshRoster } = useStore();
   const router = useRouter();
 
   const [taskOpen, setTaskOpen] = useState(false);
@@ -24,14 +24,27 @@ export default function TeacherPage() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!ready) return;
     if (role !== "teacher" || !space.teacher) router.replace("/start");
   }, [ready, role, space.teacher, router]);
 
+  // Students who joined from their own phones arrive through the shared store.
+  useEffect(() => {
+    if (!ready || role !== "teacher") return;
+    void refreshRoster();
+    // Runs on entry; the button below repeats it on demand.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, role]);
+
   const teacher = space.teacher;
-  const roster = useMemo(() => classRoster(), [classRoster]);
+  // Derived from the live space so newly synced students appear immediately.
+  const roster = useMemo(
+    () => (teacher ? Object.values(space.students).filter((st) => st.classCode === teacher.code) : []),
+    [space, teacher]
+  );
   const subject: SubjectId = teacher?.subject ?? "math";
   const topics = topicsOf(subject);
 
@@ -107,6 +120,20 @@ export default function TeacherPage() {
             <Btn size="sm" variant="outline" onClick={() => setMatOpen(true)} disabled={roster.length === 0}>
               <IconLink size={15} />
               {d.teacher.addMatTitle}
+            </Btn>
+            <Btn
+              size="sm"
+              variant="outline"
+              disabled={syncing}
+              onClick={async () => {
+                setSyncing(true);
+                const added = await refreshRoster();
+                setSyncing(false);
+                notify(added > 0 ? `${d.teacher.synced}: +${added}` : d.teacher.syncedNone);
+              }}
+            >
+              <IconRefresh size={15} />
+              {syncing ? d.common.loading : d.teacher.sync}
             </Btn>
           </div>
         </div>

@@ -573,15 +573,21 @@ export function JoinClassModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onJoin: (code: string) => JoinResult;
+  onJoin: (code: string) => Promise<JoinResult>;
 }) {
   const { d } = useI18n();
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [joined, setJoined] = useState<JoinResult | null>(null);
 
-  const submit = () => {
-    const res = onJoin(code);
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    // Pasting the invite link instead of the code is a common shortcut.
+    const fromLink = code.match(/CL-[A-Z0-9]{4}/i)?.[0] ?? code;
+    const res = await onJoin(fromLink);
+    setBusy(false);
     if (res.ok) {
       setJoined(res);
       setError(false);
@@ -619,7 +625,7 @@ export function JoinClassModal({
               setError(false);
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && code.trim().length >= 4) submit();
+              if (e.key === "Enter" && code.trim().length >= 4) void submit();
             }}
             placeholder={d.codes.joinPh}
             maxLength={10}
@@ -627,8 +633,8 @@ export function JoinClassModal({
           />
           {error && <p className="mt-2 text-[12.5px] font-semibold text-red-400">{d.codes.joinFail}</p>}
           <p className="mt-3 text-[12px] leading-relaxed text-dim">{d.codes.demoHint}</p>
-          <Btn full size="lg" className="mt-4" disabled={code.trim().length < 4} onClick={submit}>
-            {d.common.continue}
+          <Btn full size="lg" className="mt-4" disabled={code.trim().length < 4 || busy} onClick={submit}>
+            {busy ? d.common.loading : d.common.continue}
           </Btn>
         </>
       )}

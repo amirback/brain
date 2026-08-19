@@ -319,17 +319,41 @@ select:focus-visible {
 
 /* ---------- number tab styles ---------- */
 
+/* A numbered chip reads faster than a giant hollow glyph and keeps the
+   card's rhythm at any width. */
 .step-num {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(64px, 9vw, 120px);
+  font-size: 22px;
   line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1.5px #3d434f;
-  transition: all .4s var(--ease-out);
+  color: var(--color-mute);
+  background: var(--color-soot);
+  border: 1px solid var(--color-line2);
+  font-variant-numeric: tabular-nums;
+  transition: background .35s var(--ease-out), color .35s var(--ease-out),
+              border-color .35s var(--ease-out), transform .35s var(--ease-out);
 }
 .step-card:hover .step-num {
-  -webkit-text-stroke: 1.5px var(--color-brand);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-ink);
+  transform: translateY(-2px);
+}
+
+/* footer contact marks: quiet until hovered */
+.contact-mark {
+  opacity: 0.45;
+  transition: opacity .25s var(--ease-out), transform .25s var(--ease-out), color .25s var(--ease-out);
+}
+.contact-mark:hover {
+  opacity: 1;
+  transform: scale(1.08);
+  color: var(--color-brand);
 }
 
 /* ---------- reduced motion ---------- */

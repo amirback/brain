@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import type { Lang } from "@/lib/types";
-import { IconClose, IconMenu, LogoMark, Wordmark } from "./Icons";
+import { IconClose, IconMail, IconMenu, IconTelegram, LogoMark, Wordmark } from "./Icons";
 
 const LANGS: { code: Lang; short: string; full: string }[] = [
   { code: "ru", short: "RU", full: "Русский" },
@@ -201,6 +201,28 @@ export function Footer() {
             <p className="text-sm text-dim leading-relaxed">
               {d.landing.footer.made} · {d.landing.footer.forWho}
             </p>
+
+            {/* quiet contact marks that come forward on hover */}
+            <div className="mt-5 flex items-center gap-3">
+              <a
+                href="https://t.me/brainstudyAI"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="contact-mark inline-flex items-center gap-2 text-mute"
+                aria-label="Telegram @brainstudyAI"
+              >
+                <IconTelegram size={20} />
+                <span className="text-[13px] font-semibold">@brainstudyAI</span>
+              </a>
+              <a
+                href="mailto:brainstudywithus@gmail.com"
+                className="contact-mark inline-flex items-center gap-2 text-mute"
+                aria-label="brainstudywithus@gmail.com"
+              >
+                <IconMail size={20} />
+                <span className="text-[13px] font-semibold">@brainstudywithus</span>
+              </a>
+            </div>
           </div>
           <div className="flex gap-12">
             <div>
