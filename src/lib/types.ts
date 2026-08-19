@@ -41,13 +41,43 @@ export interface LessonSection {
   heading: L;
   body: L;
   formula?: string;
+  /** A worked line or two showing the rule in use, right where it is explained. */
+  example?: L;
+  /** The thing a student is most likely to get wrong about this section. */
+  note?: L;
+}
+
+/**
+ * A problem solved in full, with the reasoning named at each step.
+ * Lessons carry several of rising difficulty — one example is enough to
+ * illustrate a rule but not enough to learn a topic from.
+ */
+export interface WorkedExample {
+  title: L;
+  problem: L;
+  steps: { text: L; formula?: string }[];
+  answer: L;
+  /** The transferable idea, as opposed to the arithmetic of this particular case. */
+  takeaway: L;
+}
+
+/** A mistake that actually costs marks, paired with the correction. */
+export interface Pitfall {
+  wrong: L;
+  right: L;
+  why: L;
 }
 
 export interface Lesson {
   topic: string;
   intro: L;
+  /** What the student will be able to do afterwards — shown before the theory. */
+  objectives?: L[];
   sections: LessonSection[];
+  /** The original single example; still rendered when `worked` is absent. */
   example: { problem: L; steps: L[] };
+  worked?: WorkedExample[];
+  pitfalls?: Pitfall[];
 }
 
 export interface AnswerLog {

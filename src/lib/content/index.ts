@@ -11,6 +11,7 @@ export { SUMMARIES, summaryOf } from "./summaries";
 export { RESOURCES, type Resource } from "./extra";
 
 import { EXTRA_SECTIONS, RESOURCES as RES } from "./extra";
+import { DEEP_LESSONS } from "./lessons-deep";
 
 export const SUBJECTS: Subject[] = [
   {
@@ -60,7 +61,11 @@ export const TOPICS: Topic[] = [
   ...ieltsTopics,
 ];
 
-/** Core lessons with their extra lecture sections appended. */
+/**
+ * Core lessons, with the extra lecture sections appended and the deep layer
+ * merged over the top. A topic with no deep layer yet renders exactly as before,
+ * so the two can be written at different times without breaking the reader.
+ */
 export const LESSONS: Lesson[] = [
   ...mathLessons,
   ...englishLessons,
@@ -68,7 +73,14 @@ export const LESSONS: Lesson[] = [
   ...historyLessons,
   ...satLessons,
   ...ieltsLessons,
-].map((l) => ({ ...l, sections: [...l.sections, ...(EXTRA_SECTIONS[l.topic] ?? [])] }));
+].map((l) => {
+  const deep = DEEP_LESSONS[l.topic];
+  return {
+    ...l,
+    ...deep,
+    sections: [...l.sections, ...(EXTRA_SECTIONS[l.topic] ?? []), ...(deep?.sections ?? [])],
+  };
+});
 
 export const QUESTIONS: Question[] = [
   ...mathQuestions,
@@ -78,6 +90,18 @@ export const QUESTIONS: Question[] = [
   ...satQuestions,
   ...ieltsQuestions,
 ];
+
+/**
+ * How many reader steps a lesson has: intro, one per section, one per worked
+ * example (or one for the legacy single example), a pitfalls page when there is
+ * one, and the summary. Both the reader and the study planner call this, so they
+ * cannot disagree about when a lesson counts as finished.
+ */
+export function lessonStepCount(lesson: Lesson): number {
+  const worked = lesson.worked?.length ?? 1;
+  const pitfalls = (lesson.pitfalls?.length ?? 0) > 0 ? 1 : 0;
+  return 1 + lesson.sections.length + worked + pitfalls + 1;
+}
 
 export const topicById = (id: string) => TOPICS.find((x) => x.id === id);
 export const lessonByTopic = (id: string) => LESSONS.find((l) => l.topic === id);

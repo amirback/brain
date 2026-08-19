@@ -8,6 +8,7 @@ import { fmtHours, lastNDays, streakLength, totalSeconds, useStore, weekSeconds 
 import { subjectById, topicById, topicsOf } from "@/lib/content";
 import { checkpointDue, daysUntilCheckpoint, formatForecast, masteryBand, readiness, recommend } from "@/lib/engine";
 import { advise, buildMessages } from "@/lib/advisor";
+import { buildPlan } from "@/lib/plan";
 import type { JoinResult } from "@/lib/store";
 import { Bar, Btn, Card, MiniBars, Modal, Reveal, Ring, Sparkline } from "@/components/ui";
 import {
@@ -35,6 +36,16 @@ export default function Dashboard() {
     // Runs on entry only: syncInbox writes to `user`, so watching it would loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, lang]);
+
+  // Today's slot in the run-up to the next test, recomputed from mastery on
+  // every render — finishing a topic early moves tomorrow's work by itself.
+  const plan = useMemo(
+    () => (user ? buildPlan(user, (id) => {
+      const tp = topicById(id);
+      return tp ? pick(tp.title) : id;
+    }) : null),
+    [user, pick]
+  );
 
   const derived = useMemo(() => {
     if (!user) return null;
@@ -147,6 +158,50 @@ export default function Dashboard() {
           </Link>
         </div>
       </Reveal>
+
+      {/* today's task — the first thing a returning student should see */}
+      {plan?.today && (
+        <Reveal delay={40}>
+          <Card className={`mt-4 ${plan.today.status === "done" ? "" : "border-brand/45 bg-brand/6"}`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <span
+                className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${
+                  plan.today.status === "done" ? "bg-brand/15 text-brand" : "bg-brand text-ink"
+                }`}
+              >
+                {plan.today.status === "done" ? <IconCheck size={22} /> : <IconBolt size={22} />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold uppercase tracking-wider text-brand">
+                  <span>{plan.today.status === "done" ? d.plan.doneToday : d.plan.todayTask}</span>
+                  {plan.target.daysLeft !== null && (
+                    <span className="text-dim">
+                      · {plan.target.daysLeft} {d.plan.days}{" "}
+                      {plan.target.kind === "mock" ? d.plan.daysLeftToMock : d.plan.daysLeftToExam}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display mt-1 text-[17px] font-extrabold leading-snug">
+                  {pick(plan.today.title)}
+                </h3>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
+                  {plan.today.status === "done" ? d.plan.doneTodayNote : pick(plan.today.detail)}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-2 sm:w-auto">
+                {plan.today.status !== "done" && (
+                  <Btn href={plan.today.href} size="sm" className="w-full sm:w-auto">
+                    {d.plan.startNow}
+                  </Btn>
+                )}
+                <Btn href="/plan" variant="outline" size="sm" className="w-full sm:w-auto">
+                  {d.plan.open}
+                </Btn>
+              </div>
+            </div>
+          </Card>
+        </Reveal>
+      )}
 
       {/* class link status — this is how a teacher can see this student at all */}
       {!user.classCode && (

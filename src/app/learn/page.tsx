@@ -6,10 +6,11 @@ import { Suspense, useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { lessonByTopic, resourcesOf, summaryOf, topicById } from "@/lib/content";
+import type { WorkedExample } from "@/lib/types";
 import { masteryBand } from "@/lib/engine";
 import { videoFor } from "@/lib/advisor";
 import { Bar, Btn, Card, Reveal, Ring } from "@/components/ui";
-import { IconArrow, IconBolt, IconBook, IconCheck, IconLink, IconSpark } from "@/components/Icons";
+import { IconArrow, IconBolt, IconBook, IconCheck, IconCross, IconLink, IconSpark } from "@/components/Icons";
 
 function LearnInner() {
   const { d, pick, lang } = useI18n();
@@ -25,8 +26,21 @@ function LearnInner() {
   const video = videoFor(tid, lang);
 
   const sections = lesson?.sections ?? [];
-  // Steps: intro (0), one per section, worked example, then the summary.
-  const totalSteps = sections.length + 3;
+  // A lesson without a deep layer still has its single legacy example, which is
+  // lifted into the same shape so the reader only has one thing to render.
+  const worked: WorkedExample[] = lesson
+    ? (lesson.worked ?? [{
+        title: { ru: "Разбор", kk: "Талдау", en: "Worked problem" },
+        problem: lesson.example.problem,
+        steps: lesson.example.steps.map((s) => ({ text: s })),
+        answer: { ru: "", kk: "", en: "" },
+        takeaway: { ru: "", kk: "", en: "" },
+      }])
+    : [];
+  const pitfalls = lesson?.pitfalls ?? [];
+  const hasPitfalls = pitfalls.length > 0;
+  // Steps: intro, one per section, one per worked problem, pitfalls, summary.
+  const totalSteps = 1 + sections.length + worked.length + (hasPitfalls ? 1 : 0) + 1;
 
   const [step, setStep] = useState(0);
   const [restored, setRestored] = useState(false);
@@ -51,12 +65,20 @@ function LearnInner() {
   const band = masteryBand(m, attempts);
   const title = topic ? pick(topic.title) : (custom?.name ?? tid);
   const blurb = topic ? pick(topic.blurb) : (custom?.desc ?? "");
-  const readMinutes = Math.max(2, Math.round((sections.length * 45 + summary.length * 12) / 60));
+  // A worked problem takes longer to read than a theory section, and a pitfalls
+  // page longer still, because the student is comparing two versions line by line.
+  const readMinutes = Math.max(
+    2,
+    Math.round((sections.length * 70 + worked.length * 90 + pitfalls.length * 35 + summary.length * 12) / 60)
+  );
 
-  const atSummary = step === totalSteps - 1;
-  const atExample = step === totalSteps - 2;
   const atIntro = step === 0;
+  const atSummary = step === totalSteps - 1;
   const sectionIndex = step - 1;
+  const workedIndex = step - 1 - sections.length;
+  const atPitfalls = hasPitfalls && step === 1 + sections.length + worked.length;
+  const atWorked = !atIntro && !atSummary && !atPitfalls && workedIndex >= 0;
+  const atSection = !atIntro && !atSummary && !atPitfalls && !atWorked;
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
@@ -82,8 +104,13 @@ function LearnInner() {
                   {readMinutes} {d.lesson.minutes}
                 </span>
                 <span className="rounded-full border border-line2 px-2.5 py-1 font-semibold tabular-nums">
-                  {sections.length + 2} {d.lesson.section.toLowerCase()}
+                  {totalSteps} {d.lesson.section.toLowerCase()}
                 </span>
+                {worked.length > 1 && (
+                  <span className="rounded-full border border-brand/40 bg-brand/8 px-2.5 py-1 font-semibold tabular-nums text-brand">
+                    {worked.length} {d.lesson.worked.toLowerCase()}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -132,6 +159,22 @@ function LearnInner() {
                   </span>
                   <p className="pt-1 text-[15.5px] leading-relaxed">{pick(lesson.intro)}</p>
                 </div>
+
+                {lesson.objectives && lesson.objectives.length > 0 && (
+                  <div className="mt-5 rounded-2xl border border-line2 bg-coal p-4">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-dim">
+                      {d.lesson.objectives}
+                    </div>
+                    <ul className="mt-2.5 flex flex-col gap-2">
+                      {lesson.objectives.map((o, i) => (
+                        <li key={i} className="flex gap-2.5">
+                          <span className="mt-0.5 shrink-0 text-brand"><IconCheck size={15} /></span>
+                          <span className="text-[14px] leading-relaxed text-mute">{pick(o)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {video && (
                   <a
                     href={video}
@@ -152,7 +195,7 @@ function LearnInner() {
               </Card>
             )}
 
-            {!atIntro && !atExample && !atSummary && sections[sectionIndex] && (
+            {atSection && sections[sectionIndex] && (
               <Card>
                 <div className="flex items-baseline gap-3">
                   <span className="font-display text-[13px] font-extrabold tabular-nums text-brand">
@@ -168,26 +211,111 @@ function LearnInner() {
                     </code>
                   </div>
                 )}
+                {sections[sectionIndex].example && (
+                  <div className="ml-8 mt-3 overflow-x-auto rounded-2xl border border-brand/25 bg-brand/6 px-4 py-3">
+                    <code className="whitespace-pre-wrap font-mono text-[13.5px] leading-relaxed">
+                      {pick(sections[sectionIndex].example!)}
+                    </code>
+                  </div>
+                )}
+                {sections[sectionIndex].note && (
+                  <p className="ml-8 mt-3 border-l-2 border-amber/50 pl-3 text-[13.5px] leading-relaxed text-mute">
+                    {pick(sections[sectionIndex].note!)}
+                  </p>
+                )}
               </Card>
             )}
 
-            {atExample && (
+            {atWorked && worked[workedIndex] && (
               <Card className="border-brand/25">
                 <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-brand">
                   <IconBolt size={15} />
-                  {d.learn.example}
+                  {d.lesson.worked} {worked.length > 1 ? `${workedIndex + 1} / ${worked.length}` : ""}
                 </div>
-                <p className="font-display text-[17px] font-bold">{pick(lesson.example.problem)}</p>
-                <ol className="mt-4 flex flex-col gap-3">
-                  {lesson.example.steps.map((s, i) => (
+                {pick(worked[workedIndex].title) && (
+                  <h2 className="font-display mb-2 text-[16px] font-bold">{pick(worked[workedIndex].title)}</h2>
+                )}
+                <div className="overflow-x-auto rounded-2xl border border-line2 bg-ink px-4 py-3">
+                  <code className="whitespace-pre-wrap font-mono text-[14.5px] leading-relaxed">
+                    {pick(worked[workedIndex].problem)}
+                  </code>
+                </div>
+
+                <ol className="mt-4 flex flex-col gap-3.5">
+                  {worked[workedIndex].steps.map((s, i) => (
                     <li key={i} className="flex gap-3.5">
                       <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-brand/12 text-[11px] font-extrabold tabular-nums text-brand">
                         {i + 1}
                       </span>
-                      <span className="pt-0.5 text-[14.5px] leading-relaxed text-mute">{pick(s)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="pt-0.5 text-[14.5px] leading-relaxed text-mute">{pick(s.text)}</p>
+                        {s.formula && (
+                          <div className="mt-2 overflow-x-auto rounded-xl border border-line2 bg-ink px-3 py-2">
+                            <code className="whitespace-nowrap font-mono text-[13.5px] text-brand">{s.formula}</code>
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ol>
+
+                {pick(worked[workedIndex].answer) && (
+                  <div className="mt-4 flex flex-wrap items-baseline gap-2 border-t border-line pt-3.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-dim">
+                      {d.lesson.answerLabel}
+                    </span>
+                    <code className="font-mono text-[14.5px] font-bold text-brand">
+                      {pick(worked[workedIndex].answer)}
+                    </code>
+                  </div>
+                )}
+                {pick(worked[workedIndex].takeaway) && (
+                  <div className="mt-3 rounded-2xl bg-coal px-4 py-3">
+                    <div className="text-[10.5px] font-bold uppercase tracking-wider text-dim">
+                      {d.lesson.takeaway}
+                    </div>
+                    <p className="mt-1 text-[13.5px] leading-relaxed text-mute">
+                      {pick(worked[workedIndex].takeaway)}
+                    </p>
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {atPitfalls && (
+              <Card className="border-amber/35">
+                <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber">
+                  <IconCross size={15} />
+                  {d.lesson.pitfalls}
+                </div>
+                <p className="mb-4 text-[12.5px] text-dim">{d.lesson.pitfallsSub}</p>
+                <div className="flex flex-col gap-4">
+                  {pitfalls.map((p, i) => (
+                    <div key={i} className="rounded-2xl border border-line bg-coal p-3.5">
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div>
+                          <div className="text-[10.5px] font-bold uppercase tracking-wider text-amber">
+                            {d.lesson.pitfallWrong}
+                          </div>
+                          <code className="mt-1 block whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-mute line-through decoration-amber/60">
+                            {pick(p.wrong)}
+                          </code>
+                        </div>
+                        <div className="sm:border-l sm:border-line sm:pl-3">
+                          <div className="text-[10.5px] font-bold uppercase tracking-wider text-brand">
+                            {d.lesson.pitfallRight}
+                          </div>
+                          <code className="mt-1 block whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-paper">
+                            {pick(p.right)}
+                          </code>
+                        </div>
+                      </div>
+                      <p className="mt-3 border-t border-line pt-2.5 text-[13.5px] leading-relaxed text-mute">
+                        {pick(p.why)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </Card>
             )}
 

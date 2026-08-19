@@ -71,6 +71,7 @@ export function Header() {
         : role === "student"
           ? [
               { href: "/dashboard", label: d.nav.dashboard },
+              { href: "/plan", label: d.nav.plan },
               // The exam trainer only appears for the goal it belongs to — a UNT
               // student has no use for a SAT tab, and the bar is already full.
               ...(user?.goal === "sat" ? [{ href: "/sat", label: d.exam.satTitle }] : []),
