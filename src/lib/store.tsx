@@ -5,6 +5,7 @@ import type {
   AnswerLog, ClassRecord, CustomTopic, Goal, InboxMessage, Lang, ParentState, Role, Space,
   StudentState, SubjectId, TeacherMaterial, TeacherState, TeacherTask,
 } from "./types";
+import type { Attempt } from "./exam/types";
 import { applyElo, eloDelta, makeCode, masteryStep, readiness, START_ELO } from "./engine";
 import { defaultSubjects } from "./content";
 import { demoSpace, DEMO_CLASS_CODE, demoClassRecord } from "./mock";
@@ -63,6 +64,7 @@ function freshStudent(a: {
     achievements: [],
     mocks: [],
     inbox: [],
+    examAttempts: [],
     lessonProgress: {},
     lastLesson: null,
     lastNudge: null,
@@ -119,6 +121,8 @@ interface StoreCtx {
   refreshRoster: () => Promise<number>;
 
   saveLessonProgress: (topic: string, section: number) => void;
+  /** Stores a finished SAT/IELTS attempt and returns it. */
+  saveAttempt: (attempt: Attempt) => void;
   finishMock: (mockId: string, score: number, wrongQids: string[], lang: Lang) => void;
   syncInbox: (messages: InboxMessage[]) => void;
   markInboxRead: (id?: string) => void;
@@ -527,6 +531,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, [mutateStudent]);
 
+  /**
+   * Attempts carry the student's own writing, so the list is capped — twenty full
+   * essays is already generous next to a 5 MB localStorage budget.
+   */
+  const saveAttempt = useCallback((attempt: Attempt) => {
+    mutateStudent((st) => ({
+      ...st,
+      examAttempts: [attempt, ...(st.examAttempts ?? [])].slice(0, 20),
+    }));
+  }, [mutateStudent]);
+
   const finishMock = useCallback((mockId: string, score: number, wrongQids: string[], lang: Lang) => {
     const s = ref.current;
     const st = currentStudent(s);
@@ -579,7 +594,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         recordAnswer, finishDiagnostic, finishCheckpoint, switchGoal,
         setActiveSubject, addSubject, toggleTask, addTask, addMaterial,
         addCustomTopic, requestHelp, unlock, classRoster, refreshRoster,
-        saveLessonProgress, finishMock, syncInbox, markInboxRead,
+        saveLessonProgress, saveAttempt, finishMock, syncInbox, markInboxRead,
       }}
     >
       {children}

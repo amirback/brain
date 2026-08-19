@@ -158,6 +158,11 @@ export interface StudentState {
   achievements: string[];
   mocks: MockTest[];
   inbox: InboxMessage[];
+  /**
+   * Finished SAT/IELTS attempts, newest first. Optional because profiles created
+   * before the exam trainer existed simply do not have the field.
+   */
+  examAttempts?: import("./exam/types").Attempt[];
   /** Where the student stopped reading: topic id -> section index. */
   lessonProgress: Record<string, number>;
   lastLesson: string | null;
