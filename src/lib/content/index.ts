@@ -12,6 +12,7 @@ export { RESOURCES, type Resource } from "./extra";
 
 import { EXTRA_SECTIONS, RESOURCES as RES } from "./extra";
 import { DEEP_LESSONS } from "./lessons-deep";
+import { EXAM_LESSONS } from "./lessons-exam";
 
 export const SUBJECTS: Subject[] = [
   {
@@ -74,7 +75,7 @@ export const LESSONS: Lesson[] = [
   ...satLessons,
   ...ieltsLessons,
 ].map((l) => {
-  const deep = DEEP_LESSONS[l.topic];
+  const deep = DEEP_LESSONS[l.topic] ?? EXAM_LESSONS[l.topic];
   return {
     ...l,
     ...deep,
