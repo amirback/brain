@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { streakLength, totalSeconds, useStore } from "@/lib/store";
 import { subjectById, topicById, topicsOf } from "@/lib/content";
 import type { StudentState, SubjectId } from "@/lib/types";
+import { fmtBand } from "@/lib/exam/scoring";
 import { Bar, Btn, Card, Modal, Reveal } from "@/components/ui";
 import { classInviteLink } from "@/lib/share";
 import {
@@ -66,6 +67,29 @@ export default function TeacherPage() {
       .sort((a, b) => a.avg - b.avg);
     return { avg, activeToday, weakest };
   }, [roster, topics]);
+
+  /**
+   * The newest exam attempt per student, so the teacher sees an SAT composite or an
+   * IELTS band next to the name rather than having to open each profile.
+   */
+  const examRows = useMemo(
+    () =>
+      roster
+        .map((st) => {
+          const latest = (st.examAttempts ?? [])[0];
+          if (!latest) return null;
+          const score = latest.sat
+            ? `${latest.sat.composite}`
+            : latest.ielts?.overall !== undefined
+              ? fmtBand(latest.ielts.overall)
+              : `${latest.results.filter((r) => r.correct).length}/${latest.results.length}`;
+          return { key: st.code, name: st.name, title: latest.title, score, ts: latest.finishedAt };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+        .sort((a, b) => b.ts - a.ts)
+        .slice(0, 6),
+    [roster]
+  );
 
   const requests = space.helpRequests.filter((r) => r.classCode === teacher?.code);
 
@@ -294,6 +318,29 @@ export default function TeacherPage() {
             </Reveal>
 
             <div className="flex flex-col gap-3">
+              <Reveal delay={110}>
+                <Card>
+                  <h2 className="font-display mb-4 text-lg font-bold">{d.exam.teacherExams}</h2>
+                  {examRows.length === 0 ? (
+                    <p className="text-[13.5px] leading-relaxed text-mute">{d.exam.teacherExamsEmpty}</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {examRows.map((row) => (
+                        <div key={row.key} className="flex items-baseline justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-[13.5px] font-semibold">{row.name}</div>
+                            <div className="truncate text-[11.5px] text-dim">{row.title}</div>
+                          </div>
+                          <span className="font-display shrink-0 text-[15px] font-extrabold tabular-nums text-brand">
+                            {row.score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </Reveal>
+
               <Reveal delay={120}>
                 <Card>
                   <h2 className="font-display mb-4 text-lg font-bold">{d.teacher.weakTopics}</h2>

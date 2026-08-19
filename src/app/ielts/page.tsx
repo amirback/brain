@@ -10,7 +10,7 @@ import { IELTS_SPEAKING } from "@/lib/exam/content/ielts-speaking";
 import { fmtBand, overallBand } from "@/lib/exam/scoring";
 import { pickEL } from "@/lib/exam/coach";
 import { Btn, Card, Reveal, SectionLabel } from "@/components/ui";
-import { IconBook, IconChart, IconClock, IconGlobe, IconSpark } from "@/components/Icons";
+import { IconArrow, IconBook, IconChart, IconClock, IconGlobe, IconSpark, IconTarget } from "@/components/Icons";
 
 /**
  * IELTS hub.
@@ -87,6 +87,24 @@ export default function IeltsHub() {
           </Card>
         </Reveal>
       )}
+
+      <Reveal delay={70}>
+        <Card className="mt-6 border-brand/35">
+          <div className="flex items-start gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand/12 text-brand">
+              <IconTarget size={21} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display text-[19px] font-extrabold">{d.exam.fullTest}</h2>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-mute">{d.exam.ieltsMockIntro}</p>
+            </div>
+          </div>
+          <Btn href="/ielts/mock" size="lg" full className="arrow-slide mt-4">
+            {d.exam.start}
+            <span className="arr"><IconArrow size={18} /></span>
+          </Btn>
+        </Card>
+      </Reveal>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {skills.map((s, i) => (
