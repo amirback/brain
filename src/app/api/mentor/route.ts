@@ -36,9 +36,40 @@ const MODEL = process.env.MENTOR_MODEL || "claude-sonnet-5";
  * tell "no key" from "bad key" is to read server logs, which is a slow loop
  * when someone is configuring a deploy for the first time.
  */
-export function GET(): Response {
+export async function GET(request: Request): Promise<Response> {
   const raw = process.env.ANTHROPIC_API_KEY;
   const key = raw ?? "";
+
+  /**
+   * `?probe=1` makes one real, minimal request so the actual API error is
+   * visible. A configured key that still fails — no credit, wrong key, a model
+   * the account cannot reach — is otherwise indistinguishable from success
+   * until a student hits it. Costs one token, so it is opt-in.
+   */
+  if (new URL(request.url).searchParams.get("probe") === "1" && key) {
+    try {
+      await new Anthropic({ apiKey: key }).messages.create({
+        model: MODEL,
+        max_tokens: 1,
+        messages: [{ role: "user", content: "ok" }],
+      });
+      return Response.json({ probe: "ok", model: MODEL });
+    } catch (error) {
+      if (error instanceof Anthropic.APIError) {
+        return Response.json({
+          probe: "failed",
+          status: error.status,
+          type: error.type,
+          // Anthropic's messages name the cause plainly ("credit balance is
+          // too low") and carry nothing secret.
+          message: error.message,
+          model: MODEL,
+        });
+      }
+      return Response.json({ probe: "failed", message: String(error), model: MODEL });
+    }
+  }
+
   return Response.json({
     // `present: false` means no such variable reached this deployment at all.
     // `present: true` with length 0 means it arrived empty — a paste that
