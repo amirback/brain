@@ -22,6 +22,26 @@ export const dynamic = "force-dynamic";
 
 const MODEL = "claude-opus-5";
 
+/**
+ * Health check: is a key actually reaching this deployment?
+ *
+ * Returns whether one is present and what shape it has — never the key itself,
+ * and never enough of it to be useful to anyone. Without this, the only way to
+ * tell "no key" from "bad key" is to read server logs, which is a slow loop
+ * when someone is configuring a deploy for the first time.
+ */
+export function GET(): Response {
+  const key = process.env.ANTHROPIC_API_KEY ?? "";
+  return Response.json({
+    configured: key.length > 0,
+    // A correct key starts with sk-ant- and is long; these two catch a
+    // truncated paste or the wrong value pasted in.
+    looksValid: key.startsWith("sk-ant-") && key.length > 40,
+    length: key.length,
+    model: MODEL,
+  });
+}
+
 interface MentorRequest {
   message?: unknown;
   history?: unknown;
