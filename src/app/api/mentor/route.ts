@@ -20,7 +20,13 @@ export const runtime = "nodejs";
 // Every reply depends on the request body, so there is nothing to cache.
 export const dynamic = "force-dynamic";
 
-const MODEL = "claude-opus-5";
+/**
+ * Sonnet 5 rather than Opus: a mentor chat is short replies to ordinary
+ * questions, which Sonnet answers just as well for roughly a third of the cost
+ * per message. Overridable without a code change — set MENTOR_MODEL in the
+ * environment to try another one.
+ */
+const MODEL = process.env.MENTOR_MODEL || "claude-sonnet-5";
 
 /**
  * Health check: is a key actually reaching this deployment?
@@ -89,20 +95,16 @@ export async function POST(request: Request): Promise<Response> {
   const client = new Anthropic({ apiKey });
 
   try {
-    const stream = client.beta.messages.stream({
+    const stream = client.messages.stream({
       model: MODEL,
-      max_tokens: 2048,
-      // Thinking is on by default on Opus 5 and stays on: disabling it can leak
-      // internal tags into the visible reply. Low effort is the latency lever
-      // instead, which suits a chat bubble.
+      // Replies are chat bubbles, not documents. A lower ceiling is also the
+      // simplest guard against one runaway answer eating the budget.
+      max_tokens: 1024,
+      // Low effort keeps both the latency and the token spend down; thinking
+      // stays adaptive, which is the documented recommendation for Sonnet 5.
       output_config: { effort: "low" },
       system: buildSystem(profile),
       messages: [...history, { role: "user", content: message }],
-      // Safety classifiers can decline a request outright; this re-runs it on
-      // Anthropic's recommended fallback model rather than handing the student
-      // a dead end.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
     });
 
     const encoder = new TextEncoder();
