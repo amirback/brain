@@ -1,8 +1,20 @@
 import type { ItemSet } from "./types";
-import { READING_1_ITEMS, READING_1_PASSAGES } from "./content/ielts-reading-1";
-import { READING_2_ITEMS, READING_2_PASSAGES } from "./content/ielts-reading-2";
-import { LISTENING_ITEMS, LISTENING_SCRIPTS } from "./content/ielts-listening";
-import { LISTENING_ITEMS_2, LISTENING_SCRIPTS_2 } from "./content/ielts-listening-2";
+import { shuffleExamItem } from "../shuffle-answers";
+import { READING_1_ITEMS as RAW_READING_1, READING_1_PASSAGES } from "./content/ielts-reading-1";
+import { READING_2_ITEMS as RAW_READING_2, READING_2_PASSAGES } from "./content/ielts-reading-2";
+import { LISTENING_ITEMS as RAW_LISTENING_1, LISTENING_SCRIPTS } from "./content/ielts-listening";
+import { LISTENING_ITEMS_2 as RAW_LISTENING_2, LISTENING_SCRIPTS_2 } from "./content/ielts-listening-2";
+
+/**
+ * Shuffled once, here, because this file is the only way into the IELTS items —
+ * every set, slice and pool below is built from these four arrays, so they cannot
+ * drift apart. True/False/Not Given keeps its printed order; `shuffleExamItem`
+ * recognises those sets and leaves them alone.
+ */
+const READING_1_ITEMS = RAW_READING_1.map(shuffleExamItem);
+const READING_2_ITEMS = RAW_READING_2.map(shuffleExamItem);
+const LISTENING_ITEMS = RAW_LISTENING_1.map(shuffleExamItem);
+const LISTENING_ITEMS_2 = RAW_LISTENING_2.map(shuffleExamItem);
 
 /**
  * IELTS sets.

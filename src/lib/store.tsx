@@ -153,6 +153,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
+  /**
+   * Repair attempts saved before answer shuffling existed — see
+   * `exam/migrate-attempts.ts`. Loaded dynamically and only when there is
+   * something to repair, because the repair needs the question pools and those
+   * are far too large to sit in the root layout's bundle.
+   */
   // The ref is updated synchronously so two mutations in the same tick
   // (finish a session, then unlock a badge) both build on fresh state.
   const persist = useCallback((s: Space) => {
@@ -160,6 +166,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setSpace(s);
     window.localStorage.setItem(LS_KEY, JSON.stringify(s));
   }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const stale = Object.values(ref.current.students).some((st) =>
+      (st.examAttempts ?? []).some((a) => !a.shuffled)
+    );
+    if (!stale) return;
+
+    let cancelled = false;
+    void import("./exam/migrate-attempts").then(({ migrateAttempts }) => {
+      if (cancelled) return;
+      const s = ref.current;
+      const students = { ...s.students };
+      let changed = false;
+      for (const [id, st] of Object.entries(students)) {
+        const out = migrateAttempts(st.examAttempts ?? []);
+        if (out.changed) {
+          students[id] = { ...st, examAttempts: out.attempts };
+          changed = true;
+        }
+      }
+      if (changed) persist({ ...s, students });
+    });
+    return () => { cancelled = true; };
+  }, [ready, persist]);
 
   const currentStudent = (s: Space): StudentState | null =>
     s.activeStudent ? (s.students[s.activeStudent] ?? null) : null;
@@ -538,7 +569,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const saveAttempt = useCallback((attempt: Attempt) => {
     mutateStudent((st) => ({
       ...st,
-      examAttempts: [attempt, ...(st.examAttempts ?? [])].slice(0, 20),
+      examAttempts: [{ ...attempt, shuffled: true as const }, ...(st.examAttempts ?? [])].slice(0, 20),
     }));
   }, [mutateStudent]);
 

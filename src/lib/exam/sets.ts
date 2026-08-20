@@ -1,4 +1,5 @@
 import type { ExamItem, ItemSet, Level } from "./types";
+import { shuffleExamItem } from "../shuffle-answers";
 import { SAT_RW_CRAFT } from "./content/sat-rw-craft";
 import { SAT_RW_CONVENTIONS } from "./content/sat-rw-conventions";
 import { SAT_RW_CRAFT_2 } from "./content/sat-rw-craft-2";
@@ -15,8 +16,10 @@ import { SAT_MATH_2 } from "./content/sat-math-2";
  */
 export const SAT_RW_POOL: ExamItem[] = [
   ...SAT_RW_CRAFT, ...SAT_RW_CRAFT_2, ...SAT_RW_CONVENTIONS, ...SAT_RW_CONVENTIONS_2,
-];
-export const SAT_MATH_POOL: ExamItem[] = [...SAT_MATH_ALGEBRA, ...SAT_MATH_DATA, ...SAT_MATH_2];
+].map(shuffleExamItem);
+export const SAT_MATH_POOL: ExamItem[] = [
+  ...SAT_MATH_ALGEBRA, ...SAT_MATH_DATA, ...SAT_MATH_2,
+].map(shuffleExamItem);
 
 /* ---------------- deterministic shuffling ---------------- */
 
@@ -138,7 +141,7 @@ export const SAT_SETS: ItemSet[] = [
     title: "Craft, Structure and Ideas",
     minutes: 40,
     difficulty: "medium",
-    items: [...SAT_RW_CRAFT, ...SAT_RW_CRAFT_2],
+    items: [...SAT_RW_CRAFT, ...SAT_RW_CRAFT_2].map(shuffleExamItem),
     ru: "Слова в контексте, структура текста, главная мысль, работа с доказательствами и выводы.",
     en: "Words in context, text structure, central ideas, command of evidence and inferences.",
   }),
@@ -148,7 +151,7 @@ export const SAT_SETS: ItemSet[] = [
     title: "Conventions and Expression",
     minutes: 38,
     difficulty: "medium",
-    items: [...SAT_RW_CONVENTIONS, ...SAT_RW_CONVENTIONS_2],
+    items: [...SAT_RW_CONVENTIONS, ...SAT_RW_CONVENTIONS_2].map(shuffleExamItem),
     ru: "Пунктуация и границы предложений, согласование, связки и риторический синтез — самый быстрый раздел для роста балла.",
     en: "Punctuation and sentence boundaries, agreement, transitions and rhetorical synthesis — the fastest section to improve.",
   }),
@@ -158,7 +161,7 @@ export const SAT_SETS: ItemSet[] = [
     title: "Algebra and Advanced Math",
     minutes: 35,
     difficulty: "hard",
-    items: SAT_MATH_ALGEBRA,
+    items: SAT_MATH_ALGEBRA.map(shuffleExamItem),
     ru: "Системы без решений и с бесконечным числом решений, дискриминант, показательные модели, дробные степени.",
     en: "Systems with no or infinite solutions, discriminants, exponential models and rational exponents.",
   }),
@@ -168,7 +171,7 @@ export const SAT_SETS: ItemSet[] = [
     title: "Data, Geometry and Trigonometry",
     minutes: 50,
     difficulty: "hard",
-    items: [...SAT_MATH_DATA, ...SAT_MATH_2],
+    items: [...SAT_MATH_DATA, ...SAT_MATH_2].map(shuffleExamItem),
     ru: "Перевод единиц, проценты, таблицы и вероятность, окружности, объёмы и тригонометрия прямоугольного треугольника.",
     en: "Unit conversion, percentages, tables and probability, circles, volumes and right-triangle trigonometry.",
   }),

@@ -3,6 +3,9 @@ import { gradeWriting } from "@/lib/exam/grader";
 import { IELTS_WRITING } from "@/lib/exam/content/ielts-writing";
 import { drawModule, MIX_HARDER, MIX_MIXED, seededRandom, SAT_RW_POOL, SAT_MATH_POOL, SAT_BLUEPRINT } from "@/lib/exam/sets";
 import { IELTS_READING_FULL, IELTS_LISTENING_FULL } from "@/lib/exam/ielts-sets";
+import type { ExamItem } from "@/lib/exam/types";
+import { QUESTIONS } from "@/lib/content";
+import { remapOptionLetters } from "@/lib/shuffle-answers";
 
 let fails = 0;
 const eq = (label: string, got: unknown, want: unknown) => {
@@ -155,6 +158,52 @@ const noOverview = "The graph shows electricity in Kazakhstan. Coal was 78 perce
 const g1 = gradeWriting(noOverview, task1);
 truthy("task 1 without overview is penalised", g1.notes.some(n => n.message.en.includes("overview")));
 console.log(`     task1 no-overview: band ${g1.band}`);
+
+/**
+ * Every bank was authored with the correct option first — literally 99% of the
+ * school questions answered "A" — so a student guessing A scored full marks and
+ * the rating measured nothing. `lib/shuffle-answers.ts` fixes it at load; this
+ * asserts the fix is still wired in, because the failure is invisible in the UI.
+ */
+console.log("\n--- answer positions are spread ---");
+function spread(label: string, positions: number[]) {
+  const counts = [0, 0, 0, 0];
+  for (const p of positions) counts[p]++;
+  const top = Math.max(...counts) / positions.length;
+  console.log(
+    `     ${label.padEnd(16)} n=${String(positions.length).padStart(3)}  ` +
+      counts.map((c, i) => `${"ABCD"[i]}:${Math.round((c / positions.length) * 100)}%`).join(" ")
+  );
+  truthy(`${label}: no position holds a majority`, top <= 0.5);
+}
+const choiceIdx = (items: readonly ExamItem[]) =>
+  items.filter((i) => i.answer.kind === "choice").map((i) => (i.answer as { correct: number }).correct);
+
+spread("school", QUESTIONS.map((q) => q.correct));
+spread("SAT R&W", choiceIdx(SAT_RW_POOL));
+spread("IELTS reading", choiceIdx(IELTS_READING_FULL.items));
+
+// An explanation that says "only option B" has to still mean the same option
+// after the shuffle. The letter is rewritten only next to an option keyword —
+// "cos(90° − A)" is trigonometry, and rewriting it would corrupt the maths.
+const SWAP = [3, 2, 1, 0];
+eq("remaps a capitalised reference", remapOptionLetters("Только вариант A подходит.", SWAP), "Только вариант D подходит.");
+eq("remaps a mid-sentence reference", remapOptionLetters("Only option B avoids it.", SWAP), "Only option C avoids it.");
+eq("remaps a list", remapOptionLetters("Options C and D are narrow.", SWAP), "Options B and A are narrow.");
+eq("leaves trigonometry alone", remapOptionLetters("angle B = 90° − A, and cos(90° − A) = sin A", SWAP), "angle B = 90° − A, and cos(90° − A) = sin A");
+eq("leaves a lowercase article alone", remapOptionLetters("the option a teacher gives", SWAP), "the option a teacher gives");
+eq("does not match inside a word", remapOptionLetters("The adoption A was ratified.", SWAP), "The adoption A was ratified.");
+
+// True/False/Not Given is printed in that order on the real paper; a jumbled one
+// is not a harder question, it is a broken one.
+const tfng = [...IELTS_READING_FULL.items, ...IELTS_LISTENING_FULL.items].filter(
+  (i) => i.options?.length === 3 && /not given/i.test(i.options.join("|"))
+);
+truthy("TFNG items exist to check", tfng.length > 0);
+truthy(
+  "TFNG keeps its printed order",
+  tfng.every((i) => /^(true|yes)$/i.test(i.options![0]) && /^not given$/i.test(i.options![2]))
+);
 
 console.log(fails === 0 ? "\nALL PASS" : `\n${fails} FAILURES`);
 process.exit(fails === 0 ? 0 : 1);

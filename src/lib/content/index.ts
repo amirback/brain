@@ -11,6 +11,7 @@ export { SUMMARIES, summaryOf } from "./summaries";
 export { RESOURCES, type Resource } from "./extra";
 
 import { EXTRA_SECTIONS, RESOURCES as RES } from "./extra";
+import { shuffleQuestion } from "../shuffle-answers";
 import { DEEP_LESSONS } from "./lessons-deep";
 import { EXAM_LESSONS } from "./lessons-exam";
 
@@ -83,6 +84,11 @@ export const LESSONS: Lesson[] = [
   };
 });
 
+/**
+ * Every question was authored with the correct option written first, so the
+ * bank is shuffled on load — see `lib/shuffle-answers.ts`. Without it a student
+ * scores 99% by always choosing A, and the rating measures nothing.
+ */
 export const QUESTIONS: Question[] = [
   ...mathQuestions,
   ...englishQuestions,
@@ -90,7 +96,7 @@ export const QUESTIONS: Question[] = [
   ...historyQuestions,
   ...satQuestions,
   ...ieltsQuestions,
-];
+].map(shuffleQuestion);
 
 /**
  * How many reader steps a lesson has: intro, one per section, one per worked

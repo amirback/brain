@@ -176,6 +176,13 @@ export interface Attempt {
   ielts?: IeltsScoreReport;
   /** Writing and speaking store the produced text plus its analysis. */
   written?: WrittenResponse[];
+  /**
+   * Marks an attempt recorded after answer-order shuffling was introduced.
+   * `given` is a position, so attempts saved before it point at the option that
+   * used to sit there; the store migrates those once on load. Always true on
+   * anything saved now — its absence is what identifies an old attempt.
+   */
+  shuffled?: true;
 }
 
 export interface WrittenResponse {
