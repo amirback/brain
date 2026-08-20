@@ -37,13 +37,22 @@ const MODEL = process.env.MENTOR_MODEL || "claude-sonnet-5";
  * when someone is configuring a deploy for the first time.
  */
 export function GET(): Response {
-  const key = process.env.ANTHROPIC_API_KEY ?? "";
+  const raw = process.env.ANTHROPIC_API_KEY;
+  const key = raw ?? "";
   return Response.json({
+    // `present: false` means no such variable reached this deployment at all.
+    // `present: true` with length 0 means it arrived empty — a paste that
+    // didn't take. The two need different fixes, and the earlier version of
+    // this check could not tell them apart.
+    present: raw !== undefined,
     configured: key.length > 0,
     // A correct key starts with sk-ant- and is long; these two catch a
     // truncated paste or the wrong value pasted in.
     looksValid: key.startsWith("sk-ant-") && key.length > 40,
     length: key.length,
+    // Variable NAMES only, never values — this is what catches a typo or a
+    // key stored under a name the code doesn't read.
+    seen: Object.keys(process.env).filter((k) => /anthropic|claude|mentor/i.test(k)),
     model: MODEL,
   });
 }
