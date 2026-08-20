@@ -493,6 +493,63 @@ function lifeAnswer(q: string, st: StudentState, lang: Lang): Reply | null {
     };
   }
 
+  // pressure from parents
+  if (has(q, ["родител", "мама", "папа", "отец", "мать", "ругают", "давят", "ожидан", "разочар",
+              "ата-ана", "анам", "әкем", "parents", "mom", "dad", "pressure", "disappoint"])) {
+    return {
+      text: L3(lang,
+        "Давление близких почти всегда про их страх, а не про твои способности. Это не делает его приятнее, но объясняет, почему спорить бесполезно, а показывать — работает. Покажи карту знаний и прогноз: цифры разговаривают спокойнее, чем обещания «я буду стараться».",
+        "Жақындардың қысымы әрдайым дерлік олардың қорқынышы туралы, сенің қабілетің туралы емес. Бұл оны жағымды етпейді, бірақ неге дауласу пайдасыз, ал көрсету жұмыс істейтінін түсіндіреді. Білім картасы мен болжамды көрсет: сандар «тырысамын» деген уәдеден салмақты сөйлейді.",
+        "Pressure from family is almost always about their fear, not your ability. That doesn't make it pleasant, but it explains why arguing fails and showing works. Show them the knowledge map and the forecast — numbers argue more calmly than promises to try harder."),
+    };
+  }
+
+  // comparing yourself with everyone else
+  if (has(q, ["все умнее", "тупой", "глупый", "не способен", "хуже всех", "у всех получается", "не дано",
+              "мен ақымақ", "қабілетсіз", "stupid", "everyone else", "not smart", "no talent", "dumb"])) {
+    const elo = st.elo;
+    return {
+      topic: weak?.id,
+      text: L3(lang,
+        `«Не дано» — это почти всегда «не разобрано». Твой рейтинг ${elo} посчитан по реальным ответам, и он двигается: неспособные люди не набирают рейтинг вообще, а у тебя он есть. Сравнивать себя полезно только с собой месяц назад — все остальные сравнения врут, потому что ты не видишь, сколько они на самом деле сидели.`,
+        `«Қабілет жоқ» дегеннің мәні әрдайым дерлік «түсінілмеген». Рейтингің ${elo} нақты жауаптар бойынша есептелген және ол қозғалады: қабілетсіз адам рейтинг жинамайды, ал сенде ол бар. Өзіңді бір ай бұрынғы өзіңмен ғана салыстыр — қалған салыстырулар өтірік айтады, өйткені олардың қанша отырғанын көрмейсің.`,
+        `"I'm not built for this" almost always means "I haven't worked through it". Your rating of ${elo} comes from real answers and it moves — people without ability don't accumulate a rating at all, and you have one. The only honest comparison is with yourself a month ago; every other one lies, because you can't see how long they actually sat there.`),
+    };
+  }
+
+  // health, food, sport
+  if (has(q, ["спорт", "тренир", "здоров", "еда", "питан", "голов болит", "болит", "зарядк", "бегать",
+              "спорт", "денсаулық", "тамақ", "sport", "exercise", "health", "food", "eat", "headache", "gym"])) {
+    return {
+      text: L3(lang,
+        "Учёба упирается в тело чаще, чем кажется. Час сна стоит дороже часа зубрёжки, а двадцать минут движения в день заметно поднимают концентрацию — это одна из немногих вещей, которые работают у всех. И не занимайся голодным: мозг тратит глюкозу быстрее, чем ты замечаешь.",
+        "Оқу денеге ойлағаннан жиі тіреледі. Бір сағат ұйқы бір сағат жаттаудан қымбат, ал күніне жиырма минут қозғалыс зейінді айтарлықтай көтереді — бұл бәрінде жұмыс істейтін сирек нәрселердің бірі. Аш отырып оқыма: ми глюкозаны байқағаныңнан жылдам жұмсайды.",
+        "Studying runs into the body more often than people expect. An hour of sleep is worth more than an hour of cramming, and twenty minutes of movement a day lifts concentration measurably — one of the few things that works for everyone. And don't study hungry: the brain burns through glucose faster than you notice."),
+    };
+  }
+
+  // money
+  if (has(q, ["деньг", "заработ", "работу найти", "подработ", "дорого", "бесплатн", "оплат",
+              "ақша", "money", "earn", "job", "expensive", "free", "pay"])) {
+    return {
+      text: L3(lang,
+        "Brain бесплатный и останется таким для учеников — это к вопросу об оплате. Если речь о подработке параллельно с подготовкой: она реальна, но съедает именно те часы, которые дают рост балла. Считай честно, сколько часов в неделю останется, и ставь план под это число, а не под идеальное.",
+        "Brain тегін және оқушылар үшін солай қалады — төлем туралы сұрақ осы. Егер дайындықпен қатар қосымша жұмыс туралы болса: ол мүмкін, бірақ дәл балл өсіретін сағаттарды жейді. Аптасына қанша сағат қалатынын адал есепте де, жоспарды сол санға құр, идеалға емес.",
+        "Brain is free and stays free for students — that answers the payment question. If you mean working alongside prep: it's doable, but it eats exactly the hours that move your score. Count honestly how many hours a week are left and build the plan around that number, not the ideal one."),
+    };
+  }
+
+  // what is this app / who are you
+  if (has(q, ["кто ты", "что ты умеешь", "что такое brain", "ты бот", "ты живой", "ии ли ты",
+              "сен кімсің", "who are you", "what are you", "what can you do", "are you real", "are you ai"])) {
+    return {
+      text: L3(lang,
+        "Я наставник внутри Brain. Не человек и не большая языковая модель — я разбираю твои цифры (ответы, рейтинг, время, карту знаний) и материалы курса по правилам, которые можно проверить. Поэтому я не выдумываю фактов, но и не знаю всего на свете: спроси про учёбу, про план, про то, что тебя тормозит — здесь я полезен.",
+        "Мен Brain ішіндегі тәлімгермін. Адам да емеспін, үлкен тіл моделі де емеспін — сенің сандарыңды (жауаптар, рейтинг, уақыт, білім картасы) мен курс материалдарын тексеруге болатын ережелер бойынша талдаймын. Сондықтан факт ойлап таппаймын, бірақ бәрін де білмеймін: оқу туралы, жоспар туралы, не кедергі болып жүргені туралы сұра — мұнда пайдалымын.",
+        "I'm the mentor inside Brain. Not a person and not a large language model — I read your own numbers (answers, rating, time, knowledge map) and the course material through rules you could check yourself. So I don't invent facts, but I also don't know everything: ask about study, about the plan, about what's slowing you down, and I'm useful."),
+    };
+  }
+
   return null;
 }
 
@@ -508,7 +565,21 @@ export interface Reply {
 const norm = (s: string) =>
   s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 
-const has = (q: string, words: string[]) => words.some((w) => q.includes(w));
+/**
+ * Keyword match anchored to the start of a word, not a raw substring.
+ *
+ * Plain `includes` fired "мать" inside "заниматься" and "игр" inside "выиграл",
+ * which routed a question about sport to the parenting answer and a football
+ * trivia question to the one about phone distractions. Keywords are still
+ * prefixes on purpose — "родител" has to catch "родители" — so the anchor is
+ * the word boundary in front, never behind.
+ */
+const has = (q: string, words: string[]) =>
+  words.some((w) =>
+    w.includes(" ")
+      ? q.includes(w)
+      : new RegExp(`(^|\\s)${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(q)
+  );
 
 /** Finds a topic the student named, in any of the three languages. */
 function findTopic(q: string): string | undefined {
@@ -550,14 +621,54 @@ function findTopic(q: string): string | undefined {
 const L3 = (lang: Lang, ru: string, kk: string, en: string) => ({ ru, kk, en })[lang];
 
 /**
+ * The reply follows the language of the question, not the interface setting.
+ *
+ * A student who types in Russian while the interface happens to be in English
+ * is asking in Russian, and answering in English reads as the app ignoring
+ * them. Kazakh is checked first because it is written in Cyrillic too and is
+ * only distinguishable by the nine letters Russian does not have.
+ */
+export function replyLang(raw: string, fallback: Lang): Lang {
+  if (/[әғқңөұүһі]/i.test(raw)) return "kk";
+  // A short Kazakh sentence can be spelled entirely in letters Russian shares
+  // ("Мен шаршадым"), so a handful of function words carry the rest.
+  if (/(^|\s)(мен|сен|емес|керек|болды|болмайды|тагы|калай)(\s|$)/i.test(raw)) return "kk";
+  if (/[а-яё]/i.test(raw)) return "ru";
+  if (/[a-z]/i.test(raw)) return "en";
+  return fallback;
+}
+
+/** "Answer me in Russian" — an explicit request overrides the detected language. */
+function requestedLang(q: string): Lang | null {
+  if (has(q, ["по-русски", "по русски", "на русском", "русском языке", "переведи на русский", "in russian"])) return "ru";
+  if (has(q, ["қазақша", "казакша", "на казахском", "по-казахски", "in kazakh"])) return "kk";
+  if (has(q, ["по-английски", "по английски", "на английском", "in english", "англ"])) return "en";
+  return null;
+}
+
+/**
  * Answers a typed question from the student's own data and the content
  * library. Rule-based by design: everything it says is traceable to a number
  * in the profile or to a line of the course material.
  */
-export function answerQuestion(raw: string, st: StudentState, lang: Lang): Reply {
+export function answerQuestion(raw: string, st: StudentState, uiLang: Lang): Reply {
   const q = norm(raw);
   const topics = topicsOf(st.activeSubject);
   const weak = weakestOf(st);
+  // The interface language is only a fallback for input with no letters at all.
+  const asked = requestedLang(q);
+  const lang: Lang = asked ?? replyLang(raw, uiLang);
+
+  // "Say that in Russian" deserves the switch plus the confirmation, not a
+  // refusal — this used to fall through to "I only answer about the material".
+  if (asked && q.split(" ").length <= 6) {
+    return {
+      text: L3(lang,
+        `Хорошо, дальше отвечаю по-русски. Спрашивай о чём угодно — об учёбе, о планах или просто так.`,
+        `Жақсы, әрі қарай қазақша жауап беремін. Кез келген нәрсені сұра — оқу туралы, жоспар туралы немесе жай ғана.`,
+        `Sure, I'll answer in English from here. Ask me anything — study, plans, or just talk.`),
+    };
+  }
 
   if (!q) return { text: L3(lang, "Напиши вопрос — отвечу по твоим данным.", "Сұрағыңды жаз — деректеріңе қарап жауап беремін.", "Type a question and I'll answer from your data.") };
 
@@ -693,13 +804,34 @@ export function answerQuestion(raw: string, st: StudentState, lang: Lang): Reply
     };
   }
 
-  // --- fallback: say what it can do, and give the most useful thing anyway ---
+  /* --- fallback ---
+     Never refuse. The old version answered "I only work from the course
+     material", which reads as a brush-off to anyone who asked about anything
+     else. Say plainly what this mentor is, then still hand over the most
+     useful thing it actually knows about this student. */
   const fallbackTopic = weak?.id ?? topics[0]?.id;
+  const fallbackName = fallbackTopic ? topicById(fallbackTopic)?.title[lang] : undefined;
+  const streakNow = streakLength(st.streakDates);
+
   return {
     topic: fallbackTopic,
     text: L3(lang,
-      "Я отвечаю по твоим данным и материалам курса, поэтому вопрос лучше задать конкретнее. Например: «объясни квадратные уравнения», «что делать сегодня», «почему я застрял», «какой у меня прогноз», «дай конспект», «нужно видео».",
-      "Мен сенің деректерің мен курс материалдары бойынша жауап беремін, сондықтан сұрақты нақтырақ қой. Мысалы: «квадрат теңдеулерді түсіндір», «бүгін не істеу керек», «неге тұрып қалдым», «болжамым қандай», «конспект бер», «видео керек».",
-      "I answer from your data and the course material, so a more specific question works best. For example: \"explain quadratic equations\", \"what should I do today\", \"why am I stuck\", \"what's my forecast\", \"give me the summary\", \"I need a video\"."),
+      `На такой вопрос я честно ответить не могу: у меня нет доступа в интернет, и я не выдумываю факты. Зато я хорошо знаю тебя по цифрам — спроси про любую тему, про план, про прогноз или про то, что мешает садиться за учёбу.${
+        fallbackName ? ` Кстати, прямо сейчас больше всего очков даёт «${fallbackName}».` : ""
+      }`,
+      `Бұл сұраққа адал жауап бере алмаймын: интернетке қосылуым жоқ, ал факт ойлап таппаймын. Бірақ сені сандар бойынша жақсы білемін — кез келген тақырып, жоспар, болжам немесе оқуға отыруға не кедергі екені туралы сұра.${
+        fallbackName ? ` Айтпақшы, дәл қазір ең көп ұпайды «${fallbackName}» береді.` : ""
+      }`,
+      `I can't answer that one honestly: I have no internet access and I don't invent facts. What I do know well is you, from your numbers — ask about any topic, about the plan, about the forecast, or about whatever is stopping you from sitting down.${
+        fallbackName ? ` For what it's worth, "${fallbackName}" is where the points are right now.` : ""
+      }`),
+    bullets: [
+      L3(lang, "«Объясни квадратные уравнения» — разберу тему с нуля", "«Квадрат теңдеулерді түсіндір» — тақырыпты нөлден талдаймын", "\"Explain quadratic equations\" — I'll break the topic down"),
+      L3(lang, "«Что делать сегодня» — назову конкретную работу на день", "«Бүгін не істеу керек» — күнге нақты жұмыс айтамын", "\"What should I do today\" — I'll name the day's actual work"),
+      L3(lang,
+        streakNow > 0 ? "«Не хочу учиться» — это тоже нормальный вопрос, отвечу" : "«У меня пропала мотивация» — это тоже нормальный вопрос, отвечу",
+        "«Оқығым келмейді» — бұл да қалыпты сұрақ, жауап беремін",
+        "\"I don't want to study\" — that's a fair question too, I'll answer it"),
+    ],
   };
 }
