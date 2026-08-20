@@ -7,6 +7,14 @@ import { StoreProvider } from "@/lib/store";
 import { Header, Footer } from "@/components/Header";
 
 export const metadata: Metadata = {
+  /**
+   * Open Graph and canonical URLs have to be absolute, and a relative one is
+   * silently dropped by most link previews. This makes every relative path in
+   * the metadata below resolve against the real address, so a link pasted into
+   * WhatsApp or Telegram renders a card instead of a bare URL. The GitHub Pages
+   * mirror points here too — this is the canonical home.
+   */
+  metadataBase: new URL("https://brainstudy.online"),
   // Short enough to survive a browser tab. The long pitch lives in the
   // description and the Open Graph card, where there is room for it.
   title: "Brain — Study Together",
@@ -18,6 +26,14 @@ export const metadata: Metadata = {
     title: "Brain — Study Together",
     description: "Находит пробелы, строит план по дням и ведёт до мок-теста. ЕНТ, SAT и IELTS.",
     type: "website",
+    url: "/",
+    siteName: "Brain",
+    locale: "ru_RU",
+  },
+  twitter: {
+    card: "summary",
+    title: "Brain — Study Together",
+    description: "Находит пробелы, строит план по дням и ведёт до мок-теста. ЕНТ, SAT и IELTS.",
   },
 };
 
