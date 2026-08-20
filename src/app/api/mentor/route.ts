@@ -147,11 +147,55 @@ export async function POST(request: Request): Promise<Response> {
       messages: [...history, { role: "user", content: message }],
     });
 
+    /**
+     * Wait for the model's first token before committing to a 200.
+     *
+     * Streaming failures land *inside* the response body, where the client has
+     * already seen a success status and treats whatever arrives as the answer.
+     * That turned an empty credit balance into "(the answer was cut off)" shown
+     * to the student, instead of the silent fall back to the offline mentor.
+     * Holding the status until the first token means a failure that happens
+     * before any output is still reported as a failure — and once text starts
+     * flowing, this costs nothing, because that is when a stream would have
+     * begun emitting anyway.
+     */
+    const iterator = stream[Symbol.asyncIterator]();
+    let firstText = "";
+    try {
+      for (;;) {
+        const next = await iterator.next();
+        if (next.done) break;
+        const event = next.value;
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta" &&
+          event.delta.text
+        ) {
+          firstText = event.delta.text;
+          break;
+        }
+      }
+    } catch (error) {
+      stream.abort();
+      return apiErrorResponse(error);
+    }
+
+    if (!firstText) {
+      // Ended without producing anything — a refusal, or an empty completion.
+      // The offline mentor is a better answer than an empty bubble.
+      stream.abort();
+      return Response.json({ error: "mentor_empty" }, { status: 502 });
+    }
+
     const encoder = new TextEncoder();
-    const body = new ReadableStream<Uint8Array>({
+    const replyStream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
-          for await (const event of stream) {
+          controller.enqueue(encoder.encode(firstText));
+          for (;;) {
+            const next = await iterator.next();
+            if (next.done) break;
+            const event = next.value;
             if (
               event.type === "content_block_delta" &&
               event.delta.type === "text_delta" &&
@@ -160,14 +204,10 @@ export async function POST(request: Request): Promise<Response> {
               controller.enqueue(encoder.encode(event.delta.text));
             }
           }
-          const final = await stream.finalMessage();
-          if (final.stop_reason === "refusal") {
-            // Nothing useful was produced; say so in the stream rather than
-            // ending on an empty bubble.
-            controller.enqueue(encoder.encode(refusalNote(profile.lang)));
-          }
         } catch (error) {
-          console.error("mentor stream failed", error);
+          // Text was already delivered, so the status is spent. Say plainly
+          // that the rest is missing rather than ending mid-sentence.
+          console.error("mentor stream failed mid-reply", error);
           controller.enqueue(encoder.encode(streamErrorNote(profile.lang)));
         } finally {
           controller.close();
@@ -179,7 +219,7 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
 
-    return new Response(body, {
+    return new Response(replyStream, {
       headers: {
         "content-type": "text/plain; charset=utf-8",
         "cache-control": "no-store",
@@ -188,30 +228,34 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   } catch (error) {
-    // Typed first, so a rate limit is not reported as a bad request.
-    if (error instanceof Anthropic.RateLimitError) {
-      return Response.json({ error: "mentor_busy" }, { status: 429 });
-    }
-    if (error instanceof Anthropic.AuthenticationError) {
-      console.error("mentor auth failed — check ANTHROPIC_API_KEY");
-      return Response.json({ error: "mentor_unconfigured" }, { status: 503 });
-    }
-    if (error instanceof Anthropic.APIConnectionError) {
-      return Response.json({ error: "mentor_unreachable" }, { status: 503 });
-    }
-    if (error instanceof Anthropic.APIError) {
-      console.error("mentor api error", error.status, error.message);
-      return Response.json({ error: "mentor_failed" }, { status: 502 });
-    }
-    console.error("mentor unexpected error", error);
-    return Response.json({ error: "mentor_failed" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
-function refusalNote(lang: string): string {
-  if (lang === "kk") return "Бұл сұраққа жауап бере алмаймын. Оқу туралы сұрасаң, көмектесемін.";
-  if (lang === "en") return "I can't answer that one. Ask me about your studies and I'll help.";
-  return "На этот вопрос ответить не могу. Спроси про учёбу — помогу.";
+/**
+ * Maps an SDK error onto a status the client can act on. Typed first, so a
+ * rate limit is not reported as a bad request — and every branch here is a
+ * signal to fall back to the offline mentor, never something to show a student.
+ */
+function apiErrorResponse(error: unknown): Response {
+  if (error instanceof Anthropic.RateLimitError) {
+    return Response.json({ error: "mentor_busy" }, { status: 429 });
+  }
+  if (error instanceof Anthropic.AuthenticationError) {
+    console.error("mentor auth failed — check ANTHROPIC_API_KEY");
+    return Response.json({ error: "mentor_unconfigured" }, { status: 503 });
+  }
+  if (error instanceof Anthropic.APIConnectionError) {
+    return Response.json({ error: "mentor_unreachable" }, { status: 503 });
+  }
+  if (error instanceof Anthropic.APIError) {
+    // A 400 here is usually the account, not the request: an empty credit
+    // balance arrives as invalid_request_error.
+    console.error("mentor api error", error.status, error.message);
+    return Response.json({ error: "mentor_failed", status: error.status }, { status: 502 });
+  }
+  console.error("mentor unexpected error", error);
+  return Response.json({ error: "mentor_failed" }, { status: 500 });
 }
 
 function streamErrorNote(lang: string): string {
