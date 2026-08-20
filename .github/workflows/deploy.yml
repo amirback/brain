@@ -25,10 +25,19 @@ jobs:
 
       - run: npm ci
 
+      # GitHub Pages can only serve pre-built files, and a POST route handler
+      # cannot be statically exported. The app detects the missing endpoint and
+      # falls back to its rule-based mentor, so the exported site still works —
+      # it just doesn't have the language model behind the chat. The full
+      # version runs on Vercel.
+      - name: Drop the server-only API routes
+        run: rm -rf src/app/api
+
       - name: Build static site
         env:
           # GitHub Pages serves this project from /brain
           NEXT_PUBLIC_BASE_PATH: /brain
+          STATIC_EXPORT: "1"
         run: npm run build
 
       - name: Publish to the gh-pages branch

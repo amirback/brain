@@ -7,6 +7,8 @@ import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { topicById } from "@/lib/content";
 import { CHAT_TURNS, advise, answerQuestion, videoFor, type Advice } from "@/lib/advisor";
+import { askMentor, MentorUnavailable } from "@/lib/mentor-client";
+import { buildProfile, topicHint, type MentorTurn } from "@/lib/mentor-prompt";
 import { Btn, Card, Reveal } from "@/components/ui";
 import { IconArrow, IconBolt, IconCheck, IconHelp, IconSpark, IconTrend, IconLink } from "@/components/Icons";
 
@@ -27,6 +29,7 @@ export default function AssistantPage() {
   const [typing, setTyping] = useState(false);
   const [draft, setDraft] = useState("");
   const feedRef = useRef<HTMLDivElement>(null);
+  const nextId = useRef(0);
 
   useEffect(() => {
     if (!ready) return;
@@ -41,25 +44,71 @@ export default function AssistantPage() {
 
   if (!ready || !user) return null;
 
-  /** Anything the student types goes through the same answering path. */
-  const send = (text: string) => {
-    const q = text.trim();
-    if (!q || typing) return;
-    setChat((c) => [...c, { id: Date.now(), from: "me", text: q }]);
-    setDraft("");
-    setTyping(true);
-    // A short pause so the answer reads as a reply rather than a page reload.
-    window.setTimeout(() => {
-      const reply = answerQuestion(q, user, lang);
-      setChat((c) => [
-        ...c,
-        { id: Date.now() + 1, from: "ai", text: reply.text, topic: reply.topic, bullets: reply.bullets },
-      ]);
-      setTyping(false);
-    }, 420);
+  /** The rule-based mentor, used when no model backend is reachable. */
+  const answerOffline = (q: string, bubbleId: number) => {
+    const reply = answerQuestion(q, user, lang);
+    setChat((c) =>
+      c.map((b) =>
+        b.id === bubbleId
+          ? { ...b, text: reply.text, topic: reply.topic, bullets: reply.bullets }
+          : b
+      )
+    );
   };
 
-  const ask = (i: number) => send(pick(CHAT_TURNS[i].q));
+  /**
+   * Anything the student types goes to the model when one is configured, and
+   * to the rule-based mentor when it is not. The fallback is silent on
+   * purpose: a student asking why they are stuck does not need to hear about
+   * our deployment topology.
+   */
+  const send = async (text: string) => {
+    const q = text.trim();
+    if (!q || typing) return;
+
+    // A counter rather than a timestamp: ids only need to be unique within the
+    // conversation, and two bubbles created in the same tick must not collide.
+    const askId = (nextId.current += 1);
+    const replyId = (nextId.current += 1);
+    const history: MentorTurn[] = chat.map((b) => ({
+      role: b.from === "me" ? "user" : "assistant",
+      content: b.text,
+    }));
+
+    setChat((c) => [
+      ...c,
+      { id: askId, from: "me", text: q },
+      { id: replyId, from: "ai", text: "" },
+    ]);
+    setDraft("");
+    setTyping(true);
+
+    try {
+      await askMentor({
+        message: q,
+        history,
+        profile: buildProfile(user, lang),
+        onChunk: (chunk) => {
+          // First chunk replaces the typing indicator with real text.
+          setTyping(false);
+          setChat((c) => c.map((b) => (b.id === replyId ? { ...b, text: b.text + chunk } : b)));
+        },
+      });
+      // Deep-link the student's weakest topic under the answer, as before.
+      const hint = topicHint(user, lang);
+      if (hint) setChat((c) => c.map((b) => (b.id === replyId ? { ...b, topic: hint } : b)));
+    } catch (error) {
+      if (error instanceof MentorUnavailable) answerOffline(q, replyId);
+      else {
+        console.error(error);
+        answerOffline(q, replyId);
+      }
+    } finally {
+      setTyping(false);
+    }
+  };
+
+  const ask = (i: number) => void send(pick(CHAT_TURNS[i].q));
 
   const toneStyle = {
     praise: "border-brand/40 bg-brand/8",
@@ -218,7 +267,7 @@ export default function AssistantPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                send(draft);
+                void send(draft);
               }}
               className="flex items-center gap-2"
             >
@@ -227,7 +276,7 @@ export default function AssistantPage() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={d.assistant.placeholder}
-                maxLength={300}
+                maxLength={1000}
                 aria-label={d.assistant.placeholder}
               />
               <Btn type="submit" size="lg" disabled={!draft.trim() || typing} className="shrink-0 !px-4">
