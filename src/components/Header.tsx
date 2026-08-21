@@ -25,7 +25,7 @@ export function LangSwitch({ compact = false }: { compact?: boolean }) {
           aria-label={l.full}
           aria-pressed={lang === l.code}
           className={`press rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide transition-colors ${
-            lang === l.code ? "bg-brand text-paper" : "text-mute hover:text-ink"
+            lang === l.code ? "bg-brand-lt text-ink" : "text-mute hover:text-ink"
           }`}
         >
           {l.short}
@@ -140,7 +140,7 @@ export function Header() {
             ) : (
               <Link
                 href="/start"
-                className="hidden sm:inline-flex press shine halo items-center h-9 px-4 rounded-xl bg-brand text-paper text-[13px] font-bold hover:bg-brand-hi"
+                className="hidden sm:inline-flex press shine items-center h-9 px-4 rounded-xl bg-brand-lt text-ink text-[13px] font-bold hover:bg-brand-hi hover:text-paper"
               >
                 {d.nav.start}
               </Link>
@@ -169,7 +169,7 @@ export function Header() {
               >
                 {l.label}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4.5 12h14M13 6.5l5.5 5.5L13 17.5" stroke="#5b4ee6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4.5 12h14M13 6.5l5.5 5.5L13 17.5" stroke="#8a79e8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </Link>
             ))}
@@ -180,7 +180,7 @@ export function Header() {
                   {d.roles.switch}
                 </button>
               ) : (
-                <Link href="/start" className="press inline-flex items-center h-11 px-5 rounded-2xl bg-brand text-paper font-bold">
+                <Link href="/start" className="press inline-flex items-center h-11 px-5 rounded-2xl bg-brand-lt text-ink font-bold">
                   {d.nav.start}
                 </Link>
               )}

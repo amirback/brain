@@ -86,17 +86,18 @@ type BtnProps = {
 };
 
 /**
- * The main action carries the brand violet. On a near-white page the violet is
- * the only saturated thing on screen, so it reads as the action without
- * needing weight; `dark` stays for the rare place that needs more contrast
- * than the violet gives — a confirm over a busy surface.
+ * The main action is pale lavender carrying dark text, not a filled block of
+ * colour. On a page this light a saturated button reads as a hole; the pale
+ * fill still wins the eye because it is the only tinted rectangle on screen,
+ * and the dark label does the work of contrast. `dark` remains for the few
+ * places that need more separation than that.
  */
 const V = {
-  primary: "bg-brand text-paper hover:bg-brand-hi border border-brand shine halo",
-  brand: "bg-brand text-paper hover:bg-brand-hi border border-brand shine halo",
+  primary: "bg-brand-lt text-ink hover:bg-brand-hi hover:text-paper border border-brand-lt shine",
+  brand: "bg-brand text-paper hover:bg-brand-hi border border-brand shine",
   ghost: "bg-transparent text-ink hover:bg-brand/8 border border-transparent",
   outline: "bg-transparent text-ink hover:border-brand hover:text-brand border border-line2",
-  dark: "bg-ink text-paper hover:bg-[#262445] border border-ink shine",
+  dark: "bg-ink text-paper hover:bg-[#413c52] border border-ink shine",
 };
 
 const SZ = {
@@ -196,7 +197,7 @@ export function Ring({
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
         <circle cx={size / 2} cy={size / 2} r={r} stroke="#e9e7f5" strokeWidth={stroke} fill="none" />
         <circle
-          cx={size / 2} cy={size / 2} r={r} stroke="#5b4ee6" strokeWidth={stroke} fill="none"
+          cx={size / 2} cy={size / 2} r={r} stroke="#8a79e8" strokeWidth={stroke} fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
           style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.16,1,0.3,1)" }}
         />
@@ -265,15 +266,15 @@ export function Sparkline({
     <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={label ?? "trend"}>
       <defs>
         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#5b4ee6" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#5b4ee6" stopOpacity="0" />
+          <stop offset="0%" stopColor="#8a79e8" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#8a79e8" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#spark-fill)" />
-      <path d={d} stroke="#5b4ee6" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
+      <path d={d} stroke="#8a79e8" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
         className="draw-line" style={{ ["--dash" as string]: "600", strokeDasharray: 600 }} />
       {showDots && (
-        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#5b4ee6" stroke="#ffffff" strokeWidth="2" />
+        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#8a79e8" stroke="#ffffff" strokeWidth="2" />
       )}
     </svg>
   );
@@ -294,7 +295,7 @@ export function MiniBars({
               className="w-full rounded-t-[4px] bar-grow transition-colors"
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#5b4ee6" : "#e8e6f7",
+                background: v > 0 ? "#8a79e8" : "#ece7e0",
                 animationDelay: `${i * 60}ms`,
               }}
               title={labels?.[i]}
@@ -351,7 +352,7 @@ export function Confetti({ fire }: { fire: number }) {
   const [bits, setBits] = useState<{ id: number; cx: string; cy: string; cr: string; c: string }[]>([]);
   useEffect(() => {
     if (fire === 0) return;
-    const colors = ["#5b4ee6", "#8f83f0", "#ab9ff2", "#7263f2"];
+    const colors = ["#8a79e8", "#b6abf4", "#c6bbf8", "#a99cf1"];
     const next = Array.from({ length: 18 }, (_, i) => ({
       id: fire * 100 + i,
       cx: `${(Math.random() - 0.5) * 260}px`,

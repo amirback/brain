@@ -423,7 +423,7 @@ export default function TeacherPage() {
                               className="h-8 rounded-lg transition-transform hover:scale-[1.04]"
                               style={{
                                 background:
-                                  m >= 0.7 ? "#5b4ee6" : m >= 0.45 ? "rgba(91,78,230,.55)" : m >= 0.25 ? "rgba(91,78,230,.26)" : "#e8e6f7",
+                                  m >= 0.7 ? "#8a79e8" : m >= 0.45 ? "rgba(91,78,230,.55)" : m >= 0.25 ? "rgba(91,78,230,.26)" : "#ece7e0",
                               }}
                               title={`${r.name} · ${pick(t.title)} · ${Math.round(m * 100)}%`}
                             />

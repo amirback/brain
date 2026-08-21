@@ -26,7 +26,7 @@ export function IconTarget({ size = 24, className }: P) {
     <svg {...base(size)} className={className}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" {...S} />
       <circle cx="12" cy="12" r="5.2" stroke="currentColor" {...S} opacity="0.55" />
-      <circle cx="12" cy="12" r="2" fill="#5b4ee6" />
+      <circle cx="12" cy="12" r="2" fill="#8a79e8" />
     </svg>
   );
 }
@@ -34,10 +34,10 @@ export function IconTarget({ size = 24, className }: P) {
 export function IconMap({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="#5b4ee6" />
+      <rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="#8a79e8" />
       <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" stroke="currentColor" {...S} />
       <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" stroke="currentColor" {...S} />
-      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="#5b4ee6" opacity="0.45" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="#8a79e8" opacity="0.45" />
     </svg>
   );
 }
@@ -47,7 +47,7 @@ export function IconChart({ size = 24, className }: P) {
     <svg {...base(size)} className={className}>
       <path d="M3 20h18" stroke="currentColor" {...S} />
       <rect x="5" y="12" width="3.6" height="5" rx="1.2" stroke="currentColor" {...S} />
-      <rect x="10.2" y="8" width="3.6" height="9" rx="1.2" fill="#5b4ee6" />
+      <rect x="10.2" y="8" width="3.6" height="9" rx="1.2" fill="#8a79e8" />
       <rect x="15.4" y="4.5" width="3.6" height="12.5" rx="1.2" stroke="currentColor" {...S} />
     </svg>
   );
@@ -56,8 +56,8 @@ export function IconChart({ size = 24, className }: P) {
 export function IconTrend({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <path d="M3 16.5l5-5 3.5 3.5L20 6.5" stroke="#5b4ee6" {...S} />
-      <path d="M15 6.5h5v5" stroke="#5b4ee6" {...S} />
+      <path d="M3 16.5l5-5 3.5 3.5L20 6.5" stroke="#8a79e8" {...S} />
+      <path d="M15 6.5h5v5" stroke="#8a79e8" {...S} />
       <path d="M3 20.5h18" stroke="currentColor" {...S} opacity="0.4" />
     </svg>
   );
@@ -68,9 +68,9 @@ export function IconFlame({ size = 24, className }: P) {
     <svg {...base(size)} className={className}>
       <path
         d="M12 3c.6 3.2-1.4 4.4-2.8 5.9C7.6 10.6 7 12 7 13.7 7 17.2 9.4 20 12 20s5-2.8 5-6.3c0-2.6-1.5-4-2.6-5.6-.4 1-1 1.7-1.8 2.2.4-2.6-.2-5-1.6-7.3z"
-        fill="#5b4ee6"
+        fill="#8a79e8"
       />
-      <path d="M12 20c-1.4 0-2.4-1.3-2.4-2.9 0-1.6 1.1-2.3 1.7-3.4.7 1 2.6 1.8 2.6 3.4 0 1.6-.5 2.9-1.9 2.9z" fill="#8f83f0" />
+      <path d="M12 20c-1.4 0-2.4-1.3-2.4-2.9 0-1.6 1.1-2.3 1.7-3.4.7 1 2.6 1.8 2.6 3.4 0 1.6-.5 2.9-1.9 2.9z" fill="#b6abf4" />
     </svg>
   );
 }
@@ -79,7 +79,7 @@ export function IconClock({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" {...S} />
-      <path d="M12 7.5V12l3 2" stroke="#5b4ee6" {...S} />
+      <path d="M12 7.5V12l3 2" stroke="#8a79e8" {...S} />
     </svg>
   );
 }
@@ -87,7 +87,7 @@ export function IconClock({ size = 24, className }: P) {
 export function IconTrophy({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <path d="M7 4h10v4.5a5 5 0 01-10 0V4z" fill="#5b4ee6" />
+      <path d="M7 4h10v4.5a5 5 0 01-10 0V4z" fill="#8a79e8" />
       <path d="M7 5.5H4.8v1.2A3.2 3.2 0 007.4 9.8M17 5.5h2.2v1.2a3.2 3.2 0 01-2.6 3.1" stroke="currentColor" {...S} />
       <path d="M12 13.5V17M8.5 20h7M9.5 17h5l.7 3h-6.4l.7-3z" stroke="currentColor" {...S} />
     </svg>
@@ -97,7 +97,7 @@ export function IconTrophy({ size = 24, className }: P) {
 export function IconBolt({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <path d="M13.5 2.5L5 13.2h5.2L9.8 21.5 18.5 10.6h-5.3l.3-8.1z" fill="#5b4ee6" />
+      <path d="M13.5 2.5L5 13.2h5.2L9.8 21.5 18.5 10.6h-5.3l.3-8.1z" fill="#8a79e8" />
     </svg>
   );
 }
@@ -105,7 +105,7 @@ export function IconBolt({ size = 24, className }: P) {
 export function IconBook({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <path d="M4 5.2C4 4.3 4.8 3.6 5.7 3.7L11 4.4v15.9l-5.4-.7A1.7 1.7 0 014 17.9V5.2z" fill="#5b4ee6" opacity="0.9" />
+      <path d="M4 5.2C4 4.3 4.8 3.6 5.7 3.7L11 4.4v15.9l-5.4-.7A1.7 1.7 0 014 17.9V5.2z" fill="#8a79e8" opacity="0.9" />
       <path d="M20 5.2c0-.9-.8-1.6-1.7-1.5L13 4.4v15.9l5.4-.7c.9-.1 1.6-.9 1.6-1.7V5.2z" stroke="currentColor" {...S} />
     </svg>
   );
@@ -115,7 +115,7 @@ export function IconTeacher({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
       <rect x="3" y="4" width="18" height="12" rx="2.2" stroke="currentColor" {...S} />
-      <path d="M6.5 8.5h6M6.5 11.5h4" stroke="#5b4ee6" {...S} />
+      <path d="M6.5 8.5h6M6.5 11.5h4" stroke="#8a79e8" {...S} />
       <path d="M9 20l3-4 3 4" stroke="currentColor" {...S} />
     </svg>
   );
@@ -124,7 +124,7 @@ export function IconTeacher({ size = 24, className }: P) {
 export function IconParent({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <circle cx="8.5" cy="7" r="3" fill="#5b4ee6" />
+      <circle cx="8.5" cy="7" r="3" fill="#8a79e8" />
       <circle cx="16.5" cy="9.5" r="2.2" stroke="currentColor" {...S} />
       <path d="M3.5 19.5c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" {...S} />
       <path d="M14.8 19.5c0-2 1.1-3.6 3-3.6s2.7 1.6 2.7 3.6" stroke="currentColor" {...S} opacity="0.6" />
@@ -135,7 +135,7 @@ export function IconParent({ size = 24, className }: P) {
 export function IconCheck({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <circle cx="12" cy="12" r="9" fill="#5b4ee6" />
+      <circle cx="12" cy="12" r="9" fill="#8a79e8" />
       <path d="M8 12.3l2.7 2.7L16 9.5" stroke="#ffffff" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -170,8 +170,8 @@ export function IconGlobe({ size = 24, className }: P) {
 export function IconSpark({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
-      <path d="M12 2.8l1.9 5.6 5.6 1.9-5.6 1.9L12 17.8l-1.9-5.6-5.6-1.9 5.6-1.9L12 2.8z" fill="#5b4ee6" />
-      <path d="M18.6 15.4l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" fill="#8f83f0" />
+      <path d="M12 2.8l1.9 5.6 5.6 1.9-5.6 1.9L12 17.8l-1.9-5.6-5.6-1.9 5.6-1.9L12 2.8z" fill="#8a79e8" />
+      <path d="M18.6 15.4l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" fill="#b6abf4" />
     </svg>
   );
 }
@@ -190,7 +190,7 @@ export function IconRefresh({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
       <path d="M20 12a8 8 0 11-2.6-5.9" stroke="currentColor" {...S} />
-      <path d="M20 4v4.5h-4.5" stroke="#5b4ee6" {...S} />
+      <path d="M20 4v4.5h-4.5" stroke="#8a79e8" {...S} />
     </svg>
   );
 }
@@ -223,8 +223,8 @@ export function IconHelp({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" {...S} />
-      <path d="M9.5 9.3a2.6 2.6 0 015 .9c0 1.7-2.5 2.1-2.5 3.8" stroke="#5b4ee6" {...S} />
-      <circle cx="12" cy="17" r="1.1" fill="#5b4ee6" />
+      <path d="M9.5 9.3a2.6 2.6 0 015 .9c0 1.7-2.5 2.1-2.5 3.8" stroke="#8a79e8" {...S} />
+      <circle cx="12" cy="17" r="1.1" fill="#8a79e8" />
     </svg>
   );
 }
@@ -242,7 +242,7 @@ export function IconLink({ size = 24, className }: P) {
   return (
     <svg {...base(size)} className={className}>
       <path d="M10.5 13.5a4 4 0 005.7 0l2.8-2.8a4 4 0 10-5.7-5.7L11.9 6.4" stroke="currentColor" {...S} />
-      <path d="M13.5 10.5a4 4 0 00-5.7 0L5 13.3a4 4 0 105.7 5.7l1.4-1.4" stroke="#5b4ee6" {...S} />
+      <path d="M13.5 10.5a4 4 0 00-5.7 0L5 13.3a4 4 0 105.7 5.7l1.4-1.4" stroke="#8a79e8" {...S} />
     </svg>
   );
 }
@@ -252,7 +252,7 @@ export function IconGrid({ size = 24, className }: P) {
     <svg {...base(size)} className={className}>
       <rect x="3.5" y="3.5" width="17" height="17" rx="2.4" stroke="currentColor" {...S} />
       <path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17" stroke="currentColor" {...S} opacity="0.55" />
-      <rect x="14.8" y="9.2" width="5.7" height="5.6" fill="#5b4ee6" opacity="0.85" />
+      <rect x="14.8" y="9.2" width="5.7" height="5.6" fill="#8a79e8" opacity="0.85" />
     </svg>
   );
 }
@@ -295,10 +295,10 @@ export function LogoMark({ size = 34, className = "" }: { className?: string; si
   return (
     <svg width={size} height={size} viewBox="0 0 36 36" fill="none" className={className} aria-hidden="true">
       <rect x="1.2" y="1.2" width="33.6" height="33.6" rx="10" stroke="#d6d2ec" strokeWidth="1.6" />
-      <path d="M11 10.5H9.5A2.5 2.5 0 007 13v3.2c0 1-.8 1.8-1.8 1.8 1 0 1.8.8 1.8 1.8V23a2.5 2.5 0 002.5 2.5H11" stroke="#5b4ee6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M25 10.5h1.5A2.5 2.5 0 0129 13v3.2c0 1 .8 1.8 1.8 1.8-1 0-1.8.8-1.8 1.8V23a2.5 2.5 0 01-2.5 2.5H25" stroke="#5b4ee6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="18" cy="18" r="3.4" fill="#5b4ee6" />
-      <circle cx="18" cy="18" r="6.6" stroke="#5b4ee6" strokeWidth="1.4" opacity="0.35" />
+      <path d="M11 10.5H9.5A2.5 2.5 0 007 13v3.2c0 1-.8 1.8-1.8 1.8 1 0 1.8.8 1.8 1.8V23a2.5 2.5 0 002.5 2.5H11" stroke="#8a79e8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M25 10.5h1.5A2.5 2.5 0 0129 13v3.2c0 1 .8 1.8 1.8 1.8-1 0-1.8.8-1.8 1.8V23a2.5 2.5 0 01-2.5 2.5H25" stroke="#8a79e8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="18" cy="18" r="3.4" fill="#8a79e8" />
+      <circle cx="18" cy="18" r="6.6" stroke="#8a79e8" strokeWidth="1.4" opacity="0.35" />
     </svg>
   );
 }

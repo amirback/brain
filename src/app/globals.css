@@ -1,36 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  /* Near-white ground with a lavender bias, one deep violet accent.
-     Every neutral is mixed toward the violet rather than being flat grey —
-     that is what keeps a mostly-white page from reading as cold or clinical,
-     and it is the whole trick behind how Phantom's pages feel soft. Cards are
-     pure white so they lift off the tinted ground without a heavy border. */
-  --color-bone: #f7f6fd;
-  --color-card: #ffffff;
-  --color-mist: #f2f1fb;
-  --color-haze: #e8e6f7;
-  --color-line: #e9e7f5;
-  --color-line2: #d6d2ec;
+  /* Nothing on this page is a solid colour. The ground sits between warm
+     off-white and lavender; the neutrals lean the same way rather than being
+     flat grey, which is what stops a near-white page reading as clinical.
+     Every value is deliberately a step paler than it wants to be — the page
+     should feel lit, not printed. */
+  --color-bone: #f7f5f1;
+  --color-card: #fffdfa;
+  --color-mist: #f3efe9;
+  --color-haze: #ebe5dd;
+  --color-line: #ece7e0;
+  --color-line2: #ddd6cd;
 
   /* Kept dark on purpose: `text-ink` sits on orange fills and `bg-ink` is
      the primary button. Flipping these would invert 30 places that are
      already correct. */
-  --color-ink: #17162a;
+  /* Charcoal with violet in it, never black — a true black next to these
+     pale surfaces reads as a hole punched in the page. */
+  --color-ink: #2f2b3c;
   --color-paper: #ffffff;
 
-  --color-mute: #56537a;
-  --color-dim: #8b88ab;
+  --color-mute: #6e6879;
+  --color-dim: #9c96a4;
 
-  /* Two violets, not one. The deep one carries actions and emphasis where it
-     has to hold white text; the light one is the colour the page is lit with —
-     blooms, tints, illustration fills. Using the deep violet for both would
-     make the page heavy, and the light one alone cannot take white text. */
-  --color-brand: #5b4ee6;
-  --color-brand-hi: #7263f2;
-  --color-brand-lt: #ab9ff2;
-  --color-brand-soft: #eeecfe;
-  --color-amber: #4bbfa8;
+  /* Three weights of one lavender, split by the job each has to do.
+     `brand` is the palest value that still reads as text at 13px — it is used
+     as type in 122 places, so it cannot go lighter without those going grey.
+     `brand-lt` is the fill: buttons and chips wear it with dark text on top,
+     the way Phantom's do, which is what keeps a call to action from becoming
+     a solid block of colour. */
+  --color-brand: #8a79e8;
+  --color-brand-hi: #9c8dee;
+  --color-brand-lt: #c6bbf8;
+  --color-brand-soft: #f1eefd;
+  --color-amber: #7fc7b6;
 
   --font-display: "Unbounded Variable", "Inter Variable", system-ui, sans-serif;
   --font-body: "Inter Variable", system-ui, -apple-system, sans-serif;
@@ -44,10 +48,10 @@
   /* Warm shadows. A neutral black shadow on ivory looks like dirt. */
   /* Shadows carry the violet too. A neutral grey shadow under a white card on
      a lavender ground reads as smudge; tinting it makes the card look lit. */
-  --sh-sm: 0 1px 2px rgba(38, 30, 90, 0.04), 0 2px 8px rgba(38, 30, 90, 0.04);
-  --sh-md: 0 2px 6px rgba(38, 30, 90, 0.05), 0 12px 28px -8px rgba(38, 30, 90, 0.10);
-  --sh-lg: 0 4px 14px rgba(38, 30, 90, 0.06), 0 30px 64px -22px rgba(38, 30, 90, 0.18);
-  --sh-brand: 0 10px 28px -10px rgba(91, 78, 230, 0.55);
+  --sh-sm: 0 1px 2px rgba(70, 58, 96, 0.035), 0 2px 8px rgba(70, 58, 96, 0.035);
+  --sh-md: 0 2px 6px rgba(70, 58, 96, 0.045), 0 12px 26px -8px rgba(70, 58, 96, 0.08);
+  --sh-lg: 0 4px 14px rgba(70, 58, 96, 0.05), 0 30px 60px -22px rgba(70, 58, 96, 0.13);
+  --sh-brand: 0 10px 26px -12px rgba(138, 121, 232, 0.42);
 }
 
 * {
@@ -72,8 +76,8 @@ html {
  */
 body {
   background:
-    radial-gradient(1500px 900px at 6% -18%, rgba(171, 159, 242, 0.42), transparent 70%),
-    radial-gradient(1100px 760px at 100% -4%, rgba(129, 178, 255, 0.30), transparent 72%),
+    radial-gradient(1500px 900px at 6% -18%, rgba(178, 166, 245, 0.34), transparent 70%),
+    radial-gradient(1150px 780px at 100% -4%, rgba(232, 214, 189, 0.46), transparent 72%),
     var(--color-bone);
   background-repeat: no-repeat;
   color: var(--color-ink);
@@ -128,7 +132,7 @@ body {
 }
 
 .dotgrid {
-  background-image: radial-gradient(circle, #d9d5ee 1px, transparent 1px);
+  background-image: radial-gradient(circle, #ded7ce 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -145,7 +149,7 @@ body {
   border-radius: 50%;
   filter: blur(100px);
   pointer-events: none;
-  background: radial-gradient(circle, rgba(171, 159, 242, 0.38), transparent 68%);
+  background: radial-gradient(circle, rgba(178, 166, 245, 0.30), transparent 68%);
   animation: orbDrift 18s ease-in-out infinite;
 }
 
@@ -328,8 +332,8 @@ body {
 .shake { animation: shake 0.4s ease; }
 
 @keyframes flashOk {
-  0% { box-shadow: 0 0 0 0 rgba(91, 78, 230, 0.40); }
-  100% { box-shadow: 0 0 0 14px rgba(91, 78, 230, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(138, 121, 232, 0.35); }
+  100% { box-shadow: 0 0 0 14px rgba(138, 121, 232, 0); }
 }
 .flash-ok { animation: flashOk 0.6s ease-out; }
 
@@ -395,7 +399,7 @@ body {
 }
 .field:focus {
   border-color: var(--color-brand);
-  box-shadow: 0 0 0 4px rgba(91, 78, 230, 0.14);
+  box-shadow: 0 0 0 4px rgba(138, 121, 232, 0.16);
 }
 
 select.field {
@@ -423,16 +427,16 @@ select:focus-visible {
    inherits paper-on-ink, which is why the section needs its own border and
    muted-text values rather than the page-level ones. */
 .sec-dark {
-  background: #171633;
+  background: #3b3654;
   color: var(--color-paper);
 }
 .sec-dark .text-mute,
-.sec-dark .text-dim { color: #a29fc6; }
-.sec-dark .border-line { border-color: #262450; }
-.sec-dark .border-line2 { border-color: #34315f; }
-.sec-dark .bg-card { background: #1e1c40; }
-.sec-dark .bg-mist { background: #1c1a3a; }
-.sec-dark .bg-haze { background: #242247; }
+.sec-dark .text-dim { color: #bdb7cf; }
+.sec-dark .border-line { border-color: #4c4669; }
+.sec-dark .border-line2 { border-color: #5a5379; }
+.sec-dark .bg-card { background: #443e5f; }
+.sec-dark .bg-mist { background: #403a5a; }
+.sec-dark .bg-haze { background: #4a4467; }
 
 /* ---------- number tab styles ---------- */
 
