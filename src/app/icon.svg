@@ -1,13 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <!--
-    Site icon, drawn from the brand avatar: orange brain on red.
-    Kept as vector rather than a PNG so it stays crisp from 16px to a retina
-    tab, and simplified — the folds and vessels of the full avatar turn to mud
-    below about 24px, so only the silhouette and three vessels survive here.
+    Site icon, drawn from the brand avatar: a lavender brain on cream.
+    Vector rather than a PNG so it stays crisp from a 16px tab to a retina one,
+    and deliberately simplified — the avatar's folds and vessels turn to mud
+    below about 24px, so only the silhouette, the cerebellum, the stem and four
+    folds survive. Those four are what still reads as "brain" at tab size.
+
+    The drawing is scaled to fill the tile: at 16px every pixel of margin is a
+    pixel the shape does not get, and a small brain in a big cream square reads
+    as a smudge.
   -->
-  <rect width="64" height="64" rx="14" fill="#C62A1E"/>
-  <g stroke="#1A1A1A" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
-    <path fill="#F0921F" d="M31.5 13.6c3.4-3.2 9.6-2.4 11.3 2.2 5.2-1.6 10.2 2.4 9.2 7.7 4.2 1.4 5 7.1 1.4 9.9 1.6 4.6-2.3 9-6.9 8.2-.9 4.6-6.6 6.6-10.2 3.6-.3 3.6.4 6.3 2.1 8.8-4.3.4-7.5-3-7.6-7.6-3.9 2.5-9.3.4-10.4-4.1-4.7.8-8.5-3.7-6.8-8.3-3.6-2.8-2.8-8.6 1.4-10-1-5.3 4-9.3 9.2-7.7 1.3-3.6 5.2-5.1 8.3-2.7Z"/>
-    <path fill="none" stroke="#A8241A" d="M31.6 17.4v11.9M31.6 22.5l-6 4.6M31.6 29.3 24 34.6M24 34.6l-7.3-1.2M31.6 34.6h12.9M44.5 34.6l4.6-5.7M38.5 41.2l4.2-3.6"/>
+  <rect width="64" height="64" rx="14" fill="#f4efdf"/>
+  <g transform="translate(32 33) scale(1.1) translate(-31.4 -35.6)">
+    <g stroke="#7b6dbc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      <!-- cerebrum: a bumpy dome, flat along the bottom where the stem meets it -->
+      <path fill="#afa3ee" d="M42.2 45.4H21.6c-5 0-8.4-3.6-8.4-8 0-1.5.4-2.9 1.1-4-1.4-1.3-2.1-3-2.1-4.9 0-3.2 2.1-5.8 5.1-6.6.4-4.1 3.7-7.1 7.8-7.1 1.2 0 2.3.2 3.3.7 1.6-1.8 3.9-2.9 6.4-2.9 4.1 0 7.6 2.8 8.5 6.6 4.5.5 7.9 4 7.9 8.5 0 2-.7 3.9-1.9 5.3.6 1.2 1 2.5 1 3.9 0 4.5-3.5 8.1-8.1 8.5Z"/>
+      <!-- cerebellum, tucked under the back of the dome rather than hung off it -->
+      <path fill="#9c8fe4" d="M36.8 43.8c3.9 0 7 2.5 7 5.6s-3.1 5.6-7 5.6h-5.3c-2.5 0-4.4-1.7-4.4-4v-7.2Z"/>
+      <!-- brain stem -->
+      <path fill="#9c8fe4" d="M31.4 54.4h4.3v2.4c0 1.4-1 2.4-2.1 2.4s-2.2-1-2.2-2.4Z"/>
+      <!-- folds: the fewest lines that still read as a cortex -->
+      <g fill="none" stroke="#8578c8" stroke-width="1.9">
+        <path d="M24.4 22.6c3 1.5 4 4.7 2.4 7.4"/>
+        <path d="M34.8 20.1v9.6c-2.9 1.5-4.5 3.9-4.7 7.1"/>
+        <path d="M43.3 25.8c-2.1 2.1-2.3 5-.4 7.3"/>
+        <path d="M16.3 34.4c3-.7 5.5.3 7.1 2.9"/>
+      </g>
+      <!-- cerebellum ridges, two only -->
+      <g fill="none" stroke="#8578c8" stroke-width="1.6">
+        <path d="M32.2 46.3c2.9.3 5.1 1.4 6.6 3.2"/>
+        <path d="M31.6 50.4c2.4.2 4.3.9 5.8 2.2"/>
+      </g>
+    </g>
   </g>
 </svg>
