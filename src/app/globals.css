@@ -7,12 +7,12 @@
      next to the accent. Nothing on the page is pure white — cards are a
      lighter ivory than the ground, and it is the warm shadow rather than a
      jump to white that lifts them. Three colours, no fourth. */
-  --color-bone: #f2ebd9;
-  --color-card: #faf4e6;
-  --color-mist: #ece3cd;
-  --color-haze: #e1d6bb;
-  --color-line: #ded2b6;
-  --color-line2: #c9b994;
+  --color-bone: #f3e6cf;
+  --color-card: #fbf3e3;
+  --color-mist: #ecdec2;
+  --color-haze: #e2d0ac;
+  --color-line: #ded0ae;
+  --color-line2: #c8b287;
 
   /* Kept dark on purpose: `text-ink` sits on orange fills and `bg-ink` is
      the primary button. Flipping these would invert 30 places that are
@@ -55,8 +55,23 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/**
+ * The signature ground: ivory with an orange bloom sitting behind everything.
+ * A flat cream reads as "beige page"; the two washes give the paper a warm
+ * light source, so the accent looks like it belongs to the room rather than
+ * being dropped on top of it.
+ *
+ * It scrolls with the page rather than being fixed: a fixed background repaints
+ * on every scroll frame and stutters badly in Safari on older phones, which is
+ * exactly the device this is built for. Anchored to the top of the document the
+ * bloom also falls off naturally, so long pages end calm instead of tinted.
+ */
 body {
-  background: var(--color-bone);
+  background:
+    radial-gradient(1500px 900px at 10% -16%, rgba(255, 138, 60, 0.22), transparent 72%),
+    radial-gradient(1000px 700px at 102% 2%, rgba(255, 107, 31, 0.12), transparent 74%),
+    var(--color-bone);
+  background-repeat: no-repeat;
   color: var(--color-ink);
   font-family: var(--font-body);
   font-feature-settings: "cv11", "ss01";
@@ -109,7 +124,7 @@ body {
 }
 
 .dotgrid {
-  background-image: radial-gradient(circle, #d3c5a4 1px, transparent 1px);
+  background-image: radial-gradient(circle, #cdb995 1px, transparent 1px);
   background-size: 28px 28px;
 }
 

@@ -295,7 +295,7 @@ export function MiniBars({
               className="w-full rounded-t-[4px] bar-grow transition-colors"
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#ff6b1f" : "#e9e1cf",
+                background: v > 0 ? "#ff6b1f" : "#ecdfc5",
                 animationDelay: `${i * 60}ms`,
               }}
               title={labels?.[i]}

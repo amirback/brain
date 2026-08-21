@@ -38,27 +38,23 @@ export default function Landing() {
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-20 sm:pt-20 sm:pb-28">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-8 items-center">
             <div>
+              {/* The audience pill used to sit here. It repeated what the
+                  footer already says word for word, and above a headline this
+                  size it read as clutter. It now opens the footer instead. */}
               <Reveal>
-                <span className="inline-flex items-center gap-2 rounded-full border border-line2 bg-mist/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute backdrop-blur">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand pulse-dot" />
-                  {d.landing.badge}
-                </span>
-              </Reveal>
-
-              <Reveal delay={80}>
-                <h1 className="font-display mt-6 text-[clamp(38px,7.2vw,68px)] font-extrabold leading-[0.98] tracking-[-0.03em]">
+                <h1 className="font-display text-[clamp(42px,7.8vw,76px)] font-extrabold leading-[0.95] tracking-[-0.035em]">
                   {d.landing.h1a}
                   <br />
                   <span className="text-brand">{d.landing.h1b}</span>
                 </h1>
               </Reveal>
 
-              <Reveal delay={160}>
-                <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-mute">{d.landing.sub}</p>
+              <Reveal delay={90}>
+                <p className="mt-7 max-w-lg text-[17.5px] leading-relaxed text-mute">{d.landing.sub}</p>
               </Reveal>
 
-              <Reveal delay={240}>
-                <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Reveal delay={180}>
+                <div className="mt-9 flex flex-wrap items-center gap-3">
                   <Btn href={user ? "/dashboard" : "/start"} size="lg" className="arrow-slide">
                     {user ? d.nav.dashboard : d.landing.ctaPrimary}
                     <span className="arr">
@@ -71,16 +67,26 @@ export default function Landing() {
                 </div>
               </Reveal>
 
-              <Reveal delay={320}>
-                <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+              {/* With the pill gone the column needed a base, or the headline
+                  floated with nothing under it. Dividers turn three loose
+                  numbers into one object with weight. */}
+              <Reveal delay={270}>
+                <div className="mt-12 flex flex-wrap items-stretch gap-x-7 gap-y-4 border-t border-line2/70 pt-6">
                   {[
                     { v: "6", l: d.landing.statSubjects },
                     { v: "3", l: d.landing.statLangs },
                     { v: "0 ₸", l: d.landing.statPrice },
-                  ].map((x) => (
-                    <div key={x.l} className="text-xs leading-snug text-dim">
-                      <span className="font-display block text-lg font-extrabold text-ink tabular-nums">{x.v}</span>
-                      {x.l}
+                  ].map((x, i) => (
+                    <div
+                      key={x.l}
+                      className={`text-[12.5px] leading-snug text-dim ${
+                        i > 0 ? "border-l border-line2/70 pl-7" : ""
+                      }`}
+                    >
+                      <span className="font-display block text-[26px] font-extrabold leading-none text-ink tabular-nums">
+                        {x.v}
+                      </span>
+                      <span className="mt-1.5 block">{x.l}</span>
                     </div>
                   ))}
                 </div>
@@ -118,7 +124,7 @@ export default function Landing() {
                       className="aspect-square rounded-[5px]"
                       style={{
                         background:
-                          v === 1 ? "#ff6b1f" : v === 0.6 ? "rgba(255,107,31,.55)" : v === 0.25 ? "rgba(255,107,31,.2)" : "#e9e1cf",
+                          v === 1 ? "#ff6b1f" : v === 0.6 ? "rgba(255,107,31,.55)" : v === 0.25 ? "rgba(255,107,31,.2)" : "#ecdfc5",
                       }}
                     />
                   ))}

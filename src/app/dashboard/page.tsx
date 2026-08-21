@@ -342,7 +342,7 @@ export default function Dashboard() {
                 <span
                   key={day.date}
                   className="h-4 flex-1 rounded"
-                  style={{ background: day.seconds > 0 ? "#ff6b1f" : "#e9e1cf" }}
+                  style={{ background: day.seconds > 0 ? "#ff6b1f" : "#ecdfc5" }}
                   title={day.date}
                 />
               ))}
@@ -423,7 +423,7 @@ export default function Dashboard() {
                 {[
                   { c: "#ff6b1f", l: d.dash.mapLegend.strong },
                   { c: "#f2a018", l: d.dash.mapLegend.mid },
-                  { c: "#e9e1cf", l: d.dash.mapLegend.weak },
+                  { c: "#ecdfc5", l: d.dash.mapLegend.weak },
                 ].map((x) => (
                   <span key={x.l} className="inline-flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-sm" style={{ background: x.c }} />

@@ -203,9 +203,13 @@ export function Footer() {
               <LogoMark size={28} />
               <Wordmark size={20} />
             </div>
-            <p className="text-sm text-dim leading-relaxed">
+            {/* The audience line moved down from the hero and kept the pill it
+                wore there. It is not repeated above any more, so here it can
+                carry the weight instead of competing with a headline. */}
+            <span className="mt-1 inline-flex items-center gap-2 rounded-full border border-line2 bg-mist/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute backdrop-blur">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand pulse-dot" />
               {d.landing.footer.made} · {d.landing.footer.forWho}
-            </p>
+            </span>
 
             {/* quiet contact marks that come forward on hover */}
             <div className="mt-5 flex items-center gap-3">
