@@ -4,20 +4,21 @@
   /* Ivory ground, near-black type, one bright orange.
      The warm bias runs through every neutral — the greys are mixed toward
      the orange rather than toward blue, so nothing on the page reads cold
-     next to the accent. Pure white is reserved for cards, which is what
-     makes them lift off the background without needing a heavy border. */
-  --color-bone: #faf8f2;
-  --color-card: #ffffff;
-  --color-mist: #f4f0e6;
-  --color-haze: #ebe5d7;
-  --color-line: #e8e2d4;
-  --color-line2: #d8d0bd;
+     next to the accent. Nothing on the page is pure white — cards are a
+     lighter ivory than the ground, and it is the warm shadow rather than a
+     jump to white that lifts them. Three colours, no fourth. */
+  --color-bone: #f2ebd9;
+  --color-card: #faf4e6;
+  --color-mist: #ece3cd;
+  --color-haze: #e1d6bb;
+  --color-line: #ded2b6;
+  --color-line2: #c9b994;
 
   /* Kept dark on purpose: `text-ink` sits on orange fills and `bg-ink` is
      the primary button. Flipping these would invert 30 places that are
      already correct. */
-  --color-ink: #17150f;
-  --color-paper: #fffdf8;
+  --color-ink: #14120b;
+  --color-paper: #fdf9ef;
 
   --color-mute: #54504a;
   --color-dim: #8a857b;
@@ -26,7 +27,7 @@
      warmer and reads as light rather than rust. */
   --color-brand: #ff6b1f;
   --color-brand-hi: #ff8845;
-  --color-brand-soft: #ffeee2;
+  --color-brand-soft: #ffe6d0;
   --color-amber: #f2a018;
 
   --font-display: "Unbounded Variable", "Inter Variable", system-ui, sans-serif;
@@ -64,7 +65,7 @@ body {
 
 ::selection {
   background: var(--color-brand);
-  color: #fffdf8;
+  color: #fdf9ef;
 }
 
 ::-webkit-scrollbar {
@@ -108,7 +109,7 @@ body {
 }
 
 .dotgrid {
-  background-image: radial-gradient(circle, #ded7c6 1px, transparent 1px);
+  background-image: radial-gradient(circle, #d3c5a4 1px, transparent 1px);
   background-size: 28px 28px;
 }
 

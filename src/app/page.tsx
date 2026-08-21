@@ -118,7 +118,7 @@ export default function Landing() {
                       className="aspect-square rounded-[5px]"
                       style={{
                         background:
-                          v === 1 ? "#ff6b1f" : v === 0.6 ? "rgba(255,107,31,.55)" : v === 0.25 ? "rgba(255,107,31,.2)" : "#ebe5d7",
+                          v === 1 ? "#ff6b1f" : v === 0.6 ? "rgba(255,107,31,.55)" : v === 0.25 ? "rgba(255,107,31,.2)" : "#e9e1cf",
                       }}
                     />
                   ))}

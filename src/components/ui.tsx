@@ -195,7 +195,7 @@ export function Ring({
   return (
     <div className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#e8e2d4" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#ded2b6" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2} cy={size / 2} r={r} stroke="#ff6b1f" strokeWidth={stroke} fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
@@ -295,7 +295,7 @@ export function MiniBars({
               className="w-full rounded-t-[4px] bar-grow transition-colors"
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#ff6b1f" : "#ebe5d7",
+                background: v > 0 ? "#ff6b1f" : "#e9e1cf",
                 animationDelay: `${i * 60}ms`,
               }}
               title={labels?.[i]}

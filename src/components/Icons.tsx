@@ -294,7 +294,7 @@ export function Wordmark({ className = "", size = 26 }: { className?: string; si
 export function LogoMark({ size = 34, className = "" }: { className?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 36 36" fill="none" className={className} aria-hidden="true">
-      <rect x="1.2" y="1.2" width="33.6" height="33.6" rx="10" stroke="#d8d0bd" strokeWidth="1.6" />
+      <rect x="1.2" y="1.2" width="33.6" height="33.6" rx="10" stroke="#c9b994" strokeWidth="1.6" />
       <path d="M11 10.5H9.5A2.5 2.5 0 007 13v3.2c0 1-.8 1.8-1.8 1.8 1 0 1.8.8 1.8 1.8V23a2.5 2.5 0 002.5 2.5H11" stroke="#ff6b1f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M25 10.5h1.5A2.5 2.5 0 0129 13v3.2c0 1 .8 1.8 1.8 1.8-1 0-1.8.8-1.8 1.8V23a2.5 2.5 0 01-2.5 2.5H25" stroke="#ff6b1f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="18" cy="18" r="3.4" fill="#ff6b1f" />
