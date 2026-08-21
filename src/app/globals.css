@@ -1,34 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  /* Ivory ground, near-black type, one bright orange.
-     The warm bias runs through every neutral — the greys are mixed toward
-     the orange rather than toward blue, so nothing on the page reads cold
-     next to the accent. Nothing on the page is pure white — cards are a
-     lighter ivory than the ground, and it is the warm shadow rather than a
-     jump to white that lifts them. Three colours, no fourth. */
-  --color-bone: #f3e6cf;
-  --color-card: #fbf3e3;
-  --color-mist: #ecdec2;
-  --color-haze: #e2d0ac;
-  --color-line: #ded0ae;
-  --color-line2: #c8b287;
+  /* Near-white ground with a lavender bias, one deep violet accent.
+     Every neutral is mixed toward the violet rather than being flat grey —
+     that is what keeps a mostly-white page from reading as cold or clinical,
+     and it is the whole trick behind how Phantom's pages feel soft. Cards are
+     pure white so they lift off the tinted ground without a heavy border. */
+  --color-bone: #f7f6fd;
+  --color-card: #ffffff;
+  --color-mist: #f2f1fb;
+  --color-haze: #e8e6f7;
+  --color-line: #e9e7f5;
+  --color-line2: #d6d2ec;
 
   /* Kept dark on purpose: `text-ink` sits on orange fills and `bg-ink` is
      the primary button. Flipping these would invert 30 places that are
      already correct. */
-  --color-ink: #14120b;
-  --color-paper: #fdf9ef;
+  --color-ink: #17162a;
+  --color-paper: #ffffff;
 
-  --color-mute: #54504a;
-  --color-dim: #8a857b;
+  --color-mute: #56537a;
+  --color-dim: #8b88ab;
 
-  /* Bright, not burnt. #ff6b1f went muddy against ivory; this sits a touch
-     warmer and reads as light rather than rust. */
-  --color-brand: #ff6b1f;
-  --color-brand-hi: #ff8845;
-  --color-brand-soft: #ffe6d0;
-  --color-amber: #f2a018;
+  /* Two violets, not one. The deep one carries actions and emphasis where it
+     has to hold white text; the light one is the colour the page is lit with —
+     blooms, tints, illustration fills. Using the deep violet for both would
+     make the page heavy, and the light one alone cannot take white text. */
+  --color-brand: #5b4ee6;
+  --color-brand-hi: #7263f2;
+  --color-brand-lt: #ab9ff2;
+  --color-brand-soft: #eeecfe;
+  --color-amber: #4bbfa8;
 
   --font-display: "Unbounded Variable", "Inter Variable", system-ui, sans-serif;
   --font-body: "Inter Variable", system-ui, -apple-system, sans-serif;
@@ -40,10 +42,12 @@
   /* Overshoots slightly, the way Phantom's panels settle. */
   --ease-spring: cubic-bezier(0.22, 1.15, 0.36, 1);
   /* Warm shadows. A neutral black shadow on ivory looks like dirt. */
-  --sh-sm: 0 1px 2px rgba(64, 48, 24, 0.05), 0 2px 8px rgba(64, 48, 24, 0.04);
-  --sh-md: 0 2px 6px rgba(64, 48, 24, 0.06), 0 12px 28px -8px rgba(64, 48, 24, 0.10);
-  --sh-lg: 0 4px 12px rgba(64, 48, 24, 0.07), 0 28px 60px -20px rgba(64, 48, 24, 0.16);
-  --sh-brand: 0 8px 24px -8px rgba(255, 107, 31, 0.45);
+  /* Shadows carry the violet too. A neutral grey shadow under a white card on
+     a lavender ground reads as smudge; tinting it makes the card look lit. */
+  --sh-sm: 0 1px 2px rgba(38, 30, 90, 0.04), 0 2px 8px rgba(38, 30, 90, 0.04);
+  --sh-md: 0 2px 6px rgba(38, 30, 90, 0.05), 0 12px 28px -8px rgba(38, 30, 90, 0.10);
+  --sh-lg: 0 4px 14px rgba(38, 30, 90, 0.06), 0 30px 64px -22px rgba(38, 30, 90, 0.18);
+  --sh-brand: 0 10px 28px -10px rgba(91, 78, 230, 0.55);
 }
 
 * {
@@ -68,8 +72,8 @@ html {
  */
 body {
   background:
-    radial-gradient(1500px 900px at 10% -16%, rgba(255, 138, 60, 0.22), transparent 72%),
-    radial-gradient(1000px 700px at 102% 2%, rgba(255, 107, 31, 0.12), transparent 74%),
+    radial-gradient(1500px 900px at 6% -18%, rgba(171, 159, 242, 0.42), transparent 70%),
+    radial-gradient(1100px 760px at 100% -4%, rgba(129, 178, 255, 0.30), transparent 72%),
     var(--color-bone);
   background-repeat: no-repeat;
   color: var(--color-ink);
@@ -80,7 +84,7 @@ body {
 
 ::selection {
   background: var(--color-brand);
-  color: #fdf9ef;
+  color: #ffffff;
 }
 
 ::-webkit-scrollbar {
@@ -124,7 +128,7 @@ body {
 }
 
 .dotgrid {
-  background-image: radial-gradient(circle, #cdb995 1px, transparent 1px);
+  background-image: radial-gradient(circle, #d9d5ee 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -141,7 +145,7 @@ body {
   border-radius: 50%;
   filter: blur(100px);
   pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 107, 31, 0.22), transparent 68%);
+  background: radial-gradient(circle, rgba(171, 159, 242, 0.38), transparent 68%);
   animation: orbDrift 18s ease-in-out infinite;
 }
 
@@ -324,8 +328,8 @@ body {
 .shake { animation: shake 0.4s ease; }
 
 @keyframes flashOk {
-  0% { box-shadow: 0 0 0 0 rgba(255, 107, 31, 0.45); }
-  100% { box-shadow: 0 0 0 14px rgba(255, 107, 31, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(91, 78, 230, 0.40); }
+  100% { box-shadow: 0 0 0 14px rgba(91, 78, 230, 0); }
 }
 .flash-ok { animation: flashOk 0.6s ease-out; }
 
@@ -391,7 +395,7 @@ body {
 }
 .field:focus {
   border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px rgba(255, 107, 31, 0.16);
+  box-shadow: 0 0 0 4px rgba(91, 78, 230, 0.14);
 }
 
 select.field {
@@ -419,16 +423,16 @@ select:focus-visible {
    inherits paper-on-ink, which is why the section needs its own border and
    muted-text values rather than the page-level ones. */
 .sec-dark {
-  background: var(--color-ink);
+  background: #171633;
   color: var(--color-paper);
 }
 .sec-dark .text-mute,
-.sec-dark .text-dim { color: #a49d90; }
-.sec-dark .border-line { border-color: #302c24; }
-.sec-dark .border-line2 { border-color: #423d33; }
-.sec-dark .bg-card { background: #211e17; }
-.sec-dark .bg-mist { background: #1e1b15; }
-.sec-dark .bg-haze { background: #262219; }
+.sec-dark .text-dim { color: #a29fc6; }
+.sec-dark .border-line { border-color: #262450; }
+.sec-dark .border-line2 { border-color: #34315f; }
+.sec-dark .bg-card { background: #1e1c40; }
+.sec-dark .bg-mist { background: #1c1a3a; }
+.sec-dark .bg-haze { background: #242247; }
 
 /* ---------- number tab styles ---------- */
 

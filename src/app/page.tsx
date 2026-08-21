@@ -124,7 +124,7 @@ export default function Landing() {
                       className="aspect-square rounded-[5px]"
                       style={{
                         background:
-                          v === 1 ? "#ff6b1f" : v === 0.6 ? "rgba(255,107,31,.55)" : v === 0.25 ? "rgba(255,107,31,.2)" : "#ecdfc5",
+                          v === 1 ? "#5b4ee6" : v === 0.6 ? "rgba(91,78,230,.55)" : v === 0.25 ? "rgba(91,78,230,.2)" : "#e8e6f7",
                       }}
                     />
                   ))}
@@ -311,17 +311,17 @@ export default function Landing() {
                 <br />
                 <span className="text-brand">{d.landing.editTitle2}</span>
               </h2>
-              <p className="mt-6 max-w-md text-[16.5px] leading-relaxed text-[#b9b2a4]">{d.landing.editBody}</p>
+              <p className="mt-6 max-w-md text-[16.5px] leading-relaxed text-[#b3b0d4]">{d.landing.editBody}</p>
             </Reveal>
 
             <Reveal delay={120}>
-              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[#312d25] bg-[#312d25]">
+              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[#2a2856] bg-[#2a2856]">
                 {d.landing.editStats.map((s, i) => (
-                  <div key={i} className="bg-[#1c1a14] p-6 sm:p-7">
+                  <div key={i} className="bg-[#1c1a3c] p-6 sm:p-7">
                     <div className="font-display text-[clamp(26px,4vw,38px)] font-extrabold leading-none tracking-tight text-paper">
                       {s.v}
                     </div>
-                    <div className="mt-2 text-[13px] leading-snug text-[#a49d90]">{s.l}</div>
+                    <div className="mt-2 text-[13px] leading-snug text-[#a29fc6]">{s.l}</div>
                   </div>
                 ))}
               </div>

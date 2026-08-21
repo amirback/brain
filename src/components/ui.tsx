@@ -86,18 +86,17 @@ type BtnProps = {
 };
 
 /**
- * The main action is black on ivory, not orange. With an orange page accent,
- * an orange button competes with every badge and progress bar on the screen;
- * black wins the eye immediately and leaves the orange to mean "look here".
- * `brand` stays available for the rare screen where the accent should carry
- * the action itself.
+ * The main action carries the brand violet. On a near-white page the violet is
+ * the only saturated thing on screen, so it reads as the action without
+ * needing weight; `dark` stays for the rare place that needs more contrast
+ * than the violet gives — a confirm over a busy surface.
  */
 const V = {
-  primary: "bg-ink text-paper hover:bg-[#2b2619] border border-ink shine",
-  brand: "bg-brand text-paper hover:bg-brand-hi border border-brand shine",
-  ghost: "bg-transparent text-ink hover:bg-ink/6 border border-transparent",
+  primary: "bg-brand text-paper hover:bg-brand-hi border border-brand shine halo",
+  brand: "bg-brand text-paper hover:bg-brand-hi border border-brand shine halo",
+  ghost: "bg-transparent text-ink hover:bg-brand/8 border border-transparent",
   outline: "bg-transparent text-ink hover:border-brand hover:text-brand border border-line2",
-  dark: "bg-ink text-paper hover:bg-[#2b2619] border border-ink shine",
+  dark: "bg-ink text-paper hover:bg-[#262445] border border-ink shine",
 };
 
 const SZ = {
@@ -195,9 +194,9 @@ export function Ring({
   return (
     <div className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#ded2b6" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#e9e7f5" strokeWidth={stroke} fill="none" />
         <circle
-          cx={size / 2} cy={size / 2} r={r} stroke="#ff6b1f" strokeWidth={stroke} fill="none"
+          cx={size / 2} cy={size / 2} r={r} stroke="#5b4ee6" strokeWidth={stroke} fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
           style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.16,1,0.3,1)" }}
         />
@@ -266,15 +265,15 @@ export function Sparkline({
     <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={label ?? "trend"}>
       <defs>
         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ff6b1f" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#ff6b1f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#5b4ee6" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#5b4ee6" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#spark-fill)" />
-      <path d={d} stroke="#ff6b1f" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
+      <path d={d} stroke="#5b4ee6" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
         className="draw-line" style={{ ["--dash" as string]: "600", strokeDasharray: 600 }} />
       {showDots && (
-        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#ff6b1f" stroke="#1e222a" strokeWidth="2" />
+        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#5b4ee6" stroke="#ffffff" strokeWidth="2" />
       )}
     </svg>
   );
@@ -295,7 +294,7 @@ export function MiniBars({
               className="w-full rounded-t-[4px] bar-grow transition-colors"
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#ff6b1f" : "#ecdfc5",
+                background: v > 0 ? "#5b4ee6" : "#e8e6f7",
                 animationDelay: `${i * 60}ms`,
               }}
               title={labels?.[i]}
@@ -352,7 +351,7 @@ export function Confetti({ fire }: { fire: number }) {
   const [bits, setBits] = useState<{ id: number; cx: string; cy: string; cr: string; c: string }[]>([]);
   useEffect(() => {
     if (fire === 0) return;
-    const colors = ["#ff6b1f", "#f2a018", "#fafafa", "#ff8845"];
+    const colors = ["#5b4ee6", "#8f83f0", "#ab9ff2", "#7263f2"];
     const next = Array.from({ length: 18 }, (_, i) => ({
       id: fire * 100 + i,
       cx: `${(Math.random() - 0.5) * 260}px`,

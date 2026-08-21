@@ -229,7 +229,7 @@ export function Runner({
                   >
                     <span
                       className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold ${
-                        picked ? "bg-brand text-ink" : "bg-haze text-dim"
+                        picked ? "bg-brand text-paper" : "bg-haze text-dim"
                       }`}
                     >
                       {String.fromCharCode(65 + i)}

@@ -135,7 +135,7 @@ export function AudioScript({
       <div className="flex items-center gap-3">
         <button
           onClick={playing ? stop : play}
-          className="press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand text-ink"
+          className="press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand text-paper"
           aria-label={playing ? labels.stop : labels.play}
         >
           {playing ? (
