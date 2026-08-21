@@ -242,7 +242,7 @@ export default function TeacherPage() {
       {roster.length === 0 ? (
         <Reveal delay={80}>
           <Card className="mt-3 py-12 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-soot">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-haze">
               <IconUser size={26} />
             </div>
             <p className="mx-auto max-w-sm text-[14.5px] leading-relaxed text-mute">{d.teacherSetup.rosterEmpty}</p>
@@ -276,7 +276,7 @@ export default function TeacherPage() {
                           <tr key={r.code} className="border-b border-line last:border-0">
                             <td className="px-5 py-3.5">
                               <div className="flex items-center gap-2.5">
-                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-soot text-[12px] font-extrabold text-mute">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-haze text-[12px] font-extrabold text-mute">
                                   {r.name.slice(0, 1)}
                                 </span>
                                 <div className="min-w-0">
@@ -423,7 +423,7 @@ export default function TeacherPage() {
                               className="h-8 rounded-lg transition-transform hover:scale-[1.04]"
                               style={{
                                 background:
-                                  m >= 0.7 ? "#ff5c00" : m >= 0.45 ? "rgba(255,92,0,.55)" : m >= 0.25 ? "rgba(255,92,0,.28)" : "#2a2c33",
+                                  m >= 0.7 ? "#ff6b1f" : m >= 0.45 ? "rgba(255,107,31,.55)" : m >= 0.25 ? "rgba(255,107,31,.26)" : "#ebe5d7",
                               }}
                               title={`${r.name} · ${pick(t.title)} · ${Math.round(m * 100)}%`}
                             />

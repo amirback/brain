@@ -16,7 +16,7 @@ const SERIES_COLORS = ["var(--color-brand)", "var(--color-amber)", "var(--color-
 
 export function Chart({ spec }: { spec: ChartSpec }) {
   return (
-    <figure className="rounded-2xl border border-line bg-coal p-4">
+    <figure className="rounded-2xl border border-line bg-mist p-4">
       <figcaption className="text-[12px] font-bold uppercase tracking-wider text-dim">{spec.caption}</figcaption>
       <div className="mt-3 overflow-x-auto">
         {spec.kind === "line" && <LineChart spec={spec} />}

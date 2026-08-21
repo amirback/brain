@@ -44,13 +44,13 @@ export default function LeaguePage() {
       </Reveal>
 
       <Reveal delay={60}>
-        <div className="mt-6 inline-flex rounded-2xl border border-line bg-coal p-1">
+        <div className="mt-6 inline-flex rounded-2xl border border-line bg-mist p-1">
           {(["elo", "hours"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`press inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition-colors ${
-                tab === t ? "bg-brand text-ink" : "text-mute hover:text-paper"
+                tab === t ? "bg-brand text-paper" : "text-mute hover:text-ink"
               }`}
             >
               {t === "elo" ? <IconBolt size={15} /> : <IconClock size={15} />}
@@ -102,7 +102,7 @@ export default function LeaguePage() {
                 >
                   <span
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[13px] font-extrabold tabular-nums ${
-                      i === 0 ? "bg-amber text-ink" : r.me ? "bg-brand text-ink" : "bg-soot text-dim"
+                      i === 0 ? "bg-amber text-ink" : r.me ? "bg-brand text-paper" : "bg-haze text-dim"
                     }`}
                   >
                     {i + 1}

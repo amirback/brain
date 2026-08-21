@@ -291,7 +291,7 @@ function PracticeInner() {
     <div className="mx-auto max-w-lg px-4 py-8 sm:py-12">
       <div className="mb-5">
         <div className="mb-2 flex items-center justify-between gap-3 text-[12px] font-semibold">
-          <span className="truncate text-paper">{title}</span>
+          <span className="truncate text-ink">{title}</span>
           <span className="shrink-0 tabular-nums text-dim">
             {step + 1} / {total}
           </span>
@@ -343,7 +343,7 @@ function PracticeInner() {
           </div>
         ) : (
           <>
-            <div className="mb-4 flex items-start gap-3.5 rounded-2xl border border-line bg-coal p-4">
+            <div className="mb-4 flex items-start gap-3.5 rounded-2xl border border-line bg-mist p-4">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand">
                 <IconParent size={20} />
               </span>

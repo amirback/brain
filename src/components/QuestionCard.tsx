@@ -66,7 +66,7 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
             <span
               key={i}
               className="h-1.5 w-1.5 rounded-full"
-              style={{ background: i < Math.round((q.difficulty - 600) / 200) ? "#ff5c00" : "#333844" }}
+              style={{ background: i < Math.round((q.difficulty - 600) / 200) ? "#ff6b1f" : "#333844" }}
             />
           ))}
           <span className="ml-1 text-[11px] font-semibold text-dim tabular-nums">{q.difficulty}</span>
@@ -103,7 +103,7 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
                     ? "border-red-500/50 bg-red-500/8"
                     : isPicked
                       ? "border-brand bg-brand/6"
-                      : "border-line bg-coal hover:border-line2"
+                      : "border-line bg-mist hover:border-line2"
               } ${locked && !isRight && !isWrongPick ? "opacity-45" : ""}`}
             >
               <span
@@ -112,7 +112,7 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
                     ? "bg-red-500/80 text-ink"
                     : isRight || isPicked
                       ? "bg-brand text-ink"
-                      : "bg-soot text-dim"
+                      : "bg-haze text-dim"
                 }`}
               >
                 {String.fromCharCode(65 + i)}
@@ -149,7 +149,7 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
         <div className="slide-up mt-5">
           <div
             className={`rounded-2xl border p-4 ${
-              correct ? "border-brand/40 bg-brand/8 flash-ok" : "border-line2 bg-soot/60"
+              correct ? "border-brand/40 bg-brand/8 flash-ok" : "border-line2 bg-haze/60"
             }`}
           >
             <div className={`flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wider ${correct ? "text-brand" : "text-mute"}`}>
@@ -157,7 +157,7 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
               {feedback}
             </div>
             <p className="mt-2.5 text-[14px] leading-relaxed text-mute">
-              <span className="font-bold text-paper">{d.practice.explain}: </span>
+              <span className="font-bold text-ink">{d.practice.explain}: </span>
               {pick(q.explain)}
             </p>
           </div>

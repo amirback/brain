@@ -119,7 +119,7 @@ export default function ParentPage() {
       {!child ? (
         <Reveal delay={60}>
           <Card className="mt-7 py-10 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-soot">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-3xl border border-line2 bg-haze">
               <IconUser size={26} />
             </div>
             <h2 className="font-display text-lg font-bold">{d.codes.noChild}</h2>
@@ -134,7 +134,7 @@ export default function ParentPage() {
           <Reveal delay={50}>
             <Card className="mt-6">
               <div className="flex items-center gap-3.5">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand text-[16px] font-extrabold text-ink">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand text-[16px] font-extrabold text-paper">
                   {child.name.slice(0, 1)}
                 </span>
                 <div className="min-w-0 flex-1">

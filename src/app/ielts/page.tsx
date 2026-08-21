@@ -143,7 +143,7 @@ export default function IeltsHub() {
           <Reveal key={s.id} delay={300 + i * 40}>
             <Card>
               <div className="flex items-center gap-2">
-                <span className="rounded-md bg-soot px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dim">
+                <span className="rounded-md bg-haze px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dim">
                   {s.section}
                 </span>
                 <span className="text-[10.5px] font-bold uppercase tracking-wider text-dim">

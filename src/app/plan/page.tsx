@@ -141,7 +141,7 @@ function DayCard({
       <div className="flex items-start gap-3.5">
         <span
           className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
-            isDone ? "bg-brand/15 text-brand" : isToday ? "bg-brand text-ink" : "bg-soot text-mute"
+            isDone ? "bg-brand/15 text-brand" : isToday ? "bg-brand text-paper" : "bg-haze text-mute"
           }`}
         >
           {isDone ? <IconCheck size={18} /> : <Icon size={18} />}

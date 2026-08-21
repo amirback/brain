@@ -396,7 +396,7 @@ export default function IeltsMockPage() {
           onChange={(e) => setDraft(e.target.value)}
           rows={isWriting ? 15 : 9}
           spellCheck={false}
-          className="mt-2 w-full resize-y rounded-2xl border border-line bg-coal px-4 py-3.5 text-[14.5px] leading-relaxed outline-none focus:border-brand"
+          className="mt-2 w-full resize-y rounded-2xl border border-line bg-mist px-4 py-3.5 text-[14.5px] leading-relaxed outline-none focus:border-brand"
         />
         <div className="mt-2 flex items-center justify-between gap-3">
           <div className="flex-1"><Bar value={Math.min(1, words / minWords)} h={4} tone={words < minWords ? "amber" : "brand"} /></div>

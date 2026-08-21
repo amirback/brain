@@ -114,17 +114,19 @@ function LearnInner() {
               </div>
             )}
           </div>
-          <div className="hidden shrink-0 sm:block">
+          <div className="hidden shrink-0 flex-col items-center gap-1.5 sm:flex">
             <Ring value={m} size={82} stroke={7}>
-              <div className="text-center">
-                <div className="font-display text-lg font-extrabold leading-none tabular-nums">
-                  {attempts === 0 ? "—" : Math.round(m * 100)}
-                </div>
-                <div className="mt-0.5 text-[9px] uppercase tracking-wider text-dim">
-                  {attempts === 0 ? d.dash.mapLegend.none : "%"}
-                </div>
+              <div className="font-display text-xl font-extrabold leading-none tabular-nums">
+                {attempts === 0 ? "—" : `${Math.round(m * 100)}%`}
               </div>
             </Ring>
+            {/* The label sits under the ring: "NOT STARTED" is far wider than an
+                82px circle and used to run out over both edges of it. */}
+            {attempts === 0 && (
+              <div className="text-[9px] font-semibold uppercase tracking-wider text-dim whitespace-nowrap">
+                {d.dash.mapLegend.none}
+              </div>
+            )}
           </div>
         </div>
       </Reveal>
@@ -161,7 +163,7 @@ function LearnInner() {
                 </div>
 
                 {lesson.objectives && lesson.objectives.length > 0 && (
-                  <div className="mt-5 rounded-2xl border border-line2 bg-coal p-4">
+                  <div className="mt-5 rounded-2xl border border-line2 bg-mist p-4">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-dim">
                       {d.lesson.objectives}
                     </div>
@@ -180,9 +182,9 @@ function LearnInner() {
                     href={video}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="press mt-4 flex items-center gap-3 rounded-2xl border border-line bg-coal p-3.5 hover:border-brand/50"
+                    className="press mt-4 flex items-center gap-3 rounded-2xl border border-line bg-mist p-3.5 hover:border-brand/50"
                   >
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-soot text-mute">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-haze text-mute">
                       <IconLink size={17} />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -270,7 +272,7 @@ function LearnInner() {
                   </div>
                 )}
                 {pick(worked[workedIndex].takeaway) && (
-                  <div className="mt-3 rounded-2xl bg-coal px-4 py-3">
+                  <div className="mt-3 rounded-2xl bg-mist px-4 py-3">
                     <div className="text-[10.5px] font-bold uppercase tracking-wider text-dim">
                       {d.lesson.takeaway}
                     </div>
@@ -291,7 +293,7 @@ function LearnInner() {
                 <p className="mb-4 text-[12.5px] text-dim">{d.lesson.pitfallsSub}</p>
                 <div className="flex flex-col gap-4">
                   {pitfalls.map((p, i) => (
-                    <div key={i} className="rounded-2xl border border-line bg-coal p-3.5">
+                    <div key={i} className="rounded-2xl border border-line bg-mist p-3.5">
                       <div className="grid gap-2 sm:grid-cols-2">
                         <div>
                           <div className="text-[10.5px] font-bold uppercase tracking-wider text-amber">
@@ -305,7 +307,7 @@ function LearnInner() {
                           <div className="text-[10.5px] font-bold uppercase tracking-wider text-brand">
                             {d.lesson.pitfallRight}
                           </div>
-                          <code className="mt-1 block whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-paper">
+                          <code className="mt-1 block whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-ink">
                             {pick(p.right)}
                           </code>
                         </div>
@@ -392,7 +394,7 @@ function LearnInner() {
                 rel="noopener noreferrer"
                 className="press flex items-center gap-3 rounded-2xl border border-line bg-card p-3.5 hover:border-brand/50"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-soot text-mute">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-haze text-mute">
                   <IconLink size={17} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -422,7 +424,7 @@ function LearnInner() {
                 rel="noopener noreferrer"
                 className="press flex items-center gap-3 rounded-2xl border border-line bg-card p-3.5 hover:border-brand/50"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-soot text-mute">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-haze text-mute">
                   <IconLink size={17} />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{mt.title}</span>

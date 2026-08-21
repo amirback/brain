@@ -216,7 +216,7 @@ export default function Dashboard() {
                 key={s}
                 onClick={() => setActiveSubject(s)}
                 className={`press rounded-2xl border px-4 py-2.5 text-[13.5px] font-bold transition-colors ${
-                  active ? "border-brand bg-brand text-ink" : "border-line bg-card text-mute hover:border-line2 hover:text-paper"
+                  active ? "border-brand bg-brand text-paper" : "border-line bg-card text-mute hover:border-line2 hover:text-ink"
                 }`}
               >
                 {sub ? pick(sub.title) : s}
@@ -342,7 +342,7 @@ export default function Dashboard() {
                 <span
                   key={day.date}
                   className="h-4 flex-1 rounded"
-                  style={{ background: day.seconds > 0 ? "#ff5c00" : "#2a2c33" }}
+                  style={{ background: day.seconds > 0 ? "#ff6b1f" : "#ebe5d7" }}
                   title={day.date}
                 />
               ))}
@@ -421,9 +421,9 @@ export default function Dashboard() {
 
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3.5 text-[11px] text-dim">
                 {[
-                  { c: "#ff5c00", l: d.dash.mapLegend.strong },
-                  { c: "#ffb800", l: d.dash.mapLegend.mid },
-                  { c: "#3a3d47", l: d.dash.mapLegend.weak },
+                  { c: "#ff6b1f", l: d.dash.mapLegend.strong },
+                  { c: "#f2a018", l: d.dash.mapLegend.mid },
+                  { c: "#ebe5d7", l: d.dash.mapLegend.weak },
                 ].map((x) => (
                   <span key={x.l} className="inline-flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-sm" style={{ background: x.c }} />
@@ -443,7 +443,7 @@ export default function Dashboard() {
                     <Link
                       key={w.t.id}
                       href={`/practice?t=${w.t.id}`}
-                      className="press flex items-center gap-3 rounded-2xl border border-line bg-coal p-3 hover:border-brand/50"
+                      className="press flex items-center gap-3 rounded-2xl border border-line bg-mist p-3 hover:border-brand/50"
                     >
                       <Ring value={w.m} size={40} stroke={5}>
                         <span className="text-[10px] font-extrabold tabular-nums">{Math.round(w.m * 100)}</span>
@@ -495,7 +495,7 @@ export default function Dashboard() {
                     <Link
                       key={day.date}
                       href={day.href}
-                      className="press flex items-center gap-3 rounded-2xl border border-line bg-coal px-3.5 py-2.5 hover:border-brand/45"
+                      className="press flex items-center gap-3 rounded-2xl border border-line bg-mist px-3.5 py-2.5 hover:border-brand/45"
                     >
                       {/* No fixed width: "TOMORROW" is far wider than "ЗАВТРА"
                           and a hard-coded column made them collide. */}
@@ -531,7 +531,7 @@ export default function Dashboard() {
                         key={t.id}
                         onClick={() => toggleTask(t.id)}
                         className={`press flex items-center gap-3 rounded-2xl border p-3 text-left ${
-                          t.done ? "border-line bg-coal/50 opacity-60" : "border-line bg-coal hover:border-line2"
+                          t.done ? "border-line bg-mist/50 opacity-60" : "border-line bg-mist hover:border-line2"
                         }`}
                       >
                         <span
@@ -542,7 +542,7 @@ export default function Dashboard() {
                         >
                           {t.done && (
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#121317" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fffdf8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </span>
@@ -672,7 +672,7 @@ function RailRow({
         <span className="block truncate text-[11.5px] text-dim">{note}</span>
       </span>
       {badge !== undefined && (
-        <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-brand px-1.5 text-[10.5px] font-extrabold tabular-nums text-ink">
+        <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-brand px-1.5 text-[10.5px] font-extrabold tabular-nums text-paper">
           {badge}
         </span>
       )}

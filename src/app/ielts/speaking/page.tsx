@@ -387,7 +387,7 @@ function SpeakingInner() {
             onChange={(e) => setText(e.target.value)}
             rows={8}
             spellCheck={false}
-            className="mt-2 w-full resize-y rounded-2xl border border-line bg-coal px-4 py-3.5 text-[14.5px] leading-relaxed outline-none focus:border-brand"
+            className="mt-2 w-full resize-y rounded-2xl border border-line bg-mist px-4 py-3.5 text-[14.5px] leading-relaxed outline-none focus:border-brand"
           />
         </div>
       )}

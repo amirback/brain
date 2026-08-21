@@ -114,7 +114,7 @@ function WritingInner() {
               {list.map((p) => (
                 <Card key={p.id}>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-soot px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dim">
+                    <span className="rounded-md bg-haze px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dim">
                       {p.kind}
                     </span>
                     <span className="text-[11px] font-bold tabular-nums text-dim">
@@ -182,7 +182,7 @@ function WritingInner() {
                     <IconCross size={15} />
                     <div className="min-w-0">
                       {n.quote && (
-                        <code className="mb-1 block truncate rounded bg-soot px-1.5 py-0.5 text-[12px] text-amber">
+                        <code className="mb-1 block truncate rounded bg-haze px-1.5 py-0.5 text-[12px] text-amber">
                           {n.quote}
                         </code>
                       )}
@@ -306,7 +306,7 @@ function WritingInner() {
           onChange={(e) => setText(e.target.value)}
           rows={16}
           spellCheck={false}
-          className="mt-2 w-full resize-y rounded-2xl border border-line bg-coal px-4 py-3.5 text-[14.5px] leading-relaxed outline-none focus:border-brand"
+          className="mt-2 w-full resize-y rounded-2xl border border-line bg-mist px-4 py-3.5 text-[14.5px] leading-relaxed outline-none focus:border-brand"
         />
       </div>
 

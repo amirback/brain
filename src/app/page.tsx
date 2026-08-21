@@ -31,7 +31,7 @@ export default function Landing() {
         <div className="glow-orb -top-24 -left-20 h-[420px] w-[420px]" aria-hidden="true" />
         <div className="glow-orb top-40 -right-32 h-[380px] w-[380px] opacity-70" aria-hidden="true" />
         <div
-          className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink"
+          className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-bone"
           aria-hidden="true"
         />
 
@@ -39,7 +39,7 @@ export default function Landing() {
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-8 items-center">
             <div>
               <Reveal>
-                <span className="inline-flex items-center gap-2 rounded-full border border-line2 bg-coal/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute backdrop-blur">
+                <span className="inline-flex items-center gap-2 rounded-full border border-line2 bg-mist/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute backdrop-blur">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand pulse-dot" />
                   {d.landing.badge}
                 </span>
@@ -79,7 +79,7 @@ export default function Landing() {
                     { v: "0 ₸", l: d.landing.statPrice },
                   ].map((x) => (
                     <div key={x.l} className="text-xs leading-snug text-dim">
-                      <span className="font-display block text-lg font-extrabold text-paper tabular-nums">{x.v}</span>
+                      <span className="font-display block text-lg font-extrabold text-ink tabular-nums">{x.v}</span>
                       {x.l}
                     </div>
                   ))}
@@ -89,7 +89,7 @@ export default function Landing() {
 
             {/* floating demo stack */}
             <div className="relative h-[420px] sm:h-[460px] select-none" aria-hidden="true">
-              <div className="float-a absolute left-0 top-4 w-[240px] sm:w-[262px] rounded-3xl border border-line bg-card p-4 shadow-2xl shadow-black/60">
+              <div className="float-a absolute left-0 top-4 w-[240px] sm:w-[262px] rounded-3xl border border-line bg-card p-4 shadow-[0_28px_60px_-20px_rgba(64,48,24,0.22)]">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">
                     {d.landing.demoCard.forecast}
@@ -106,7 +106,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="float-b absolute right-0 top-28 w-[210px] sm:w-[230px] rounded-3xl border border-line bg-card p-4 shadow-2xl shadow-black/60">
+              <div className="float-b absolute right-0 top-28 w-[210px] sm:w-[230px] rounded-3xl border border-line bg-card p-4 shadow-[0_28px_60px_-20px_rgba(64,48,24,0.22)]">
                 <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-dim">
                   <IconMap size={15} />
                   {d.landing.demoCard.mapTitle}
@@ -118,14 +118,14 @@ export default function Landing() {
                       className="aspect-square rounded-[5px]"
                       style={{
                         background:
-                          v === 1 ? "#ff5c00" : v === 0.6 ? "rgba(255,92,0,.55)" : v === 0.25 ? "rgba(255,92,0,.2)" : "#2a2f38",
+                          v === 1 ? "#ff6b1f" : v === 0.6 ? "rgba(255,107,31,.55)" : v === 0.25 ? "rgba(255,107,31,.2)" : "#ebe5d7",
                       }}
                     />
                   ))}
                 </div>
               </div>
 
-              <div className="float-c absolute bottom-6 left-6 sm:left-10 w-[214px] rounded-3xl border border-line bg-card p-4 shadow-2xl shadow-black/60">
+              <div className="float-c absolute bottom-6 left-6 sm:left-10 w-[214px] rounded-3xl border border-line bg-card p-4 shadow-[0_28px_60px_-20px_rgba(64,48,24,0.22)]">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">
                     {d.landing.demoCard.eloTitle}
@@ -151,7 +151,7 @@ export default function Landing() {
       </section>
 
       {/* ---------------- marquee ---------------- */}
-      <section className="border-y border-line bg-coal/50 py-3.5">
+      <section className="border-y border-line bg-mist/50 py-3.5">
         <div className="marquee">
           {[0, 1].map((k) => (
             <div key={k} className="marquee-track" aria-hidden={k === 1}>
@@ -194,7 +194,7 @@ export default function Landing() {
           The site explained what Brain does but never what the student
           actually does. This section walks one loop end to end, with the
           generated plan shown next to it so the promise is concrete. */}
-      <section className="relative overflow-hidden border-y border-line bg-coal/40">
+      <section className="relative overflow-hidden border-y border-line bg-mist/40">
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
           <Reveal>
             <h2 className="font-display max-w-2xl text-[clamp(28px,5vw,46px)] font-extrabold leading-[1.08] tracking-[-0.02em]">
@@ -242,7 +242,7 @@ export default function Landing() {
                       <div
                         key={i}
                         className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 ${
-                          last ? "border-brand/45 bg-brand/8" : "border-line bg-coal"
+                          last ? "border-brand/45 bg-brand/8" : "border-line bg-mist"
                         }`}
                       >
                         <span
@@ -264,7 +264,7 @@ export default function Landing() {
       </section>
 
       {/* ---------------- features ---------------- */}
-      <section className="relative overflow-hidden border-y border-line bg-coal/40">
+      <section className="relative overflow-hidden border-y border-line bg-mist/40">
         <div className="glow-orb -right-40 top-0 h-[360px] w-[360px] opacity-50" aria-hidden="true" />
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
           <Reveal>
@@ -281,7 +281,7 @@ export default function Landing() {
               return (
                 <Reveal key={i} delay={(i % 3) * 80}>
                   <Card hover className="h-full">
-                    <div className="mb-4 grid h-11 w-11 place-items-center rounded-2xl border border-line2 bg-soot text-paper">
+                    <div className="mb-4 grid h-11 w-11 place-items-center rounded-2xl border border-line2 bg-haze text-ink">
                       <Icon size={22} />
                     </div>
                     <h3 className="font-display text-[17px] font-bold">{f.t}</h3>
@@ -294,8 +294,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ---------------- editorial (light) ---------------- */}
-      <section className="sec-light relative overflow-hidden">
+      {/* ---------------- editorial (inverted, dark) ---------------- */}
+      <section className="sec-dark relative overflow-hidden">
         <div className="absolute inset-0 dotgrid-light opacity-70" aria-hidden="true" />
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -305,17 +305,17 @@ export default function Landing() {
                 <br />
                 <span className="text-brand">{d.landing.editTitle2}</span>
               </h2>
-              <p className="mt-6 max-w-md text-[16.5px] leading-relaxed text-[#3d3d3d]">{d.landing.editBody}</p>
+              <p className="mt-6 max-w-md text-[16.5px] leading-relaxed text-[#b9b2a4]">{d.landing.editBody}</p>
             </Reveal>
 
             <Reveal delay={120}>
-              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[#e2e2e2] bg-[#e2e2e2]">
+              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[#312d25] bg-[#312d25]">
                 {d.landing.editStats.map((s, i) => (
-                  <div key={i} className="bg-paper p-6 sm:p-7">
-                    <div className="font-display text-[clamp(26px,4vw,38px)] font-extrabold leading-none tracking-tight text-ink">
+                  <div key={i} className="bg-[#1c1a14] p-6 sm:p-7">
+                    <div className="font-display text-[clamp(26px,4vw,38px)] font-extrabold leading-none tracking-tight text-paper">
                       {s.v}
                     </div>
-                    <div className="mt-2 text-[13px] leading-snug text-[#5a5a5a]">{s.l}</div>
+                    <div className="mt-2 text-[13px] leading-snug text-[#a49d90]">{s.l}</div>
                   </div>
                 ))}
               </div>
@@ -370,12 +370,12 @@ export default function Landing() {
                   <div
                     key={c.name}
                     className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 ${
-                      i === 0 ? "border-brand/40 bg-brand/8" : "border-line bg-soot/40"
+                      i === 0 ? "border-brand/40 bg-brand/8" : "border-line bg-haze/40"
                     }`}
                   >
                     <span
                       className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold tabular-nums ${
-                        i === 0 ? "bg-brand text-ink" : "bg-line text-mute"
+                        i === 0 ? "bg-brand text-paper" : "bg-line text-mute"
                       }`}
                     >
                       {i + 1}
@@ -385,7 +385,7 @@ export default function Landing() {
                   </div>
                 ))}
                 <div className="mt-1 flex items-center gap-3 rounded-2xl border border-dashed border-line2 px-3 py-2.5">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-soot text-[12px] font-extrabold text-dim">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-haze text-[12px] font-extrabold text-dim">
                     5
                   </span>
                   <span className="flex-1 text-sm font-semibold text-dim">{d.lead.you}</span>
@@ -398,7 +398,7 @@ export default function Landing() {
       </section>
 
       {/* ---------------- roles ---------------- */}
-      <section className="border-y border-line bg-coal/40">
+      <section className="border-y border-line bg-mist/40">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-24">
           <Reveal>
             <SectionLabel>{d.landing.rolesTitle}</SectionLabel>
@@ -411,7 +411,7 @@ export default function Landing() {
               <Reveal key={href} delay={i * 100}>
                 <Link href={href} className="group block h-full">
                   <Card hover className="flex h-full flex-col">
-                    <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl border border-line2 bg-soot">
+                    <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl border border-line2 bg-haze">
                       <Icon size={24} />
                     </div>
                     <h3 className="font-display text-xl font-bold">{r.t}</h3>

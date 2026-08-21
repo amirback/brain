@@ -17,7 +17,7 @@ const LANGS: { code: Lang; short: string; full: string }[] = [
 export function LangSwitch({ compact = false }: { compact?: boolean }) {
   const { lang, setLang } = useI18n();
   return (
-    <div className={`inline-flex items-center rounded-full border border-line bg-coal p-0.5 ${compact ? "" : "gap-0.5"}`}>
+    <div className={`inline-flex items-center rounded-full border border-line bg-mist p-0.5 ${compact ? "" : "gap-0.5"}`}>
       {LANGS.map((l) => (
         <button
           key={l.code}
@@ -25,7 +25,7 @@ export function LangSwitch({ compact = false }: { compact?: boolean }) {
           aria-label={l.full}
           aria-pressed={lang === l.code}
           className={`press rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide transition-colors ${
-            lang === l.code ? "bg-brand text-ink" : "text-mute hover:text-paper"
+            lang === l.code ? "bg-brand text-paper" : "text-mute hover:text-ink"
           }`}
         >
           {l.short}
@@ -93,7 +93,7 @@ export function Header() {
     <>
       <header
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-          solid ? "bg-ink/85 backdrop-blur-xl border-b border-line" : "bg-transparent border-b border-transparent"
+          solid ? "bg-bone/80 backdrop-blur-xl border-b border-line" : "bg-transparent border-b border-transparent"
         }`}
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -108,7 +108,7 @@ export function Header() {
                 key={l.href}
                 href={l.href}
                 className={`px-3 py-2 rounded-xl text-[13.5px] font-medium whitespace-nowrap transition-colors ${
-                  isActive(l.href) ? "text-paper bg-white/8" : "text-mute hover:text-paper hover:bg-white/5"
+                  isActive(l.href) ? "text-ink bg-ink/7" : "text-mute hover:text-ink hover:bg-ink/5"
                 }`}
               >
                 {l.label}
@@ -123,9 +123,9 @@ export function Header() {
             {role === "student" && user ? (
               <Link
                 href="/profile"
-                className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-coal pl-1 pr-3 py-1 press hover:border-line2"
+                className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-mist pl-1 pr-3 py-1 press hover:border-line2"
               >
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-ink text-xs font-extrabold">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-paper text-xs font-extrabold">
                   {user.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="text-xs font-semibold tabular-nums">{user.elo}</span>
@@ -140,13 +140,13 @@ export function Header() {
             ) : (
               <Link
                 href="/start"
-                className="hidden sm:inline-flex press items-center h-9 px-4 rounded-xl bg-brand text-ink text-[13px] font-bold hover:bg-brand-hi"
+                className="hidden sm:inline-flex press shine items-center h-9 px-4 rounded-xl bg-ink text-paper text-[13px] font-bold hover:bg-[#2b2619]"
               >
                 {d.nav.start}
               </Link>
             )}
             <button
-              className="md:hidden text-paper press p-1.5 -mr-1.5"
+              className="md:hidden text-ink press p-1.5 -mr-1.5"
               onClick={() => setOpen((v) => !v)}
               aria-label="menu"
               aria-expanded={open}
@@ -158,7 +158,7 @@ export function Header() {
       </header>
 
       {open && (
-        <div className="fixed inset-0 z-40 md:hidden bg-ink pt-16">
+        <div className="fixed inset-0 z-40 md:hidden bg-bone pt-16">
           <div className="px-4 py-6 flex flex-col gap-1">
             {[{ href: "/", label: d.nav.home }, ...links].map((l, i) => (
               <Link
@@ -169,7 +169,7 @@ export function Header() {
               >
                 {l.label}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4.5 12h14M13 6.5l5.5 5.5L13 17.5" stroke="#ff5c00" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4.5 12h14M13 6.5l5.5 5.5L13 17.5" stroke="#ff6b1f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </Link>
             ))}

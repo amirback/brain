@@ -57,7 +57,7 @@ export default function SatHub() {
           </div>
 
           {lastMock?.sat && (
-            <div className="mt-4 rounded-xl border border-line2 bg-coal px-3.5 py-3">
+            <div className="mt-4 rounded-xl border border-line2 bg-mist px-3.5 py-3">
               <div className="text-[10.5px] font-bold uppercase tracking-wider text-dim">{d.exam.lastResult}</div>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="font-display text-2xl font-extrabold tabular-nums">{lastMock.sat.composite}</span>
@@ -94,7 +94,7 @@ export default function SatHub() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-md bg-soot px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dim">
+                      <span className="rounded-md bg-haze px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dim">
                         {s.section === "rw" ? d.exam.sectionRW : d.exam.sectionMath}
                       </span>
                       <span className="text-[10.5px] font-bold uppercase tracking-wider text-dim">

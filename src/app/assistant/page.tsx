@@ -113,8 +113,8 @@ export default function AssistantPage() {
   const toneStyle = {
     praise: "border-brand/40 bg-brand/8",
     warn: "border-amber/40 bg-amber/8",
-    plan: "border-line2 bg-coal",
-    info: "border-line bg-coal",
+    plan: "border-line2 bg-mist",
+    info: "border-line bg-mist",
   } as const;
 
   const toneIcon = { praise: IconCheck, warn: IconHelp, plan: IconTrend, info: IconBolt } as const;
@@ -203,7 +203,7 @@ export default function AssistantPage() {
                   const video = b.topic ? videoFor(b.topic, lang) : null;
                   return b.from === "me" ? (
                     <div key={b.id} className="slide-up flex justify-end">
-                      <span className="max-w-[85%] rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[14px] font-semibold text-ink">
+                      <span className="max-w-[85%] rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[14px] font-semibold text-paper">
                         {b.text}
                       </span>
                     </div>
@@ -290,7 +290,7 @@ export default function AssistantPage() {
                   key={i}
                   onClick={() => ask(i)}
                   disabled={typing}
-                  className="press rounded-xl border border-line bg-coal px-3 py-2 text-left text-[12.5px] font-semibold text-mute hover:border-brand hover:text-brand disabled:opacity-50"
+                  className="press rounded-xl border border-line bg-mist px-3 py-2 text-left text-[12.5px] font-semibold text-mute hover:border-brand hover:text-brand disabled:opacity-50"
                 >
                   {pick(turn.q)}
                 </button>

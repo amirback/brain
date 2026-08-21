@@ -252,7 +252,7 @@ function MockInner() {
                   setPhase("run");
                 }}
                 className={`press relative grid h-12 place-items-center rounded-xl border text-[14px] font-bold tabular-nums transition-colors ${
-                  done ? "border-brand bg-brand/12 text-brand" : "border-line bg-coal text-dim hover:border-line2"
+                  done ? "border-brand bg-brand/12 text-brand" : "border-line bg-mist text-dim hover:border-line2"
                 }`}
               >
                 {i + 1}
@@ -329,12 +329,12 @@ function MockInner() {
                 key={i}
                 onClick={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
                 className={`press flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors ${
-                  picked ? "border-brand bg-brand/8" : "border-line bg-coal hover:border-line2"
+                  picked ? "border-brand bg-brand/8" : "border-line bg-mist hover:border-line2"
                 }`}
               >
                 <span
                   className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold ${
-                    picked ? "bg-brand text-ink" : "bg-soot text-dim"
+                    picked ? "bg-brand text-paper" : "bg-haze text-dim"
                   }`}
                 >
                   {String.fromCharCode(65 + i)}
@@ -443,7 +443,7 @@ function NavSheet({
               key={q.id}
               onClick={() => onPick(i)}
               className={`press relative grid h-12 place-items-center rounded-xl border text-[14px] font-bold tabular-nums ${
-                done ? "border-brand bg-brand/12 text-brand" : "border-line bg-coal text-dim hover:border-line2"
+                done ? "border-brand bg-brand/12 text-brand" : "border-line bg-mist text-dim hover:border-line2"
               }`}
             >
               {i + 1}

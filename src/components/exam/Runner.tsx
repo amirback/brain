@@ -204,7 +204,7 @@ export function Runner({
 
         <div key={q.id} className="slide-up rounded-3xl border border-line bg-card p-5 sm:p-6">
           {q.instruction && (
-            <div className="mb-3 rounded-xl border border-line2 bg-coal px-3 py-2 text-[12.5px] font-semibold text-mute">
+            <div className="mb-3 rounded-xl border border-line2 bg-mist px-3 py-2 text-[12.5px] font-semibold text-mute">
               {q.instruction}
             </div>
           )}
@@ -224,12 +224,12 @@ export function Runner({
                     key={i}
                     onClick={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
                     className={`press flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors ${
-                      picked ? "border-brand bg-brand/8" : "border-line bg-coal hover:border-line2"
+                      picked ? "border-brand bg-brand/8" : "border-line bg-mist hover:border-line2"
                     }`}
                   >
                     <span
                       className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold ${
-                        picked ? "bg-brand text-ink" : "bg-soot text-dim"
+                        picked ? "bg-brand text-ink" : "bg-haze text-dim"
                       }`}
                     >
                       {String.fromCharCode(65 + i)}
@@ -247,7 +247,7 @@ export function Runner({
                 onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
                 inputMode="text"
                 autoComplete="off"
-                className="mt-2 w-full rounded-2xl border border-line bg-coal px-4 py-3.5 font-display text-[18px] font-bold outline-none focus:border-brand"
+                className="mt-2 w-full rounded-2xl border border-line bg-mist px-4 py-3.5 font-display text-[18px] font-bold outline-none focus:border-brand"
               />
             </div>
           )}
@@ -303,7 +303,7 @@ function Grid({
             key={it.id}
             onClick={() => onPick(i)}
             className={`press relative grid h-12 place-items-center rounded-xl border text-[14px] font-bold tabular-nums transition-colors ${
-              done ? "border-brand bg-brand/12 text-brand" : "border-line bg-coal text-dim hover:border-line2"
+              done ? "border-brand bg-brand/12 text-brand" : "border-line bg-mist text-dim hover:border-line2"
             }`}
           >
             {i + 1}

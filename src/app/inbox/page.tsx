@@ -73,7 +73,7 @@ export default function InboxPage() {
                   <div className="flex items-start gap-3.5">
                     <span
                       className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
-                        m.read ? "bg-soot text-mute" : "bg-brand/12 text-brand"
+                        m.read ? "bg-haze text-mute" : "bg-brand/12 text-brand"
                       }`}
                     >
                       <Icon size={19} />

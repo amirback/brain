@@ -119,7 +119,7 @@ export function Review({
                   <p className="whitespace-pre-line text-[14.5px] font-semibold leading-snug">{it.stem}</p>
 
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    <div className={`rounded-xl border px-3 py-2.5 ${r.correct ? "border-line bg-coal" : "border-amber/40 bg-amber/8"}`}>
+                    <div className={`rounded-xl border px-3 py-2.5 ${r.correct ? "border-line bg-mist" : "border-amber/40 bg-amber/8"}`}>
                       <div className="text-[10.5px] font-bold uppercase tracking-wider text-dim">{d.exam.yourAnswer}</div>
                       <div className="mt-1 text-[13.5px] font-semibold">
                         {analysis.givenLabel ?? d.exam.skipped}
@@ -160,7 +160,7 @@ function SimilarStrip({ item, pool, label }: { item: ExamItem; pool: ExamItem[];
   const similar = similarItems(item, pool, 3);
   if (similar.length === 0) return null;
   return (
-    <div className="mt-4 rounded-xl border border-line2 bg-coal px-3 py-3">
+    <div className="mt-4 rounded-xl border border-line2 bg-mist px-3 py-3">
       <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-dim">
         <IconSpark size={13} />
         {label}

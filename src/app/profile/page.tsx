@@ -83,7 +83,7 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8 sm:py-12">
       <Reveal>
         <div className="flex items-center gap-4">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-brand text-2xl font-extrabold text-ink">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-brand text-2xl font-extrabold text-paper">
             {user.name.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
@@ -130,7 +130,7 @@ export default function ProfilePage() {
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Card>
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-soot text-mute">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-haze text-mute">
                 <IconParent size={19} />
               </span>
               <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ export default function ProfilePage() {
 
           <Card>
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-soot text-mute">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-haze text-mute">
                 <IconLock size={19} />
               </span>
               <div className="min-w-0 flex-1">
@@ -188,7 +188,7 @@ export default function ProfilePage() {
       <Reveal delay={70}>
         <Card className="mt-3">
           <div className="flex items-center gap-3.5">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot text-mute">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-haze text-mute">
               <IconTeacher size={20} />
             </span>
             <div className="min-w-0 flex-1">
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                   key={s}
                   onClick={() => setActiveSubject(s)}
                   className={`press rounded-2xl border px-3.5 py-2 text-[13px] font-bold transition-colors ${
-                    active ? "border-brand bg-brand/10 text-brand" : "border-line bg-coal text-mute hover:border-line2"
+                    active ? "border-brand bg-brand/10 text-brand" : "border-line bg-mist text-mute hover:border-line2"
                   }`}
                 >
                   {sub ? pick(sub.title) : s}
@@ -302,8 +302,8 @@ export default function ProfilePage() {
                 .sort((a, b) => (b.takenAt ?? 0) - (a.takenAt ?? 0))
                 .slice(0, 4)
                 .map((m) => (
-                  <div key={m.id} className="flex items-center gap-3.5 rounded-2xl border border-line bg-coal p-3.5">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-soot text-mute">
+                  <div key={m.id} className="flex items-center gap-3.5 rounded-2xl border border-line bg-mist p-3.5">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-haze text-mute">
                       <IconClock size={18} />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -338,7 +338,7 @@ export default function ProfilePage() {
                 <div
                   key={k}
                   className={`rounded-2xl border p-3.5 transition-colors ${
-                    has ? "border-brand/40 bg-brand/6" : "border-line bg-coal opacity-55"
+                    has ? "border-brand/40 bg-brand/6" : "border-line bg-mist opacity-55"
                   }`}
                 >
                   <span className={has ? "text-brand" : "text-dim"}>
@@ -410,7 +410,7 @@ export default function ProfilePage() {
                   addSubject(s.id as SubjectId);
                   setSubjectsOpen(false);
                 }}
-                className="press rounded-2xl border border-line bg-coal p-3.5 text-left hover:border-brand"
+                className="press rounded-2xl border border-line bg-mist p-3.5 text-left hover:border-brand"
               >
                 <div className="text-[14.5px] font-bold">{pick(s.title)}</div>
                 <div className="mt-0.5 text-[12px] text-dim">{pick(s.blurb)}</div>
@@ -460,7 +460,7 @@ function GoalSwitchModal({
     <Modal open={open} onClose={onClose} title={d.profile.switchTitle}>
       {carried === null ? (
         <>
-          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-line bg-coal p-3.5">
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-line bg-mist p-3.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand">
               <IconSpark size={18} />
             </span>
@@ -476,10 +476,10 @@ function GoalSwitchModal({
                   disabled={active}
                   onClick={() => onSwitch(g)}
                   className={`press flex items-center gap-3.5 rounded-2xl border p-3.5 text-left ${
-                    active ? "border-brand bg-brand/8 opacity-60" : "border-line bg-coal hover:border-brand"
+                    active ? "border-brand bg-brand/8 opacity-60" : "border-line bg-mist hover:border-brand"
                   }`}
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-soot text-mute">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line2 bg-haze text-mute">
                     <Icon size={19} />
                   </span>
                   <span className="min-w-0 flex-1">

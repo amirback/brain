@@ -116,7 +116,7 @@ function RolePicker({ onPick, banner }: { onPick: (r: Role) => void; banner?: st
             <Reveal key={c.role} delay={i * 80}>
               <button onClick={() => onPick(c.role)} className="press w-full text-left">
                 <Card hover className="flex items-center gap-4">
-                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-line2 bg-haze">
                     <c.Icon size={26} />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -264,7 +264,7 @@ function StudentSetup() {
                     key={g}
                     onClick={() => setGrade(g)}
                     className={`press h-11 rounded-xl border text-sm font-bold tabular-nums transition-colors ${
-                      grade === g ? "border-brand bg-brand text-ink" : "border-line bg-coal text-mute hover:border-line2 hover:text-paper"
+                      grade === g ? "border-brand bg-brand text-paper" : "border-line bg-mist text-mute hover:border-line2 hover:text-ink"
                     }`}
                   >
                     {g}
@@ -290,10 +290,10 @@ function StudentSetup() {
                       key={g}
                       onClick={() => chooseGoal(g)}
                       className={`press flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition-colors ${
-                        active ? "border-brand bg-brand/8" : "border-line bg-coal hover:border-line2"
+                        active ? "border-brand bg-brand/8" : "border-line bg-mist hover:border-line2"
                       }`}
                     >
-                      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${active ? "border-brand/40 bg-brand/12 text-brand" : "border-line2 bg-soot text-mute"}`}>
+                      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${active ? "border-brand/40 bg-brand/12 text-brand" : "border-line2 bg-haze text-mute"}`}>
                         <Icon size={20} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -318,7 +318,7 @@ function StudentSetup() {
                       key={s.id}
                       onClick={() => toggleSubject(s.id)}
                       className={`press rounded-2xl border p-3 text-left transition-colors ${
-                        active ? "border-brand bg-brand/8" : "border-line bg-coal hover:border-line2"
+                        active ? "border-brand bg-brand/8" : "border-line bg-mist hover:border-line2"
                       }`}
                     >
                       <span className="flex items-center justify-between gap-2">
@@ -549,7 +549,7 @@ function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void
 
   return (
     <Modal open={open} onClose={() => { onClose(); setTimeout(reset, 250); }} title={d.consult.title}>
-      <div className="mb-4 flex items-start gap-3 rounded-2xl border border-line bg-coal p-3.5">
+      <div className="mb-4 flex items-start gap-3 rounded-2xl border border-line bg-mist p-3.5">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand">
           <IconSpark size={19} />
         </span>
@@ -569,7 +569,7 @@ function Advisor({ open, onClose, onPick }: { open: boolean; onClose: () => void
               <button
                 key={i}
                 onClick={() => { setAns([...ans, i]); setStep(step + 1); }}
-                className="press rounded-2xl border border-line bg-coal px-4 py-3 text-left text-[14px] font-semibold hover:border-brand hover:bg-brand/6"
+                className="press rounded-2xl border border-line bg-mist px-4 py-3 text-left text-[14px] font-semibold hover:border-brand hover:bg-brand/6"
               >
                 {a}
               </button>

@@ -77,7 +77,7 @@ type BtnProps = {
   children: React.ReactNode;
   href?: string;
   onClick?: () => void;
-  variant?: "primary" | "ghost" | "outline" | "dark";
+  variant?: "primary" | "brand" | "ghost" | "outline" | "dark";
   size?: "sm" | "md" | "lg";
   className?: string;
   disabled?: boolean;
@@ -85,11 +85,19 @@ type BtnProps = {
   full?: boolean;
 };
 
+/**
+ * The main action is black on ivory, not orange. With an orange page accent,
+ * an orange button competes with every badge and progress bar on the screen;
+ * black wins the eye immediately and leaves the orange to mean "look here".
+ * `brand` stays available for the rare screen where the accent should carry
+ * the action itself.
+ */
 const V = {
-  primary: "bg-brand text-ink hover:bg-brand-hi border border-brand",
-  ghost: "bg-transparent text-paper hover:bg-white/8 border border-transparent",
-  outline: "bg-transparent text-paper hover:border-brand hover:text-brand border border-line2",
-  dark: "bg-ink text-paper hover:bg-soot border border-line2",
+  primary: "bg-ink text-paper hover:bg-[#2b2619] border border-ink shine",
+  brand: "bg-brand text-paper hover:bg-brand-hi border border-brand shine",
+  ghost: "bg-transparent text-ink hover:bg-ink/6 border border-transparent",
+  outline: "bg-transparent text-ink hover:border-brand hover:text-brand border border-line2",
+  dark: "bg-ink text-paper hover:bg-[#2b2619] border border-ink shine",
 };
 
 const SZ = {
@@ -167,7 +175,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 export function Bar({ value, tone = "brand", h = 8 }: { value: number; tone?: "brand" | "amber" | "dim"; h?: number }) {
   const colors = { brand: "bg-brand", amber: "bg-amber", dim: "bg-line2" };
   return (
-    <div className="w-full rounded-full bg-soot overflow-hidden" style={{ height: h }}>
+    <div className="w-full rounded-full bg-haze overflow-hidden" style={{ height: h }}>
       <div
         className={`h-full rounded-full ${colors[tone]} transition-[width] duration-700`}
         style={{ width: `${Math.min(100, Math.max(0, value * 100))}%`, transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
@@ -187,9 +195,9 @@ export function Ring({
   return (
     <div className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#2e333d" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#e8e2d4" strokeWidth={stroke} fill="none" />
         <circle
-          cx={size / 2} cy={size / 2} r={r} stroke="#ff5c00" strokeWidth={stroke} fill="none"
+          cx={size / 2} cy={size / 2} r={r} stroke="#ff6b1f" strokeWidth={stroke} fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
           style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.16,1,0.3,1)" }}
         />
@@ -258,15 +266,15 @@ export function Sparkline({
     <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={label ?? "trend"}>
       <defs>
         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ff5c00" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#ff5c00" stopOpacity="0" />
+          <stop offset="0%" stopColor="#ff6b1f" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#ff6b1f" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#spark-fill)" />
-      <path d={d} stroke="#ff5c00" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
+      <path d={d} stroke="#ff6b1f" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
         className="draw-line" style={{ ["--dash" as string]: "600", strokeDasharray: 600 }} />
       {showDots && (
-        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#ff5c00" stroke="#1e222a" strokeWidth="2" />
+        <circle cx={xs(points.length - 1)} cy={ys(last)} r="3.6" fill="#ff6b1f" stroke="#1e222a" strokeWidth="2" />
       )}
     </svg>
   );
@@ -287,7 +295,7 @@ export function MiniBars({
               className="w-full rounded-t-[4px] bar-grow transition-colors"
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#ff5c00" : "#2a2f38",
+                background: v > 0 ? "#ff6b1f" : "#ebe5d7",
                 animationDelay: `${i * 60}ms`,
               }}
               title={labels?.[i]}
@@ -320,7 +328,7 @@ export function Modal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[80] grid place-items-end sm:place-items-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink/45 backdrop-blur-[3px]" onClick={onClose} />
       <div
         className={`relative w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} bg-card border border-line rounded-t-3xl sm:rounded-3xl p-5 slide-up max-h-[92vh] overflow-y-auto`}
         role="dialog"
@@ -328,7 +336,7 @@ export function Modal({
       >
         <div className="flex items-start justify-between gap-4 mb-4">
           <h3 className="font-display text-lg font-bold">{title}</h3>
-          <button onClick={onClose} className="text-mute hover:text-paper press p-1 -m-1" aria-label="close">
+          <button onClick={onClose} className="text-mute hover:text-ink press p-1 -m-1" aria-label="close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
@@ -344,7 +352,7 @@ export function Confetti({ fire }: { fire: number }) {
   const [bits, setBits] = useState<{ id: number; cx: string; cy: string; cr: string; c: string }[]>([]);
   useEffect(() => {
     if (fire === 0) return;
-    const colors = ["#ff5c00", "#ffb800", "#fafafa", "#ff7a2e"];
+    const colors = ["#ff6b1f", "#f2a018", "#fafafa", "#ff8845"];
     const next = Array.from({ length: 18 }, (_, i) => ({
       id: fire * 100 + i,
       cx: `${(Math.random() - 0.5) * 260}px`,
@@ -371,5 +379,5 @@ export function Confetti({ fire }: { fire: number }) {
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-2xl bg-soot ${className}`} />;
+  return <div className={`animate-pulse rounded-2xl bg-haze ${className}`} />;
 }

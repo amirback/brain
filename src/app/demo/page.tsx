@@ -52,7 +52,7 @@ export default function DemoPage() {
             {cards.map((c) => (
               <button key={c.role} onClick={() => enter(c.role)} disabled={going !== null} className="press">
                 <Card hover className={`flex items-center gap-4 ${going === c.role ? "border-brand" : ""}`}>
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-soot">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-line2 bg-haze">
                     <c.Icon size={21} />
                   </span>
                   <span className="min-w-0 flex-1">
