@@ -214,24 +214,23 @@ body {
 
 /* ---------- floating cards ---------- */
 
-/* The cards sit in a grid now rather than floating free, so the drift has to
-   be small and the rotation gone: a tilted card in a row of upright ones reads
-   as a mistake, and a 16px rise opens a visible gap under it. */
+/* Free-floating cards again, so the tilt comes back — it is what makes the
+   stack read as layered depth rather than three rectangles. */
 .float-a { animation: floatA 7s ease-in-out infinite; }
 .float-b { animation: floatB 8.5s ease-in-out infinite; }
 .float-c { animation: floatC 6s ease-in-out infinite; }
 
 @keyframes floatA {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+  50% { transform: translateY(-12px) rotate(-0.4deg); }
 }
 @keyframes floatB {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+  0%, 100% { transform: translateY(0) rotate(1.6deg); }
+  50% { transform: translateY(-16px) rotate(0.8deg); }
 }
 @keyframes floatC {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  50% { transform: translateY(-8px); }
 }
 
 /* ---------- micro-interactions ---------- */
