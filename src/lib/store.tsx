@@ -11,7 +11,6 @@ import { defaultSubjects } from "./content";
 import { demoSpace, DEMO_CLASS_CODE, demoClassRecord } from "./mock";
 import { todayStr } from "./store-helpers";
 import { mockResultMessage, planMock } from "./advisor";
-import { slimStudent } from "./share";
 import { joinRoster, lookupClass, lookupStudent, publishClass, publishStudent, pullRoster } from "./sync";
 
 export { todayStr };
@@ -145,6 +144,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (parsed.pendingClass === undefined) parsed.pendingClass = null;
         if (!parsed.classes[DEMO_CLASS_CODE]) parsed.classes[DEMO_CLASS_CODE] = demoClassRecord();
         ref.current = parsed;
+        // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSpace(parsed);
       }
     } catch {
@@ -153,12 +156,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
-  /**
-   * Repair attempts saved before answer shuffling existed — see
-   * `exam/migrate-attempts.ts`. Loaded dynamically and only when there is
-   * something to repair, because the repair needs the question pools and those
-   * are far too large to sit in the root layout's bundle.
-   */
   // The ref is updated synchronously so two mutations in the same tick
   // (finish a session, then unlock a badge) both build on fresh state.
   const persist = useCallback((s: Space) => {
@@ -167,6 +164,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(LS_KEY, JSON.stringify(s));
   }, []);
 
+  /**
+   * Repair attempts saved before answer shuffling existed — see
+   * `exam/migrate-attempts.ts`. Loaded dynamically and only when there is
+   * something to repair, because the repair needs the question pools and those
+   * are far too large to sit in the root layout's bundle.
+   */
   useEffect(() => {
     if (!ready) return;
     const stale = Object.values(ref.current.students).some((st) =>
@@ -434,7 +437,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persist({ ...s, students: { ...s.students, [st.code]: next } });
     pushSnapshot(next);
     return { delta, elo };
-  }, [persist]);
+  }, [persist, pushSnapshot]);
 
   const finishDiagnostic = useCallback(() => {
     mutateStudent((st) => {

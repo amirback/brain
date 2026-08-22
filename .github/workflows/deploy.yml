@@ -1,8 +1,12 @@
 name: Deploy to GitHub Pages
 
+# Зеркало на GitHub Pages больше не собирается автоматически.
+# Оно клало готовую статику в ветку gh-pages, а Vercel по умолчанию делает
+# превью-деплой для каждой ветки — заходил туда, не находил package.json и
+# падал с «failed preview deployment» на каждый пуш в main.
+# Основной адрес — brainstudy.online на Vercel. Зеркало осталось как запасной
+# вариант и запускается вручную из вкладки Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

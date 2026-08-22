@@ -8,7 +8,7 @@ import { topicById } from "@/lib/content";
 import { mockQuestions } from "@/lib/advisor";
 import type { Question } from "@/lib/types";
 import { Bar, Btn, Card, Confetti, CountUp, Modal, Reveal } from "@/components/ui";
-import { IconArrow, IconCheck, IconClock, IconCross, IconGrid } from "@/components/Icons";
+import { IconArrow, IconClock, IconGrid } from "@/components/Icons";
 
 /**
  * Mock test in the shape of a real digital exam (Bluebook-style):
@@ -90,6 +90,10 @@ function MockInner() {
   }, [phase]);
 
   useEffect(() => {
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (timedOut && phase !== "done") submit();
   }, [timedOut, phase, submit]);
 

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
-import { streakLength, totalSeconds, useStore } from "@/lib/store";
+import { totalSeconds, useStore } from "@/lib/store";
 import { subjectById, topicById, topicsOf } from "@/lib/content";
 import type { StudentState, SubjectId } from "@/lib/types";
 import { fmtBand } from "@/lib/exam/scoring";
@@ -115,6 +115,10 @@ export default function TeacherPage() {
     const days = [...st.streakDates, ...Object.keys(st.secondsByDay)].sort();
     const last = days.pop();
     if (!last) return null;
+    // Date.now() нужен для «сколько дней осталось». Значение живёт до следующего
+   // рендера и меняется раз в сутки по смыслу, поэтому чистоту здесь
+   // покупать прокидыванием часов через состояние не стоит.
+    // eslint-disable-next-line react-hooks/purity
     return Math.round((Date.now() - new Date(last).getTime()) / 864e5);
   };
 

@@ -60,6 +60,10 @@ function PracticeInner() {
   // snapshot the "before" numbers once, for the summary screen
   useEffect(() => {
     if (!user || eloStart !== null) return;
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEloStart(user.elo);
     setMStart(topicParam ? (user.mastery[topicParam] ?? 0) : 0);
     setFStart(formatForecast(readiness(user, user.activeSubject), user.goal).numeric);
@@ -70,6 +74,10 @@ function PracticeInner() {
     if (!user || current || done) return;
     if (mode === "mock" || mode === "fix") {
       const q = fixedSet[step];
+      // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (q) setCurrent(q);
       else setDone(true);
       return;
@@ -120,6 +128,10 @@ function PracticeInner() {
   useEffect(() => {
     if (!done || saved || mode !== "mock" || !mock) return;
     finishMock(mock.id, right, wrongIds, lang);
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSaved(true);
   }, [done, saved, mode, mock, right, wrongIds, lang, finishMock]);
 

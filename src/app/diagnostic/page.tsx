@@ -39,6 +39,10 @@ export default function DiagnosticPage() {
     if (phase !== "run" || current || !user) return;
     const topic = nextDiagnosticTopic(step, subject);
     const q = pickQuestion({ subject, topic, target, excludeIds: asked, answers: user.answers });
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q) setCurrent(q);
   }, [phase, step, target, current, asked, subject, user]);
 

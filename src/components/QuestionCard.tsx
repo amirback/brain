@@ -25,6 +25,10 @@ export function QuestionCard({ q, index, total, showHint = true, allowSkip = fal
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPicked(null);
     setLocked(false);
     setHint(false);

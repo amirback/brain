@@ -49,6 +49,10 @@ function LearnInner() {
   useEffect(() => {
     if (restored || !user) return;
     const saved = user.lessonProgress[tid] ?? 0;
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved > 0 && saved < totalSteps) setStep(saved);
     setRestored(true);
   }, [user, tid, totalSteps, restored]);

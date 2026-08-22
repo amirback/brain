@@ -35,6 +35,10 @@ export default function StartPage() {
     clearHash();
     if (payload.kind === "join") {
       const res = joinByInvite(payload.cls);
+      // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (res.ok) setBanner(`${payload.cls.className} · ${payload.cls.teacherName}`);
     } else if (payload.kind === "restore") {
       restoreProfile(payload.student);

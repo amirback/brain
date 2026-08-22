@@ -57,6 +57,10 @@ export default function ParentPage() {
     }
 
     const view = formatForecast(readiness(child, subject), child.goal);
+    // Date.now() нужен для «сколько дней осталось». Значение живёт до следующего
+   // рендера и меняется раз в сутки по смыслу, поэтому чистоту здесь
+   // покупать прокидыванием часов через состояние не стоит.
+    // eslint-disable-next-line react-hooks/purity
     const weekAgo = child.forecastHistory.find((p) => p.ts > Date.now() - 7 * 864e5);
     const delta = weekAgo ? view.numeric - formatForecast(weekAgo.raw, child.goal).numeric : 0;
     out.push(
@@ -86,6 +90,10 @@ export default function ParentPage() {
   // so this is filled in after mount rather than during hydration.
   const [weekLabel, setWeekLabel] = useState("");
   useEffect(() => {
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWeekLabel(
       new Date().toLocaleDateString(lang === "kk" ? "kk-KZ" : lang === "en" ? "en-US" : "ru-RU", {
         day: "numeric",

@@ -56,6 +56,10 @@ export default function Dashboard() {
     const days = lastNDays(user.secondsByDay, 14);
     const raw = readiness(user, subject);
     const view = formatForecast(raw, user.goal);
+    // Date.now() нужен для «сколько дней осталось». Значение живёт до следующего
+   // рендера и меняется раз в сутки по смыслу, поэтому чистоту здесь
+   // покупать прокидыванием часов через состояние не стоит.
+    // eslint-disable-next-line react-hooks/purity
     const weekAgo = user.forecastHistory.find((p) => p.ts > Date.now() - 7 * 864e5);
     const delta = weekAgo ? view.numeric - formatForecast(weekAgo.raw, user.goal).numeric : 0;
     const recs = recommend(user, subject);
@@ -67,12 +71,20 @@ export default function Dashboard() {
     const rival = [...rivals].sort((a, b) => a.elo - b.elo).find((c) => c.elo > user.elo) ?? null;
     const dueCheckpoint = checkpointDue(user.lastCheckpoint, user.createdAt);
     const mock = user.mocks.find((mk) => mk.status === "scheduled") ?? null;
+    // Date.now() нужен для «сколько дней осталось». Значение живёт до следующего
+   // рендера и меняется раз в сутки по смыслу, поэтому чистоту здесь
+   // покупать прокидыванием часов через состояние не стоит.
+    // eslint-disable-next-line react-hooks/purity
     const mockDays = mock ? Math.ceil((mock.dueAt - Date.now()) / 864e5) : null;
     const lastMock = [...user.mocks].filter((mk) => mk.status === "done").sort((a, b) => (b.takenAt ?? 0) - (a.takenAt ?? 0))[0] ?? null;
     const unread = user.inbox.filter((mm) => !mm.read).length;
     const tip = advise(user)[0] ?? null;
     const resume = user.lastLesson ? topicById(user.lastLesson) : null;
     const daysLeft = user.examDate
+      // Date.now() нужен для «сколько дней осталось». Значение живёт до следующего
+   // рендера и меняется раз в сутки по смыслу, поэтому чистоту здесь
+   // покупать прокидыванием часов через состояние не стоит.
+      // eslint-disable-next-line react-hooks/purity
       ? Math.max(0, Math.ceil((new Date(user.examDate).getTime() - Date.now()) / 864e5))
       : null;
     return {

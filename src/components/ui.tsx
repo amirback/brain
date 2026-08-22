@@ -360,6 +360,10 @@ export function Confetti({ fire }: { fire: number }) {
       cr: `${(Math.random() - 0.5) * 540}deg`,
       c: colors[i % colors.length],
     }));
+    // Клиентские данные (localStorage, язык браузера, скролл) во время SSR
+   // прочитать нельзя — только после монтирования. Это требуемый паттерн,
+   // а не каскад рендеров.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBits(next);
     const t = setTimeout(() => setBits([]), 1100);
     return () => clearTimeout(t);
