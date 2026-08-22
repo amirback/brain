@@ -189,7 +189,7 @@ function LearnInner() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[14px] font-bold">{d.lesson.video}</span>
-                      <span className="block truncate text-[12px] text-dim">{d.lesson.videoHint}</span>
+                      <span className="block text-[12px] leading-snug text-dim line-clamp-2">{d.lesson.videoHint}</span>
                     </span>
                     <IconArrow size={16} />
                   </a>
@@ -399,7 +399,7 @@ function LearnInner() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14.5px] font-semibold">{r.title}</span>
-                  <span className="block truncate text-[12px] text-dim">{pick(r.note)}</span>
+                  <span className="block text-[12px] leading-snug text-dim line-clamp-2">{pick(r.note)}</span>
                 </span>
                 <IconArrow size={16} />
               </a>

@@ -57,7 +57,7 @@ export default function DemoPage() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-bold">{c.t}</span>
-                    <span className="block truncate text-[12.5px] leading-snug text-dim">{c.sub}</span>
+                    <span className="block text-[12.5px] leading-snug text-dim line-clamp-2">{c.sub}</span>
                   </span>
                   <IconArrow size={18} />
                 </Card>

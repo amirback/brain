@@ -36,13 +36,18 @@ export default function Landing() {
         />
 
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-20 sm:pt-20 sm:pb-28">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-8 items-center">
+          {/* Text first, demo cards under it. The cards used to sit in a second
+              column and were absolutely positioned inside it, so a long word —
+              Kazakh "білмейтініңді" at 76px — pushed the headline out of its
+              column and straight across them. Stacking removes the whole class
+              of collision instead of tuning the breakpoint where it starts. */}
+          <div className="max-w-3xl">
             <div>
               {/* The audience pill used to sit here. It repeated what the
                   footer already says word for word, and above a headline this
                   size it read as clutter. It now opens the footer instead. */}
               <Reveal>
-                <h1 className="font-display text-[clamp(42px,7.8vw,76px)] font-extrabold leading-[0.95] tracking-[-0.035em]">
+                <h1 className="font-display text-[clamp(34px,6.4vw,68px)] font-extrabold leading-[0.98] tracking-[-0.035em] [overflow-wrap:break-word] text-balance">
                   {d.landing.h1a}
                   <br />
                   <span className="text-brand">{d.landing.h1b}</span>
@@ -92,10 +97,13 @@ export default function Landing() {
                 </div>
               </Reveal>
             </div>
+          </div>
 
-            {/* floating demo stack */}
-            <div className="relative h-[420px] sm:h-[460px] select-none" aria-hidden="true">
-              <div className="float-a absolute left-0 top-4 w-[240px] sm:w-[262px] rounded-3xl border border-line bg-card p-4 shadow-[0_28px_60px_-20px_rgba(64,48,24,0.22)]">
+          {/* Demo cards: a plain grid, so they reflow instead of overlapping.
+              One column on a phone, two on a tablet, three on a desktop. */}
+          <Reveal delay={340}>
+            <div className="mt-14 grid gap-4 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+              <div className="float-c rounded-3xl border border-line bg-card p-5 shadow-[0_20px_44px_-22px_rgba(70,58,96,0.22)]">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">
                     {d.landing.demoCard.forecast}
@@ -112,7 +120,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="float-b absolute right-0 top-28 w-[210px] sm:w-[230px] rounded-3xl border border-line bg-card p-4 shadow-[0_28px_60px_-20px_rgba(64,48,24,0.22)]">
+              <div className="float-b rounded-3xl border border-line bg-card p-5 shadow-[0_20px_44px_-22px_rgba(70,58,96,0.22)]">
                 <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-dim">
                   <IconMap size={15} />
                   {d.landing.demoCard.mapTitle}
@@ -131,7 +139,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="float-c absolute bottom-6 left-6 sm:left-10 w-[214px] rounded-3xl border border-line bg-card p-4 shadow-[0_28px_60px_-20px_rgba(64,48,24,0.22)]">
+              <div className="float-a rounded-3xl border border-line bg-card p-5 shadow-[0_20px_44px_-22px_rgba(70,58,96,0.22)] sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-dim">
                     {d.landing.demoCard.eloTitle}
@@ -152,7 +160,7 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -258,7 +266,7 @@ export default function Landing() {
                         >
                           {r.d}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{r.t}</span>
+                        <span className="min-w-0 flex-1 text-[14px] font-semibold leading-snug line-clamp-2">{r.t}</span>
                       </div>
                     );
                   })}
@@ -306,7 +314,7 @@ export default function Landing() {
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <Reveal>
-              <h2 className="font-display text-[clamp(30px,5vw,52px)] font-extrabold leading-[1.02] tracking-[-0.025em]">
+              <h2 className="font-display text-[clamp(28px,4.4vw,48px)] font-extrabold leading-[1.04] tracking-[-0.025em] [overflow-wrap:break-word]">
                 {d.landing.editTitle}
                 <br />
                 <span className="text-brand">{d.landing.editTitle2}</span>
